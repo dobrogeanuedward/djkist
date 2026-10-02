@@ -27,6 +27,9 @@
 - Retouched photos are edited versions of the supplied frames, not new documentary captures.
 # Update: approved imagegen branding and transport
 
+- SoundCloud public profile UI verified three own uploads: THIRTYTEEN, Bipolar, Declinatio electronica. Opening selection is random, excluding the previous visit's selection when session storage is available. Current native track metadata updates title, source link and artwork.
+- Daje is an explicit play command for initial entry, not a toggle; deliberate pause/resume remains available after entry. Selecting a different mix replaces the previous widget safely. CI includes a deterministic widget-contract regression test, separate from real-provider playback verification.
+
 - Approved generated KIST wordmark applied to hero, header, entrance and footer. Built-in imagegen prompt: interlocking geometric KIST, tactical negative-space cuts and sinusoidal fissure; transparent white production mark. Optimized asset: `public/media/kist-wordmark-imagegen.webp`.
 - Desktop hero reserves the left 35% for the identity; photographs are positioned to keep Benedetta's face separate, including portrait-shaped desktop viewports.
 - Real SoundCloud playback, pause/resume and transfer of the same dock to the header after leaving the hero verified manually. Circular shadowed close control is on the left.

@@ -54,6 +54,31 @@ jobs:
             if(checks.overflow||!checks.canvas||errors.length)throw new Error('Browser validation failed');
             await page.close();
           }
+          // Deterministic widget contract test: entry must PLAY, never toggle.
+          // Real provider playback is separately checked in the visual audit.
+          const music=await browser.newPage({viewport:{width:390,height:844}});
+          await music.addInitScript(()=>{
+            window.testPlayCalls=0;window.testPauseCalls=0;
+            function Widget(){const listeners={};return {bind:(event,fn)=>{listeners[event]=fn;if(event==='READY')setTimeout(fn,30)},play:()=>{window.testPlayCalls++;listeners.PLAY?.()},pause:()=>{window.testPauseCalls++;listeners.PAUSE?.()},getCurrentSound:fn=>fn({})}};
+            Widget.Events={READY:'READY',PLAY:'PLAY',PAUSE:'PAUSE',ERROR:'ERROR',FINISH:'FINISH',PLAY_PROGRESS:'PLAY_PROGRESS'};window.SC={Widget};
+          });
+          await music.goto('http://127.0.0.1:4321');
+          const first=await music.locator('.sound-row strong').innerText();
+          await music.getByRole('button',{name:'Daje',exact:true}).click();
+          await music.waitForFunction(()=>document.body.classList.contains('sound-active'));
+          if(await music.evaluate(()=>window.testPlayCalls!==1||window.testPauseCalls!==0))throw new Error('Entry toggled instead of playing');
+          await music.getByRole('link',{name:'Diary',exact:true}).click();
+          await music.locator('.audio-dock.in-header').waitFor({state:'visible'});
+          await music.getByRole('button',{name:'Metti in pausa il set',exact:true}).click();
+          await music.getByRole('button',{name:'Riprendi il set',exact:true}).click();
+          if(!await music.evaluate(()=>document.body.classList.contains('sound-active')))throw new Error('Resume failed');
+          await music.reload();
+          const second=await music.locator('.sound-row strong').innerText();
+          if(first===second)throw new Error('Random entry repeated previous set');
+          await music.getByRole('button',{name:'Daje',exact:true}).click();
+          await music.waitForFunction(()=>document.body.classList.contains('sound-active'));
+          if(await music.evaluate(()=>window.testPauseCalls!==0))throw new Error('Reload entry paused playback');
+          await music.close();
           await browser.close();
           JS
       - uses: actions/upload-artifact@v4

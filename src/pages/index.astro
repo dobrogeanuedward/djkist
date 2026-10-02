@@ -40,7 +40,7 @@ const featured = mixes[0];
 <div class="hero-top"><span>DJ / SELECTOR</span><span>BOLOGNA · IT</span></div>
 <div class="hero-title"><span class="small">You're in my space.</span><h1><img src="/media/kist-wordmark-imagegen.webp" alt="KIST"/></h1></div>
 <div class="hero-bottom"><button class="hero-listen" id="hero-listen" aria-label="Apri il player di KIST"><span>Riproduci</span><i aria-hidden="true"></i></button>
-<div class="sound-invitation" data-url={featured?.url || artist.soundcloud}>
+<div class="sound-invitation" data-url={featured?.url || artist.soundcloud} data-mixes={JSON.stringify(mixes)}>
 <div class="mini-record" aria-hidden="true"><img src="/media/kist-fifteen-frames-clean-v2.webp" alt=""/></div>
 <div class="sound-caption"><span>THIS SPACE SOUNDS BETTER WITH MUSIC</span><span>01 / SOUND ON</span></div>
 <div class="sound-row"><div><strong>{featured?.title || 'La prossima selezione'}</strong><p id="audio-status" role="status">{featured || artist.soundcloud ? 'Entra con il suono.' : 'Il primo ascolto arriva presto.'}</p></div><button class="play" id="hero-play" aria-label="Riproduci il set di KIST" disabled={!featured && !artist.soundcloud}><span class="ui-icon icon-play" aria-hidden="true"></span><span class="mini-label">Riproduci</span></button><button id="quiet" class="quiet">Per ora, in silenzio</button></div>

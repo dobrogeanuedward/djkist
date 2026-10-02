@@ -4,6 +4,7 @@ export const artist = {
  bio: 'Dalle origini lucane a Bologna. Un percorso nella musica elettronica che passa dalla Link Academy e arriva alla console.',
 };
 export const mixes: {title:string;url:string;artwork?:string;label:string}[] = [{title:'Declinatio electronica',url:'https://soundcloud.com/benedetta-pasquariello/declinatio-electronica',label:'KIST / Electronic · Techno · House'}];
+mixes.push({title:'THIRTYTEEN',url:'https://soundcloud.com/benedetta-pasquariello/thirtyteen',label:'KIST / Electronic'},{title:'Bipolar',url:'https://soundcloud.com/benedetta-pasquariello/bipolar',label:'KIST / Techno'});
 export const films: {title:string;youtubeId:string;label:string}[] = [];
 export const photographs: {src:string;alt:string;caption:string}[] = [{src:'/media/kist-fifteen-frames-clean-second.webp',alt:'KIST alla console, secondo fotogramma ritoccato',caption:'Fifteen Frames'},{src:'/media/kist-techno-console.jpg',alt:'Dettaglio della console nel reel di KIST',caption:'Dalla console'}];
 export const events: {date:string;name:string;place:string;url:string;cover?:string}[] = [{date:'2026-06-20',name:'Love (P)ride Parade',cover:'/media/love-pride-2026.jpg',place:'Medicina',url:'https://www.facebook.com/100090713703534/posts/960403370326778/'}];
