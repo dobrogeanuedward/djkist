@@ -24,7 +24,7 @@ jobs:
               if tag=='meta': self.meta[a.get('property',a.get('name',''))]=a.get('content','')
           def read(url):
             return urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'}),timeout=25).read()
-          for url in ['https://www.instagram.com/reel/DbbEcZJt6uv/','https://www.instagram.com/p/DMadZ8fMePw/']:
+          for url in ['https://www.instagram.com/reel/DbbEcZJt6uv/','https://www.instagram.com/p/Ddynp8WCDhA/','https://www.instagram.com/thats_kist/','https://www.facebook.com/100090713703534/posts/960403370326778/']:
             try:
               text=read(url).decode(); p=Tags();p.feed(text)
               print('META '+json.dumps({'source':url,'meta':p.meta},ensure_ascii=False))
