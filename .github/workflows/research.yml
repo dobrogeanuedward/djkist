@@ -1,0 +1,29 @@
+name: Verify public KIST media
+on:
+  push:
+    paths:
+      - '.github/workflows/research.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install yt-dlp
+      - name: Find artist sessions
+        run: |
+          python - <<'PY'
+          import yt_dlp, json
+          options={'quiet':True,'extract_flat':True,'skip_download':True,'ignoreerrors':True}
+          with yt_dlp.YoutubeDL(options) as y:
+            for query in ['ytsearch10:KIST Link Academy Radio','ytsearch5:KIST Bologna DJ']:
+              try:
+                result=y.extract_info(query,download=False)
+                for e in (result or {}).get('entries',[]):
+                  if e: print(json.dumps({k:e.get(k) for k in ['id','title','url','channel','duration','thumbnails']},ensure_ascii=False))
+              except Exception as e: print(str(e)[:300])
+          PY
