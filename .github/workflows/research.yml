@@ -1,8 +1,7 @@
 name: Verify public KIST media
 on:
   push:
-    paths:
-      - '.github/workflows/research.yml'
+    paths: ['.github/workflows/research.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -13,25 +12,29 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install yt-dlp
-      - name: Inspect primary artist sources
+      - name: Read public session metadata
         run: |
           python - <<'PY'
-          import yt_dlp,json,urllib.request,re,html
-          with yt_dlp.YoutubeDL({'quiet':True,'extract_flat':True,'skip_download':True,'ignoreerrors':True,'playlistend':250}) as y:
+          import urllib.request,html,json,re,base64
+          from html.parser import HTMLParser
+          class Tags(HTMLParser):
+            def __init__(self): super().__init__(); self.meta={}
+            def handle_starttag(self,tag,attrs):
+              a=dict(attrs)
+              if tag=='meta': self.meta[a.get('property',a.get('name',''))]=a.get('content','')
+          def read(url):
+            return urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'}),timeout=25).read()
+          for url in ['https://www.instagram.com/reel/DbbEcZJt6uv/','https://www.instagram.com/p/DMadZ8fMePw/']:
             try:
-              result=y.extract_info('https://www.youtube.com/@linkacademyradio/videos',download=False)
-              for e in (result or {}).get('entries',[]):
-                if e and 'kist' in e.get('title','').lower(): print('KIST_SESSION '+json.dumps(e,ensure_ascii=False))
-            except Exception as e: print(str(e)[:300])
-          for url in ['https://www.instagram.com/thats_kist/','https://www.instagram.com/reel/DbbEcZJt6uv/','https://www.linkacademyradio.com/','https://soundcloud.com/link-academy-radio']:
+              text=read(url).decode(); p=Tags();p.feed(text)
+              print('META '+json.dumps({'source':url,'meta':p.meta},ensure_ascii=False))
+              img=p.meta.get('og:image','')
+              if img and 'cdninstagram.com/rsrc' not in img:
+                data=read(img);print('PHOTO '+json.dumps({'source':url,'mime':'image/jpeg','base64':base64.b64encode(data).decode()}))
+            except Exception as e: print('ERROR '+str(e)[:200])
+          for url in ['https://soundcloud.com/link-academy-radio','https://www.linkacademyradio.com/','https://www.youtube.com/@linkacademyradio/videos']:
             try:
-              req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'})
-              text=urllib.request.urlopen(req,timeout=20).read().decode()
-              print('SOURCE '+url)
-              for tag in re.findall(r'<meta[^>]+>',text):
-                if any(x in tag for x in ['og:image','og:description','og:title']): print(html.unescape(tag)[:1200])
-              for link in re.findall(r'https?[^\s"<>]+',text):
-                if any(x in link.lower() for x in ['kist','soundcloud.com/','youtube.com/watch','youtu.be/']): print(html.unescape(link)[:500])
-            except Exception as e: print('UNAVAILABLE '+url+' '+str(e)[:200])
+              text=read(url).decode()
+              for match in re.finditer('kist',text,re.I): print('MATCH '+url+' '+text[max(0,match.start()-300):match.end()+800].replace('\n',' ')[:1200])
+            except Exception as e:print('ERROR '+str(e)[:200])
           PY
