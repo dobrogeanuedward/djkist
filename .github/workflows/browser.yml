@@ -1,0 +1,49 @@
+name: Browser validation
+on:
+  push:
+    paths:
+      - 'src/**'
+      - '.github/workflows/browser.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npm run build
+      - run: npm install --no-save playwright
+      - run: npx playwright install --with-deps chromium
+      - name: Verify viewports
+        run: |
+          python3 -m http.server 4321 --directory dist > /tmp/kist-server.log 2>&1 &
+          node --input-type=module <<'JS'
+          import { chromium } from 'playwright';
+          import { mkdir } from 'node:fs/promises';
+          await mkdir('screenshots',{recursive:true});
+          const browser=await chromium.launch({args:['--enable-webgl','--use-gl=angle','--use-angle=swiftshader']});
+          for(const [name,width,height] of [['desktop',1440,1000],['mobile',390,844]]){
+            const page=await browser.newPage({viewport:{width,height}});
+            const errors=[];page.on('pageerror',e=>errors.push(e.message));
+            await page.goto('http://127.0.0.1:4321',{waitUntil:'domcontentloaded'});
+            await page.waitForTimeout(2500);
+            const checks=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,canvas:!!document.querySelector('#prism'),brand:document.querySelector('h1')?.textContent?.trim()||!!document.querySelector('h1 img')}));
+            await page.getByRole('button',{name:/Prossimi incontri/}).click();
+            if(!await page.locator('#future-events').isVisible())throw new Error('Event tab failed');
+            await page.screenshot({path:'screenshots/'+name+'.png',fullPage:true});
+            console.log(name,JSON.stringify(checks),JSON.stringify(errors));
+            if(checks.overflow||!checks.canvas||errors.length)throw new Error('Browser validation failed');
+            await page.close();
+          }
+          await browser.close();
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kist-responsive-previews
+          path: screenshots
