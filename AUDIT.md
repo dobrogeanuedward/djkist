@@ -25,3 +25,10 @@
 - No confirmed future dates or uniquely verified YouTube set were available; no fabricated events or namesake videos were added.
 - Further Instagram carousel media behind sign-in was not extracted. More original photos and the source performance video would materially improve variety and photographic quality.
 - Retouched photos are edited versions of the supplied frames, not new documentary captures.
+# Update: approved imagegen branding and transport
+
+- Approved generated KIST wordmark applied to hero, header, entrance and footer. Built-in imagegen prompt: interlocking geometric KIST, tactical negative-space cuts and sinusoidal fissure; transparent white production mark. Optimized asset: `public/media/kist-wordmark-imagegen.webp`.
+- Desktop hero reserves the left 35% for the identity; photographs are positioned to keep Benedetta's face separate, including portrait-shaped desktop viewports.
+- Real SoundCloud playback, pause/resume and transfer of the same dock to the header after leaving the hero verified manually. Circular shadowed close control is on the left.
+- Entrance: modular blurred color orbits, procedural waves, DJ above identity and smaller Based in Bologna below. Reduced-motion preference honored.
+- Social stack links to verified SoundCloud and Instagram; YouTube explicitly opens a search, not an unverified artist channel.

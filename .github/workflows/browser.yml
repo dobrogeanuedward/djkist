@@ -27,7 +27,7 @@ jobs:
           import { mkdir } from 'node:fs/promises';
           await mkdir('screenshots',{recursive:true});
           const browser=await chromium.launch({args:['--enable-webgl','--use-gl=angle','--use-angle=swiftshader']});
-          for(const [name,width,height] of [['desktop',1440,1000],['mobile',390,844],['small-mobile',320,740]]){
+          for(const [name,width,height] of [['desktop',1440,1000],['portrait-desktop',801,1100],['mobile',390,844],['small-mobile',320,740]]){
             const page=await browser.newPage({viewport:{width,height}});
             const errors=[];page.on('pageerror',e=>errors.push(e.message));
             await page.goto('http://127.0.0.1:4321',{waitUntil:'domcontentloaded'});
