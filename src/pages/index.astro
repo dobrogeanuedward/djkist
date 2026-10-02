@@ -25,7 +25,7 @@ const featured = mixes[0];
 </header>
 <main id="main">
 <section class="hero" id="home">
-<div class="hero-media">
+<div class="hero-media"><canvas id="prism" aria-hidden="true"></canvas>
 {artist.hero && <picture><source media="(max-width: 700px)" srcset={artist.heroMobile || artist.hero}/><img src={artist.hero} alt="KIST" fetchpriority="high"/></picture>}
 {artist.heroVideo && <video muted loop playsinline autoplay poster={artist.hero} aria-label="KIST alla console"><source src={artist.heroVideo} type="video/mp4"/></video>}
 <div class="grain"></div>
@@ -60,5 +60,5 @@ const featured = mixes[0];
 <footer><img src="/kist-logo.svg" alt="KIST"/><span>PERSONAL FREQUENCY</span><a href={artist.instagram} target="_blank" rel="noopener noreferrer">Instagram</a><span>Crafted by DOGO Studio · 2026</span></footer>
 <dialog id="media-dialog"><button class="close-dialog" aria-label="Chiudi">×</button><div id="dialog-content"></div></dialog>
 <div class="audio-dock" hidden><span>KIST / NOW PLAYING</span><button id="dock-toggle">Pausa</button><button id="dock-close" aria-label="Chiudi il lettore">×</button></div>
-<script src="../scripts/experience.ts"></script>
+<script src="../scripts/experience.ts"></script><script src="../scripts/prism.ts"></script>
 </body></html>
