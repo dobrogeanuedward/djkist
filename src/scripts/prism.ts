@@ -1,4 +1,4 @@
-const canvas=document.querySelector<HTMLCanvasElement>('#prism')!;
+document.querySelectorAll<HTMLCanvasElement>('[data-prism]').forEach(canvas=>{
 const gl=canvas.getContext('webgl',{alpha:true,antialias:false,powerPreference:'low-power'});
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 if(gl){
@@ -27,4 +27,5 @@ canvas.addEventListener('webglcontextlost',()=>{if(frame)cancelAnimationFrame(fr
 }
 }
 }
+});
 export {};

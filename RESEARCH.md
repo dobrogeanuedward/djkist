@@ -6,3 +6,5 @@
 - Institutional context: https://www.link.bo.it/link-academy-2/
 Photos, artist SoundCloud profile and individual YouTube sets require verified direct URLs. No Brazilian Veronica Kist content is used.
 Draft remains noindex until confirmed content is integrated.
+
+Corrected: DbbEcZJt6uv is All For Music / Fifteen Frames, not Link Academy Radio. Original downloaded cover stored in media. DMadZ8fMePw is unrelated and excluded. PLUG session appearance confirmed by Ddynp8WCDhA, September 27 recap; exact performance date unconfirmed, no invented date added. Event cover Love Pride fetched from original organizer post.

@@ -1,0 +1,8 @@
+---
+type Event = {date:string;name:string;place:string;url:string;cover?:string};
+interface Props {items:Event[];label:string}
+const {items,label}=Astro.props;
+---
+<div class="event-viewer" aria-label={label}>
+{items.length ? <><div class="event-stage">{items.map((event,i)=><article class="event-slide" hidden={i!==0}><div class="event-art"><a class="event-cover" href={event.url} target="_blank" rel="noopener noreferrer" aria-label={'Apri '+event.name}>{event.cover ? <img src={event.cover} alt={'Locandina '+event.name} loading="lazy"/> : <div class="event-cover-empty"><span>FROM THE ARCHIVE</span><img src="/kist-logo.svg" alt="KIST"/><span>{event.name}</span></div>}</a></div><div class="event-details"><span class="event-tag">{event.place.toUpperCase()} / DJ SET</span><time datetime={event.date}>{new Date(event.date+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})}</time><h3>{event.name}</h3><p>{event.place}</p><a class="event-link" href={event.url} target="_blank" rel="noopener noreferrer">Scopri la serata <span>↗</span></a></div></article>)}</div><div class="event-controls"><span class="event-current">01 / {String(items.length).padStart(2,'0')}</span><div><button class="event-prev" aria-label="Evento precedente" disabled={items.length<2}>←</button><button class="event-next" aria-label="Evento successivo" disabled={items.length<2}>→</button></div></div>{items.length>1 && <div class="event-thumbs">{items.map((event,i)=><button class="event-thumb" data-index={i} aria-label={'Mostra '+event.name} aria-pressed={i===0}>{event.cover ? <img src={event.cover} alt=""/> : <span>{event.name}</span>}</button>)}</div>}</> : <p class="no-events">Le prossime date saranno annunciate qui.</p>}
+</div>

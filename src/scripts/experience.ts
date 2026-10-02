@@ -36,3 +36,12 @@ slideToggle?.addEventListener('click',()=>{slidePaused=!slidePaused;slideToggle.
 document.addEventListener('visibilitychange',scheduleSlide);
 if(reduced&&slideToggle){slideToggle.setAttribute('aria-pressed','true');slideToggle.textContent='▶';slideToggle.setAttribute('aria-label','Riprendi lo slideshow')}
 scheduleSlide();
+
+document.querySelectorAll<HTMLElement>('.event-viewer').forEach(viewer=>{
+ const cards=Array.from(viewer.querySelectorAll<HTMLElement>('.event-slide'));if(cards.length<1)return;let index=0;
+ function show(next:number){index=(next+cards.length)%cards.length;cards.forEach((card,i)=>card.hidden=i!==index);viewer.querySelectorAll<HTMLButtonElement>('.event-thumb').forEach((button,i)=>button.setAttribute('aria-pressed',String(i===index)));const count=viewer.querySelector('.event-current');if(count)count.textContent=String(index+1).padStart(2,'0')+' / '+String(cards.length).padStart(2,'0')}
+ viewer.querySelector('.event-prev')?.addEventListener('click',()=>show(index-1));
+ viewer.querySelector('.event-next')?.addEventListener('click',()=>show(index+1));
+ viewer.querySelectorAll<HTMLButtonElement>('.event-thumb').forEach(button=>button.addEventListener('click',()=>show(Number(button.dataset.index))));
+ if(!reduced&&matchMedia('(pointer:fine)').matches)viewer.querySelectorAll<HTMLElement>('.event-art').forEach(art=>{const cover=art.querySelector<HTMLElement>('.event-cover')!;art.addEventListener('pointermove',e=>{const r=art.getBoundingClientRect();const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;cover.style.transform='rotateY('+x*16+'deg) rotateX('+(-y*12)+'deg) translateZ(25px)'});art.addEventListener('pointerleave',()=>cover.style.transform='')});
+});
