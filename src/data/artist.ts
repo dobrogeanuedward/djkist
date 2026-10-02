@@ -1,6 +1,6 @@
 export const artist = {
  name: 'KIST', instagram: 'https://www.instagram.com/thats_kist/',
- soundcloud: '', hero: '', heroMobile: '', heroVideo: '', portrait: '/media/kist-fifteen-frames.jpg',
+ soundcloud: '', hero: '/media/kist-fifteen-frames.jpg', heroMobile: '/media/kist-fifteen-frames.jpg', heroVideo: '', portrait: '/media/kist-fifteen-frames.jpg',
  bio: 'Dalle origini lucane a Bologna. Un percorso nella musica elettronica che passa dalla Link Academy e arriva alla console.',
 };
 export const mixes: {title:string;url:string;artwork?:string;label:string}[] = [];
