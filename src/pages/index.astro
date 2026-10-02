@@ -1,5 +1,5 @@
 ---
-import { artist, mixes, films, photographs, events } from '../data/artist';
+import { artist, mixes, films, photographs, events, heroSlides } from '../data/artist';
 import '../styles/global.css';
 const today = new Date().toISOString().slice(0,10);
 const future = events.filter(e => e.date >= today);
@@ -26,7 +26,7 @@ const featured = mixes[0];
 <main id="main">
 <section class="hero" id="home">
 <div class="hero-media"><canvas id="prism" aria-hidden="true"></canvas>
-{artist.hero && <picture><source media="(max-width: 700px)" srcset={artist.heroMobile || artist.hero}/><img src={artist.hero} alt="KIST" fetchpriority="high"/></picture>}
+{heroSlides.length > 0 && <div class="hero-slides">{heroSlides.map((slide,i)=><picture class={'hero-slide'+(i===0?' active':'')} style={'--position:'+ (slide.position||'center')+';--mobile-position:'+(slide.mobilePosition||slide.position||'center')}><source media="(max-width:700px)" srcset={slide.mobile||slide.src}/><img src={slide.src} alt={slide.alt} fetchpriority={i===0?'high':'auto'} loading={i===0?'eager':'lazy'}/></picture>)}</div>}{artist.hero && heroSlides.length===0 && <picture><source media="(max-width: 700px)" srcset={artist.heroMobile || artist.hero}/><img src={artist.hero} alt="KIST" fetchpriority="high"/></picture>}
 {artist.heroVideo && <video muted loop playsinline autoplay poster={artist.hero} aria-label="KIST alla console"><source src={artist.heroVideo} type="video/mp4"/></video>}
 <div class="grain"></div>
 </div>
@@ -39,7 +39,7 @@ const featured = mixes[0];
 <div id="player-mount"></div>
 </div>
 </div>
-<div class="hero-foot"><span>SCROLL TO FEEL MORE</span><span>PERSONAL FREQUENCY / 2026</span></div>
+<div class="hero-foot">{heroSlides.length>1 && <div class="slideshow-controls"><button id="slides-toggle" aria-label="Metti in pausa lo slideshow" aria-pressed="false">Ⅱ</button><span id="slide-count">01 / {String(heroSlides.length).padStart(2,'0')}</span></div>}<span>SCROLL TO FEEL MORE</span><span>PERSONAL FREQUENCY / 2026</span></div>
 </section>
 <div class="ticker" aria-hidden="true"><div>FEEL THE ROOM. FIND YOUR FREQUENCY. KIST. FEEL THE ROOM. FIND YOUR FREQUENCY. KIST.</div></div>
 <section class="sound-section section" id="sound">

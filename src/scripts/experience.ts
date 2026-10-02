@@ -27,3 +27,12 @@ document.querySelectorAll<HTMLButtonElement>('[data-mix]').forEach(button=>butto
 toggle.addEventListener('click',()=>{playing?widget?.pause():widget?.play()});
 document.getElementById('dock-close')?.addEventListener('click',()=>{widget?.pause();dock.hidden=true});
 document.getElementById('quiet')?.addEventListener('click',()=>{widget?.pause();status.textContent='Continua a esplorare. Il suono può aspettare.';document.getElementById('sound')?.scrollIntoView({behavior:reduced?'auto':'smooth'})});
+
+const slides=Array.from(document.querySelectorAll<HTMLElement>('.hero-slide'));
+const slideToggle=document.getElementById('slides-toggle');
+let slideIndex=0,slidePaused=reduced,slideTimer:ReturnType<typeof setTimeout>|undefined;
+function scheduleSlide(){clearTimeout(slideTimer);if(slides.length<2||slidePaused||document.hidden)return;slideTimer=setTimeout(()=>{const next=(slideIndex+1)%slides.length;const image=slides[next].querySelector('img')!;image.loading='eager';image.decode().catch(()=>{}).then(()=>{slides[slideIndex].classList.remove('active');slideIndex=next;slides[slideIndex].classList.add('active');const count=document.getElementById('slide-count');if(count)count.textContent=String(slideIndex+1).padStart(2,'0')+' / '+String(slides.length).padStart(2,'0');scheduleSlide()})},6500)}
+slideToggle?.addEventListener('click',()=>{slidePaused=!slidePaused;slideToggle.setAttribute('aria-pressed',String(slidePaused));slideToggle.setAttribute('aria-label',slidePaused?'Riprendi lo slideshow':'Metti in pausa lo slideshow');slideToggle.textContent=slidePaused?'▶':'Ⅱ';scheduleSlide()});
+document.addEventListener('visibilitychange',scheduleSlide);
+if(reduced&&slideToggle){slideToggle.setAttribute('aria-pressed','true');slideToggle.textContent='▶';slideToggle.setAttribute('aria-label','Riprendi lo slideshow')}
+scheduleSlide();
