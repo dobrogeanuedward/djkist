@@ -1,7 +1,9 @@
-# KIST — personal frequency
+# KIST — Personal frequency
 
-Portfolio Astro di DJ KIST. Direzione creativa DOGO Studio.
+Astro portfolio by DOGO Studio.
 
-Avvio: npm install && npm run dev. Build: npm run build.
+Run npm install then npm run dev. Build with npm run build.
 
-I materiali e i profili verificati sono gestiti in src/data/artist.ts. Nessun evento o ritratto viene inventato.
+Artist content: src/data/artist.ts. Verified sources: RESEARCH.md.
+
+Draft: real portrait, SoundCloud and video assets are pending verification. No invented dates or substitute artist imagery.
