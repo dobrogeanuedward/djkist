@@ -15,6 +15,7 @@ const a=gl.getAttribLocation(program,'a');gl.enableVertexAttribArray(a);gl.verte
 const uniforms=Object.fromEntries(['uRes','uTime','uEnergy','uPhase','uPointer'].map(n=>[n,gl.getUniformLocation(program,n)]));
 let energy=0,target=0,phase=0,visible=true,frame=0,then=0;
 const pointer={x:0,y:0};
+window.addEventListener('kist:pulse',e=>{target=.25+(e as CustomEvent<{pulse:number}>).detail.pulse*1.5});
 function size(){const r=canvas.getBoundingClientRect();const d=Math.min(devicePixelRatio,1.25);canvas.width=Math.max(1,Math.round(r.width*d));canvas.height=Math.max(1,Math.round(r.height*d));gl!.viewport(0,0,canvas.width,canvas.height)}
 new ResizeObserver(size).observe(canvas);
 window.addEventListener('kist:audio',(e)=>{const d=(e as CustomEvent<{playing:boolean;position?:number}>).detail;target=d.playing?1:0;if(d.position!==undefined)phase=d.position/60000});

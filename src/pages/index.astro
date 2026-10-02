@@ -1,8 +1,11 @@
 ---
 import { artist, mixes, films, photographs, events, heroSlides } from '../data/artist';
 import '../styles/global.css';
+import '../styles/polish.css';
 import EventViewer from '../components/EventViewer.astro';
 import FrequencySculpture from '../components/FrequencySculpture.astro';
+import SonicCrystal from '../components/SonicCrystal.astro';
+import HostedBy from '../components/HostedBy.astro';
 const today = new Date().toISOString().slice(0,10);
 const future = events.filter(e => e.date >= today);
 const past = events.filter(e => e.date < today).sort((a,b)=>b.date.localeCompare(a.date));
@@ -19,11 +22,11 @@ const featured = mixes[0];
 </head>
 <body>
 <a class="skip" href="#main">Vai al contenuto</a>
-<div class="entrance" aria-hidden="true"><img src="/kist-logo.svg" alt=""/><span>PERSONAL FREQUENCY</span></div>
+<div class="entrance" aria-hidden="true"><canvas class="entrance-waves"></canvas><img src="/kist-logo.svg" alt=""/><span>PERSONAL FREQUENCY</span></div>
 <header>
 <a class="brand" href="#home" aria-label="KIST, inizio"><img src="/kist-logo.svg" alt="KIST"/></a>
 <nav aria-label="Menu principale"><a href="#sound">Sound</a><a href="#diary">Diary</a><a href="#about">Kist</a></nav>
-<a class="connect" href={artist.instagram} target="_blank" rel="noopener noreferrer">Let's connect <span>↗</span></a>
+<a class="connect" href={artist.instagram} target="_blank" rel="noopener noreferrer">Let's connect <span class="ui-icon icon-external" aria-hidden="true"></span></a>
 </header>
 <main id="main">
 <section class="hero" id="home">
@@ -34,32 +37,37 @@ const featured = mixes[0];
 </div>
 <div class="hero-top"><span>DJ / SELECTOR</span><span>BOLOGNA · IT</span></div>
 <div class="hero-title"><span class="small">You're in my space.</span><h1><img src="/kist-logo.svg" alt="KIST"/></h1></div>
-<div class="hero-bottom"><p>Ci vediamo<br/><em>dall'altra parte del suono.</em></p>
+<div class="hero-bottom"><button class="hero-listen" id="hero-listen" aria-label="Apri il player di KIST"><span>Riproduci</span><i aria-hidden="true"></i></button>
 <div class="sound-invitation" data-url={featured?.url || artist.soundcloud}>
 <div class="sound-caption"><span>THIS SPACE SOUNDS BETTER WITH MUSIC</span><span>01 / SOUND ON</span></div>
-<div class="sound-row"><button class="play" id="hero-play" aria-label="Avvia il set di KIST" disabled={!featured && !artist.soundcloud}>▶</button><div><strong>{featured?.title || 'La prossima selezione'}</strong><p id="audio-status" role="status">{featured || artist.soundcloud ? 'Entra con il suono.' : 'Il primo ascolto arriva presto.'}</p></div><button id="quiet" class="quiet">Per ora, in silenzio</button></div>
-<canvas id="sound-prism" data-prism aria-hidden="true"></canvas><div id="player-mount"></div>
+<div class="sound-row"><button class="play" id="hero-play" aria-label="Avvia il set di KIST" disabled={!featured && !artist.soundcloud}><span class="ui-icon icon-play" aria-hidden="true"></span></button><div><strong>{featured?.title || 'La prossima selezione'}</strong><p id="audio-status" role="status">{featured || artist.soundcloud ? 'Entra con il suono.' : 'Il primo ascolto arriva presto.'}</p></div><button id="quiet" class="quiet">Per ora, in silenzio</button></div>
+<canvas id="sound-prism" data-prism aria-hidden="true"></canvas>
 </div>
 </div>
-<div class="hero-foot">{heroSlides.length>1 && <div class="slideshow-controls"><button id="slides-toggle" aria-label="Metti in pausa lo slideshow" aria-pressed="false">Ⅱ</button><span id="slide-count">01 / {String(heroSlides.length).padStart(2,'0')}</span></div>}<span>SCROLL TO FEEL MORE</span><span>PERSONAL FREQUENCY / 2026</span></div>
+<div class="hero-foot">{heroSlides.length>1 && <div class="slideshow-controls"><button id="slides-toggle" aria-label="Metti in pausa lo slideshow" aria-pressed="false"><span class="ui-icon icon-pause" aria-hidden="true"></span></button><span id="slide-count">01 / {String(heroSlides.length).padStart(2,'0')}</span></div>}<span>SCROLL TO FEEL MORE</span><span>PERSONAL FREQUENCY / 2026</span></div>
 </section>
 <div class="ticker" aria-hidden="true"><div>FEEL THE ROOM. FIND YOUR FREQUENCY. KIST. FEEL THE ROOM. FIND YOUR FREQUENCY. KIST.</div></div>
 <section class="sound-section section" id="sound">
 <div class="section-heading"><span>01 / THE SOUND</span><h2>Press play.<br/><em>Stay a while.</em></h2><p>Una selezione alla volta.<br/>Il resto può aspettare.</p></div>
-{mixes.length ? <div class="mix-list">{mixes.map((mix,i)=><button class="mix" data-mix={mix.url}><span class="mix-index">0{i+1}</span><div><span>{mix.label}</span><h3>{mix.title}</h3></div><span class="mix-play">▶</span></button>)}</div> : <div class="empty-sound"><FrequencySculpture/><span class="record-label">KIST / SELECTED SOUNDS</span><p>Nuovi set, qui.<br/>Presto.</p><a href={artist.instagram} target="_blank" rel="noopener noreferrer">Segui KIST</a></div>}
+{mixes.length ? <div class="sound-universe"><SonicCrystal/><div class="mix-list">{mixes.map((mix,i)=><button class="mix" data-mix={mix.url}><span class="mix-index">0{i+1}</span><div><span>{mix.label}</span><h3>{mix.title}</h3><span class="mix-action">Ascolta il set</span></div><span class="mix-play ui-icon icon-play" aria-hidden="true"></span></button>)}<a class="sound-profile" href={artist.soundcloud} target="_blank" rel="noopener noreferrer">Tutte le selezioni su SoundCloud <i class="ui-icon icon-external" aria-hidden="true"></i></a></div></div> : <div class="empty-sound"><FrequencySculpture/><span class="record-label">KIST / SELECTED SOUNDS</span><p>Nuovi set, qui.<br/>Presto.</p><a href={artist.instagram} target="_blank" rel="noopener noreferrer">Segui KIST</a></div>}
 </section>
-{films.length > 0 && <section class="film-section" aria-label="Video di KIST">{films.map(film=><div class="film"><button class="film-open" data-youtube={film.youtubeId} aria-label={'Guarda '+film.title}><img src={'https://i.ytimg.com/vi/'+film.youtubeId+'/hqdefault.jpg'} alt={film.title} loading="lazy"/><span class="film-text"><small>{film.label}</small><strong>{film.title}</strong><span>Guarda il set · ▶</span></span></button></div>)}</section>}
-<section class="real-sessions section" aria-label="KIST, sessioni e immagini reali"><div class="section-heading"><span>02 / IN THE ROOM</span><h2>Behind the decks.<br/><em>Inside the moment.</em></h2><p>KIST alla console.<br/>La sessione originale.</p></div><div class="session-stage"><div class="session-identity"><span class="session-edition">FIFTEEN FRAMES / S01—E29</span><strong>In her<br/><em>element.</em></strong><div class="session-caption"><img src="/kist-sigil.svg" alt=""/><p>Una console.<br/>Il suo modo di abitarla.</p></div></div><div class="instagram-sessions"><article><iframe src="https://www.instagram.com/reel/DbbEcZJt6uv/embed/" title="KIST — Fifteen Frames S01 E29" loading="lazy" allowfullscreen></iframe><a href="https://www.instagram.com/reel/DbbEcZJt6uv/" target="_blank" rel="noopener noreferrer">S01—E29 / Guarda la sessione su Instagram</a></article></div></div></section><section class="diary section" id="diary">
+{films.length > 0 && <section class="film-section" aria-label="Video di KIST">{films.map(film=><div class="film"><button class="film-open" data-youtube={film.youtubeId} aria-label={'Guarda '+film.title}><img src={'https://i.ytimg.com/vi/'+film.youtubeId+'/hqdefault.jpg'} alt={film.title} loading="lazy"/><span class="film-text"><small>{film.label}</small><strong>{film.title}</strong><span>Guarda il set</span></span></button></div>)}</section>}
+<section class="real-sessions section" aria-label="KIST, sessioni e immagini reali"><div class="section-heading"><span>02 / IN THE ROOM</span><h2>Behind the decks.<br/><em>Inside the moment.</em></h2><p>KIST alla console.<br/>La sessione originale.</p></div><div class="session-stage"><div class="session-identity"><span class="session-edition">FIFTEEN FRAMES / S01—E29</span><strong>In her<br/><em>element.</em></strong><div class="session-caption"><img src="/kist-sigil.svg" alt=""/><p>Una console.<br/>Il suo modo di abitarla.</p></div></div><div class="instagram-sessions"><article><div class="session-media"><button class="session-watch" aria-label="Guarda la sessione Fifteen Frames"><img src="/media/kist-fifteen-frames-clean-v2.webp" alt="KIST alla console — Fifteen Frames" loading="lazy"/><span><i class="ui-icon icon-play" aria-hidden="true"></i>Guarda la sessione</span></button></div><a href="https://www.instagram.com/reel/DbbEcZJt6uv/" target="_blank" rel="noopener noreferrer">S01—E29 / Guarda la sessione su Instagram</a></article></div></div></section><section class="diary section" id="diary">
 <div class="section-heading"><span>03 / OUT THERE</span><h2>Same music.<br/><em>Different nights.</em></h2><p>Persone, posti,<br/>momenti che restano.</p></div>
 <div class="event-tabs" role="group" aria-label="Mostra eventi"><button aria-pressed="true" data-events="past">Notti passate <span>{past.length}</span></button><button aria-pressed="false" data-events="future">Prossimi incontri <span>{future.length}</span></button></div>
 <div id="past-events"><EventViewer items={past} label="Archivio eventi di KIST"/></div><div id="future-events" hidden><EventViewer items={future} label="Prossimi eventi di KIST"/></div>
 </section>
 {photographs.length > 0 && <section class="photo-wall" aria-label="Diario fotografico">{photographs.map((photo,i)=><button class={'photo photo-'+i%3} data-photo={photo.src} data-caption={photo.caption} aria-label={'Ingrandisci: '+photo.alt}><img src={photo.src} alt={photo.alt} loading="lazy"/><span>{photo.caption}</span></button>)}</section>}
-<section class="about section" id="about"><div class="about-photo">{artist.portrait ? <img src={artist.portrait} alt="Ritratto di KIST" loading="lazy"/> : <div class="portrait-await"><span>BEHIND THE SOUND</span><img src="/kist-logo.svg" alt="KIST"/></div>}</div><div class="about-copy"><span>04 / A LITTLE CLOSER</span><h2>La musica.<br/>E chi la sceglie.</h2><p>{artist.bio}</p><a href={artist.instagram} target="_blank" rel="noopener noreferrer">@thats_kist <span>↗</span></a></div></section>
-<section class="contact section"><div class="contact-orbits" aria-hidden="true"><i></i><i></i><i></i></div><span>FOR THE NEXT NIGHT</span><a href={artist.instagram} target="_blank" rel="noopener noreferrer">Let's make<br/><em>some noise.</em><span class="contact-star" aria-hidden="true">✳</span></a><p>Booking, collaborazioni, un messaggio.<br/>Ci sentiamo su Instagram.</p></section>
+<HostedBy/>
+<section class="about section" id="about"><div class="about-photo">{artist.portrait ? <img src={artist.portrait} alt="Ritratto di KIST" loading="lazy"/> : <div class="portrait-await"><span>BEHIND THE SOUND</span><img src="/kist-logo.svg" alt="KIST"/></div>}</div><div class="about-copy"><span>04 / A LITTLE CLOSER</span><h2>La musica.<br/>E chi la sceglie.</h2><p>{artist.bio}</p><a href={artist.instagram} target="_blank" rel="noopener noreferrer">@thats_kist <span class="ui-icon icon-external" aria-hidden="true"></span></a></div></section>
+<section class="contact section"><div class="contact-orbits" aria-hidden="true"><i></i><i></i><i></i></div><span>FOR THE NEXT NIGHT</span><a href={artist.instagram} target="_blank" rel="noopener noreferrer">Let's make<br/><em>some noise.</em><span class="contact-star" aria-hidden="true"><img src="/kist-sigil.svg" alt=""/></span></a><p>Booking, collaborazioni, un messaggio.<br/>Ci sentiamo su Instagram.</p></section>
 </main>
 <footer><img src="/kist-logo.svg" alt="KIST"/><span>PERSONAL FREQUENCY</span><a href={artist.instagram} target="_blank" rel="noopener noreferrer">Instagram</a><span>Crafted by DOGO Studio · 2026</span></footer>
-<dialog id="media-dialog"><button class="close-dialog" aria-label="Chiudi">×</button><div id="dialog-content"></div></dialog>
-<div class="audio-dock" hidden><span>KIST / NOW PLAYING</span><button id="dock-toggle">Pausa</button><button id="dock-close" aria-label="Chiudi il lettore">×</button></div>
+<dialog id="media-dialog"><button class="close-dialog" aria-label="Chiudi"><span class="ui-icon icon-close" aria-hidden="true"></span></button><div id="dialog-content"></div></dialog>
+<dialog id="sound-dialog" aria-labelledby="sound-dialog-title"><div class="player-stage"><canvas data-prism aria-hidden="true"></canvas><button id="player-dismiss" class="player-dismiss" aria-label="Chiudi il player"><span class="ui-icon icon-close" aria-hidden="true"></span></button><div class="player-intro"><img src="/kist-sigil.svg" alt=""/><span>Il tuo spazio. Il suo suono.</span></div><div class="vinyl-scene" aria-hidden="true"><div class="vinyl-disc"><div class="vinyl-art"><img src="/media/kist-fifteen-frames-clean-v2.webp" alt=""/></div><i></i></div><div class="vinyl-needle"></div></div><div class="player-copy"><p>KIST / SoundCloud</p><h2 id="sound-dialog-title">{featured?.title || 'Personal frequency'}</h2><span>Entra con il suono. O resta in silenzio.</span></div><div class="player-actions"><button id="popup-play" class="popup-play"><span class="ui-icon icon-play" aria-hidden="true"></span><span class="button-label">Avvia il set</span></button><button id="popup-quiet">Continua senza musica</button></div><p id="popup-status" role="status" aria-live="polite"></p><div id="player-mount"></div><a class="player-source" href={featured?.url || artist.soundcloud} target="_blank" rel="noopener noreferrer">Ascolta su SoundCloud <span class="ui-icon icon-external" aria-hidden="true"></span></a></div></dialog>
+<div class="audio-dock" hidden><button id="dock-open" aria-label="Apri il player">KIST / SoundCloud</button><button id="dock-toggle">Pausa</button><button id="dock-close" aria-label="Chiudi il lettore"><span class="ui-icon icon-close" aria-hidden="true"></span></button></div>
 <script src="../scripts/experience.ts"></script><script src="../scripts/prism.ts"></script>
+<script src="../scripts/motion.ts"></script>
+<script src="../scripts/crystal.ts"></script>
+<script src="../scripts/tempo.ts"></script>
 </body></html>
