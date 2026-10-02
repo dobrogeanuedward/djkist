@@ -1,0 +1,4 @@
+---
+const { compact = false } = Astro.props;
+---
+<div class:list={['frequency-sculpture', { compact }]} aria-hidden="true"><div class="frequency-orbit orbit-one"></div><div class="frequency-orbit orbit-two"></div><div class="frequency-orbit orbit-three"></div><div class="frequency-core"><img src="/kist-sigil.svg" alt=""/></div><span class="frequency-coordinate">K / PERSONAL FREQUENCY</span><div class="frequency-bars">{Array.from({length:32},(_,i)=><i style={'--i:'+i}></i>)}</div></div>
