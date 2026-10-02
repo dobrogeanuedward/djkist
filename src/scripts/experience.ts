@@ -15,14 +15,23 @@ document.querySelectorAll<HTMLButtonElement>('[data-photo]').forEach(button=>but
 document.querySelectorAll<HTMLButtonElement>('[data-youtube]').forEach(button=>button.addEventListener('click',()=>{widget?.pause();const iframe=document.createElement('iframe');iframe.className='dialog-video';iframe.src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(button.dataset.youtube!)+'?autoplay=1';iframe.title=button.getAttribute('aria-label')||'KIST video';iframe.allow='autoplay; encrypted-media; fullscreen; picture-in-picture';iframe.allowFullscreen=true;content.replaceChildren(iframe);dialog.showModal()}));
 document.querySelectorAll<HTMLButtonElement>('[data-events]').forEach(button=>button.addEventListener('click',()=>{const past=button.dataset.events==='past';document.querySelectorAll('[data-events]').forEach(el=>el.setAttribute('aria-pressed',String(el===button)));document.getElementById('past-events')!.hidden=!past;document.getElementById('future-events')!.hidden=past}));
 type Sound={title?:string;artwork_url?:string;permalink_url?:string};
-type Widget = {play:()=>void;pause:()=>void;getCurrentSound:(callback:(sound:Sound)=>void)=>void;bind:(event:string,callback:(data?:{currentPosition:number})=>void)=>void};
+type Widget = {play:()=>void;pause:()=>void;seekTo:(milliseconds:number)=>void;getDuration:(callback:(duration:number)=>void)=>void;getPosition:(callback:(position:number)=>void)=>void;getCurrentSound:(callback:(sound:Sound)=>void)=>void;bind:(event:string,callback:(data?:{currentPosition:number})=>void)=>void};
 declare global {interface Window {SC?:{Widget: ((iframe:HTMLIFrameElement)=>Widget)&{Events:{READY:string;PLAY:string;PAUSE:string;ERROR:string;FINISH:string;PLAY_PROGRESS:string}}}}}
 let widget:Widget|undefined;
 let loadedUrl='';
 const invitation=document.querySelector<HTMLElement>('.sound-invitation')!;
 const choices: {title:string;url:string;artwork?:string}[]=JSON.parse(invitation.dataset.mixes||'[]');
-function showTrack(sound:Sound){if(sound.title){invitation.querySelector('strong')!.textContent=sound.title;document.querySelector('.player-copy p')!.textContent=sound.title}if(sound.permalink_url?.startsWith('https://soundcloud.com/')){invitation.dataset.url=sound.permalink_url;document.querySelector<HTMLAnchorElement>('.player-source')!.href=sound.permalink_url}if(sound.artwork_url?.startsWith('https://')){const cover=sound.artwork_url.replace('-large.','-t500x500.');document.querySelectorAll<HTMLImageElement>('.mini-record img,.vinyl-art img').forEach(img=>img.src=cover);invitation.style.setProperty('--cover-art',`url("${cover.replace(/["\\]/g,'')}")`)}}
-if(choices.length){let previous='';try{previous=sessionStorage.getItem('kist:last-mix')||''}catch{}const pool=choices.length>1?choices.filter(m=>m.url!==previous):choices;const selected=pool[Math.floor(Math.random()*pool.length)];showTrack({title:selected.title,permalink_url:selected.url,artwork_url:selected.artwork});try{sessionStorage.setItem('kist:last-mix',selected.url)}catch{}}
+function showTrack(sound:Sound){if(sound.title){invitation.querySelector('strong')!.textContent=sound.title;document.querySelector('.player-copy p')!.textContent=sound.title}if(sound.permalink_url?.startsWith('https://soundcloud.com/')){invitation.dataset.url=sound.permalink_url;document.querySelector<HTMLAnchorElement>('.player-source')!.href=sound.permalink_url}if(sound.artwork_url&&(sound.artwork_url.startsWith('https://')||sound.artwork_url.startsWith('/media/'))){const cover=sound.artwork_url.replace('-large.','-t500x500.');document.querySelectorAll<HTMLImageElement>('.mini-record img,.vinyl-art img').forEach(img=>img.src=cover);invitation.style.setProperty('--cover-art',`url("${cover.replace(/["\\]/g,'')}")`)}}
+type PlayerSession={version:1;url:string;position:number;playing:boolean};
+const sessionKey='kist:player-session:v1';
+let session:PlayerSession|undefined;
+try{const saved=JSON.parse(localStorage.getItem(sessionKey)||'null');if(saved?.version===1&&choices.some(m=>m.url===saved.url)&&Number.isFinite(saved.position)&&saved.position>=0)session=saved}catch{}
+const restoreOnEntry=!!session;
+let position=session?.position||0,lastSave=0;
+if(choices.length){const selected=choices.find(m=>m.url===session?.url)||choices[Math.floor(Math.random()*choices.length)];showTrack({title:selected.title,permalink_url:selected.url,artwork_url:selected.artwork})}
+function saveSession(force=false){if(!loadedUrl)return;const now=Date.now();if(!force&&now-lastSave<350)return;lastSave=now;session={version:1,url:loadedUrl,position,playing};try{localStorage.setItem(sessionKey,JSON.stringify(session))}catch{}}
+window.addEventListener('pagehide',()=>saveSession(true));
+document.addEventListener('visibilitychange',()=>{if(document.hidden)saveSession(true)});
 let playing=false;
 const dock=document.querySelector<HTMLDivElement>('.audio-dock')!;
 const status=document.getElementById('audio-status')!;
@@ -33,7 +42,57 @@ function api(){return apiPromise ||=new Promise<void>((resolve,reject)=>{if(wind
 let connecting=false,readyTimer:ReturnType<typeof setTimeout>|undefined;
 function transport(active:boolean){playing=active;toggle.querySelector('.transport-label')!.textContent=active?'Pausa':'Riprendi';toggle.querySelector('.ui-icon')!.className='ui-icon '+(active?'icon-pause':'icon-play');toggle.setAttribute('aria-label',active?'Metti in pausa il set':'Riprendi il set');window.dispatchEvent(new CustomEvent('kist:audio',{detail:{playing:active}}))}
 function retry(message:string){clearTimeout(readyTimer);connecting=false;heroButton.disabled=false;popupPlay.disabled=false;transport(false);widget=undefined;status.textContent=message;popupPlay.querySelector('.button-label')!.textContent='Riprova';popupPlay.setAttribute('aria-label','Riprova la connessione a SoundCloud')}
-async function start(url:string){if(!url||connecting)return;if(widget&&loadedUrl===url){widget.play();return}if(widget){const previousWidget=widget;widget=undefined;previousWidget.pause();transport(false)}loadedUrl=url;const selected=choices.find(m=>m.url===url);if(selected)showTrack({title:selected.title,permalink_url:selected.url,artwork_url:selected.artwork});connecting=true;heroButton.disabled=true;popupPlay.disabled=true;status.textContent='Connessione a SoundCloud…';try{await api();const frame=document.createElement('iframe');frame.title='SoundCloud — KIST';frame.allow='autoplay';frame.src='https://w.soundcloud.com/player/?url='+encodeURIComponent(url)+'&auto_play=false&color=%23c9ff52&show_comments=false&show_reposts=false&hide_related=true';document.getElementById('player-mount')!.replaceChildren(frame);const current=window.SC!.Widget(frame);widget=current;const events=window.SC!.Widget.Events;readyTimer=setTimeout(()=>retry('SoundCloud impiega troppo. Riprova o apri il set dal link qui sotto.'),15000);current.bind(events.READY,()=>{if(widget!==current)return;clearTimeout(readyTimer);connecting=false;heroButton.disabled=false;popupPlay.disabled=false;status.textContent='Premi play per entrare con il suono.';dock.hidden=false;current.play()});current.bind(events.PLAY,()=>{if(widget!==current)return;transport(true);status.textContent='In ascolto.';current.getCurrentSound(sound=>{if(widget===current)showTrack(sound)})});current.bind(events.PAUSE,()=>{if(widget!==current)return;transport(false);status.textContent='In pausa.'});current.bind(events.PLAY_PROGRESS,data=>{if(data&&widget===current&&playing)window.dispatchEvent(new CustomEvent('kist:audio',{detail:{playing:true,position:data.currentPosition}}))});current.bind(events.FINISH,()=>{if(widget!==current)return;transport(false);status.textContent='Set concluso.'});current.bind(events.ERROR,()=>{if(widget===current)retry('Set non disponibile. Riprova o ascolta su SoundCloud.')});}catch{retry('SoundCloud non raggiungibile. Riprova o apri il set dal link qui sotto.')}}
+async function start(url:string){
+ if(!url||connecting)return;
+ if(widget&&loadedUrl===url){widget.play();return}
+ const resumable=session?.url===url;
+ const resumePosition=resumable?session!.position:0;
+ const randomEntry=!restoreOnEntry&&!loadedUrl;
+ if(widget){const previousWidget=widget;widget=undefined;previousWidget.pause()}
+ loadedUrl=url;position=resumePosition;
+ const selected=choices.find(m=>m.url===url);
+ if(selected)showTrack({title:selected.title,permalink_url:selected.url,artwork_url:selected.artwork});
+ connecting=true;heroButton.disabled=true;popupPlay.disabled=true;status.textContent='Connessione a SoundCloud…';
+ try{
+  await api();const frame=document.createElement('iframe');
+  frame.title='SoundCloud — KIST';frame.allow='autoplay';
+  frame.src='https://w.soundcloud.com/player/?url='+encodeURIComponent(url)+'&auto_play=false&color=%23c9ff52&show_comments=false&show_reposts=false&hide_related=true';
+  document.getElementById('player-mount')!.replaceChildren(frame);
+  const current=window.SC!.Widget(frame);widget=current;
+  const events=window.SC!.Widget.Events;
+  readyTimer=setTimeout(()=>retry('SoundCloud impiega troppo. Riprova o apri il set dal link qui sotto.'),15000);
+  current.bind(events.READY,()=>{
+   if(widget!==current)return;
+   clearTimeout(readyTimer);connecting=false;heroButton.disabled=false;popupPlay.disabled=false;dock.hidden=false;
+   status.textContent='Premi play per entrare con il suono.';
+   // Seek precedes play. A persisted position always wins over the initial random excerpt.
+   current.getDuration(duration=>{
+    if(widget!==current)return;
+    const end=Math.max(0,duration-1500);
+    position=Math.min(end,randomEntry?Math.round(duration*(.05+Math.random()*.65)):resumePosition);
+    current.seekTo(position);saveSession(true);current.play();
+   });
+  });
+  current.bind(events.PLAY,()=>{
+   if(widget!==current)return;
+   transport(true);saveSession(true);status.textContent='In ascolto.';
+   current.getCurrentSound(sound=>{if(widget===current)showTrack(sound)});
+  });
+  current.bind(events.PAUSE,()=>{
+   if(widget!==current)return;
+   transport(false);saveSession(true);status.textContent='In pausa.';
+   current.getPosition(p=>{if(widget===current&&Number.isFinite(p)){position=p;saveSession(true)}});
+  });
+  current.bind(events.PLAY_PROGRESS,data=>{
+   if(!data||widget!==current)return;
+   position=data.currentPosition;saveSession();
+   document.body.dataset.audioPosition=String(Math.round(position));
+   if(playing)window.dispatchEvent(new CustomEvent('kist:audio',{detail:{playing:true,position}}));
+  });
+  current.bind(events.FINISH,()=>{if(widget!==current)return;transport(false);saveSession(true);status.textContent='Set concluso.'});
+  current.bind(events.ERROR,()=>{if(widget===current)retry('Set non disponibile. Riprova o ascolta su SoundCloud.')});
+ }catch{retry('SoundCloud non raggiungibile. Riprova o apri il set dal link qui sotto.')}
+}
 const soundDialog=document.getElementById('sound-dialog') as HTMLDialogElement;
 const popupPlay=document.getElementById('popup-play') as HTMLButtonElement;
 let playerOpener:HTMLElement|undefined;
@@ -56,8 +115,9 @@ window.addEventListener('kist:audio',e=>{const active=(e as CustomEvent<{playing
 document.getElementById('dock-open')?.addEventListener('click',openPlayer);
 window.addEventListener('kist:audio',e=>{const active=(e as CustomEvent<{playing:boolean}>).detail.playing;soundDialog.classList.toggle('is-playing',active);const icon=popupPlay.querySelector('.ui-icon');if(icon)icon.className='ui-icon '+(active?'icon-pause':'icon-play');const label=popupPlay.querySelector('.button-label');if(label)label.textContent=active?'Pausa':'Riprendi il set';popupPlay.setAttribute('aria-label',active?'Metti in pausa il set':'Riprendi il set');heroButton.classList.toggle('is-playing',active)});
 new MutationObserver(()=>{document.getElementById('popup-status')!.textContent=status.textContent}).observe(status,{childList:true,characterData:true,subtree:true});
-if(document.querySelector<HTMLElement>('.sound-invitation')?.dataset.url)setTimeout(openPlayer,reduced?200:1800);
-document.querySelectorAll<HTMLButtonElement>('[data-mix]').forEach(button=>button.addEventListener('click',()=>{openPlayer();start(button.dataset.mix!)}));
+if(invitation.dataset.url)setTimeout(()=>{openPlayer();if(session?.playing){enterWithMusic=true;start(invitation.dataset.url!)}},reduced?200:1800);
+document.querySelectorAll<HTMLButtonElement>('[data-mix]').forEach(button=>button.addEventListener('click',()=>{if(widget&&loadedUrl===button.dataset.mix){playing?widget.pause():widget.play()}else{entryInvitation=false;enterWithMusic=true;openPlayer();start(button.dataset.mix!)}}));
+window.addEventListener('kist:audio',()=>{document.querySelectorAll<HTMLButtonElement>('[data-mix]').forEach(button=>{const active=playing&&button.dataset.mix===loadedUrl;button.classList.toggle('is-playing',active);button.setAttribute('aria-pressed',String(active));button.querySelector('.mix-action')!.textContent=active?'Pausa':'Riproduci';button.querySelector('.mix-play')!.className='mix-play ui-icon '+(active?'icon-pause':'icon-play')})});
 toggle.addEventListener('click',()=>{playing?widget?.pause():widget?.play()});
 document.getElementById('dock-close')?.addEventListener('click',()=>{widget?.pause();dock.hidden=true});
 const headerSlot=document.querySelector('.header-transport-slot')!;
@@ -77,12 +137,19 @@ document.addEventListener('visibilitychange',scheduleSlide);
 if(reduced&&slideToggle){slideToggle.setAttribute('aria-pressed','true');slideToggle.querySelector('.ui-icon')?.setAttribute('class','ui-icon icon-play');slideToggle.setAttribute('aria-label','Riprendi lo slideshow')}
 scheduleSlide();
 
-document.querySelectorAll<HTMLElement>('.event-viewer').forEach(viewer=>{
- const cards=Array.from(viewer.querySelectorAll<HTMLElement>('.event-slide'));if(cards.length<1)return;let index=0;
- function show(next:number){index=(next+cards.length)%cards.length;cards.forEach((card,i)=>card.hidden=i!==index);viewer.querySelectorAll<HTMLButtonElement>('.event-thumb').forEach((button,i)=>button.setAttribute('aria-pressed',String(i===index)));const count=viewer.querySelector('.event-current');if(count)count.textContent=String(index+1).padStart(2,'0')+' / '+String(cards.length).padStart(2,'0')}
- viewer.querySelector('.event-prev')?.addEventListener('click',()=>show(index-1));
- viewer.querySelector('.event-next')?.addEventListener('click',()=>show(index+1));
- viewer.querySelectorAll<HTMLButtonElement>('.event-thumb').forEach(button=>button.addEventListener('click',()=>show(Number(button.dataset.index))));
- let swipeX=0,swipeY=0;viewer.querySelector('.event-stage')?.addEventListener('touchstart',event=>{const e=event as TouchEvent;swipeX=e.touches[0].clientX;swipeY=e.touches[0].clientY},{passive:true});viewer.querySelector('.event-stage')?.addEventListener('touchend',event=>{const e=event as TouchEvent;const dx=e.changedTouches[0].clientX-swipeX,dy=e.changedTouches[0].clientY-swipeY;if(Math.abs(dx)>65&&Math.abs(dx)>Math.abs(dy)*1.5)show(index+(dx<0?1:-1))},{passive:true});
- if(!reduced&&matchMedia('(pointer:fine)').matches)viewer.querySelectorAll<HTMLElement>('.event-art').forEach(art=>{const cover=art.querySelector<HTMLElement>('.event-cover')!;art.addEventListener('pointermove',e=>{const r=art.getBoundingClientRect();const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;cover.style.transform='rotateY('+x*16+'deg) rotateX('+(-y*12)+'deg) translateZ(25px)'});art.addEventListener('pointerleave',()=>cover.style.transform='')});
+document.querySelectorAll<HTMLElement>('.night-viewer').forEach(viewer=>{
+ const cards=Array.from(viewer.querySelectorAll<HTMLButtonElement>('.night-sleeve'));if(!cards.length)return;let index=0;
+ function show(next:number){
+  index=(next+cards.length)%cards.length;
+  cards.forEach((card,i)=>{const delta=(i-index+cards.length)%cards.length;card.dataset.position=String(delta===0?0:delta===1?1:-1);card.setAttribute('aria-pressed',String(i===index))});
+  viewer.querySelectorAll<HTMLElement>('[data-night-title],.night-details').forEach(el=>{const siblings=el.matches('[data-night-title]')?Array.from(viewer.querySelectorAll('[data-night-title]')):Array.from(viewer.querySelectorAll('.night-details'));el.hidden=siblings.indexOf(el)!==index});
+  viewer.querySelector('.night-count')!.textContent=String(index+1).padStart(2,'0')+' / '+String(cards.length).padStart(2,'0');
+ }
+ viewer.querySelector('.night-prev')?.addEventListener('click',()=>show(index-1));
+ viewer.querySelector('.night-next')?.addEventListener('click',()=>show(index+1));
+ cards.forEach((card,i)=>card.addEventListener('click',()=>show(i)));
+ const stage=viewer.querySelector<HTMLElement>('.night-stage')!;let x=0,y=0;
+ stage.addEventListener('touchstart',e=>{x=e.touches[0].clientX;y=e.touches[0].clientY},{passive:true});
+ stage.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-x,dy=e.changedTouches[0].clientY-y;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.4)show(index+(dx<0?1:-1))},{passive:true});
+ stage.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();show(index+(e.key==='ArrowRight'?1:-1));cards[index].focus()}});
 });

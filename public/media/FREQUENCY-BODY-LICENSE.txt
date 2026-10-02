@@ -1,0 +1,6 @@
+Frequency body geometry: Cesium Man, © 2017 Cesium, CC BY 4.0.
+Source: https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CesiumMan
+License: https://creativecommons.org/licenses/by/4.0/
+Modifications: removed original textures/logos, iridescent materials, altered skeletal poses, multiple overlapping instances.
+Three.js: MIT license, © 2010–2026 three.js authors.
+The visual is decorative: SoundCloud exposes transport and playback position, not PCM or live BPM.

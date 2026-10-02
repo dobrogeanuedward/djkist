@@ -39,11 +39,19 @@ jobs:
             if(!await page.locator('#sound-dialog').isVisible())throw new Error('Player reopen failed');
             await page.getByRole('button',{name:'Continua senza musica'}).click();
             const checks=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,canvas:!!document.querySelector('#prism'),brand:document.querySelector('h1')?.textContent?.trim()||!!document.querySelector('h1 img')}));
-            await page.getByRole('button',{name:/Prossimi incontri/}).click();
+            await page.getByRole('button',{name:/Future/}).click();
             if(!await page.locator('#future-events').isVisible())throw new Error('Event tab failed');
-            await page.getByRole('button',{name:/Notti passate/}).click();
+            await page.getByRole('button',{name:/Passate/}).click();
             await page.getByRole('button',{name:'Evento successivo'}).click();
             if(!await page.getByRole('heading',{name:'Love (P)ride Parade',exact:true}).isVisible())throw new Error('Event navigation failed');
+            await page.getByRole('link',{name:'Diary',exact:true}).click();
+            await page.waitForTimeout(800);
+            const night=await page.locator('#diary').boundingBox();
+            if(width<800&&night.height>height-90)throw new Error('Night archive exceeds mobile viewport');
+            await page.screenshot({path:'screenshots/'+name+'-nights.png'});
+            await page.locator('.festival-trip').scrollIntoViewIfNeeded();
+            await page.waitForFunction(()=>document.querySelector('[data-festival]')?.dataset.renderer==='webgl',null,{timeout:20000});
+            await page.screenshot({path:'screenshots/'+name+'-festival.png'});
             await page.locator('.photo').first().click();
             if(!await page.locator('#media-dialog').isVisible())throw new Error('Photo viewer failed');
             await page.getByRole('button',{name:'Chiudi',exact:true}).click();
@@ -59,7 +67,7 @@ jobs:
           const music=await browser.newPage({viewport:{width:390,height:844}});
           await music.addInitScript(()=>{
             window.testPlayCalls=0;window.testPauseCalls=0;
-            function Widget(){const listeners={};return {bind:(event,fn)=>{listeners[event]=fn;if(event==='READY')setTimeout(fn,30)},play:()=>{window.testPlayCalls++;listeners.PLAY?.()},pause:()=>{window.testPauseCalls++;listeners.PAUSE?.()},getCurrentSound:fn=>fn({})}};
+            function Widget(){const listeners={};let position=0;return {bind:(event,fn)=>{listeners[event]=fn;if(event==='READY')setTimeout(fn,30)},play:()=>{window.testPlayCalls++;listeners.PLAY?.();listeners.PLAY_PROGRESS?.({currentPosition:position})},pause:()=>{window.testPauseCalls++;listeners.PAUSE?.()},seekTo:p=>{position=p;window.testSeekPosition=p},getDuration:fn=>fn(100000),getPosition:fn=>fn(position),getCurrentSound:fn=>fn({})}};
             Widget.Events={READY:'READY',PLAY:'PLAY',PAUSE:'PAUSE',ERROR:'ERROR',FINISH:'FINISH',PLAY_PROGRESS:'PLAY_PROGRESS'};window.SC={Widget};
           });
           await music.goto('http://127.0.0.1:4321');
@@ -72,12 +80,22 @@ jobs:
           await music.getByRole('button',{name:'Metti in pausa il set',exact:true}).click();
           await music.getByRole('button',{name:'Riprendi il set',exact:true}).click();
           if(!await music.evaluate(()=>document.body.classList.contains('sound-active')))throw new Error('Resume failed');
+          const savedPosition=await music.evaluate(()=>window.testSeekPosition);
+          if(savedPosition<5000||savedPosition>70000)throw new Error('First-visit random excerpt failed');
           await music.reload();
           const second=await music.locator('.sound-row strong').innerText();
-          if(first===second)throw new Error('Random entry repeated previous set');
-          await music.getByRole('button',{name:'Daje',exact:true}).click();
+          if(first!==second)throw new Error('Persisted track was lost');
           await music.waitForFunction(()=>document.body.classList.contains('sound-active'));
           if(await music.evaluate(()=>window.testPauseCalls!==0))throw new Error('Reload entry paused playback');
+          if(await music.evaluate(()=>window.testSeekPosition)!==savedPosition)throw new Error('Refresh lost playback position');
+          await music.getByRole('link',{name:'Diary',exact:true}).click();
+          await music.locator('.audio-dock.in-header').waitFor({state:'visible'});
+          await music.getByRole('button',{name:'Metti in pausa il set',exact:true}).click();
+          await music.reload();
+          await music.getByRole('button',{name:'Daje',exact:true}).click();
+          await music.waitForFunction(()=>document.body.classList.contains('sound-active'));
+          if(await music.evaluate(()=>window.testPauseCalls!==0))throw new Error('Daje paused a restored session');
+          if(await music.evaluate(()=>window.testSeekPosition)!==savedPosition)throw new Error('Paused session seek was lost');
           await music.close();
           await browser.close();
           JS
