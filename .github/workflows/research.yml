@@ -14,16 +14,24 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install yt-dlp
-      - name: Find artist sessions
+      - name: Inspect primary artist sources
         run: |
           python - <<'PY'
-          import yt_dlp, json
-          options={'quiet':True,'extract_flat':True,'skip_download':True,'ignoreerrors':True}
-          with yt_dlp.YoutubeDL(options) as y:
-            for query in ['ytsearch10:KIST Link Academy Radio','ytsearch5:KIST Bologna DJ']:
-              try:
-                result=y.extract_info(query,download=False)
-                for e in (result or {}).get('entries',[]):
-                  if e: print(json.dumps({k:e.get(k) for k in ['id','title','url','channel','duration','thumbnails']},ensure_ascii=False))
-              except Exception as e: print(str(e)[:300])
+          import yt_dlp,json,urllib.request,re,html
+          with yt_dlp.YoutubeDL({'quiet':True,'extract_flat':True,'skip_download':True,'ignoreerrors':True,'playlistend':250}) as y:
+            try:
+              result=y.extract_info('https://www.youtube.com/@linkacademyradio/videos',download=False)
+              for e in (result or {}).get('entries',[]):
+                if e and 'kist' in e.get('title','').lower(): print('KIST_SESSION '+json.dumps(e,ensure_ascii=False))
+            except Exception as e: print(str(e)[:300])
+          for url in ['https://www.instagram.com/thats_kist/','https://www.instagram.com/reel/DbbEcZJt6uv/','https://www.linkacademyradio.com/','https://soundcloud.com/link-academy-radio']:
+            try:
+              req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'})
+              text=urllib.request.urlopen(req,timeout=20).read().decode()
+              print('SOURCE '+url)
+              for tag in re.findall(r'<meta[^>]+>',text):
+                if any(x in tag for x in ['og:image','og:description','og:title']): print(html.unescape(tag)[:1200])
+              for link in re.findall(r'https?[^\s"<>]+',text):
+                if any(x in link.lower() for x in ['kist','soundcloud.com/','youtube.com/watch','youtu.be/']): print(html.unescape(link)[:500])
+            except Exception as e: print('UNAVAILABLE '+url+' '+str(e)[:200])
           PY
