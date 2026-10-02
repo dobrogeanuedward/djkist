@@ -12,10 +12,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - run: pip install yt-dlp
       - name: Read public session metadata
         run: |
           python - <<'PY'
-          import urllib.request,html,json,re,base64
+          import urllib.request,html,json,re,base64,yt_dlp
           from html.parser import HTMLParser
           class Tags(HTMLParser):
             def __init__(self): super().__init__(); self.meta={}
@@ -32,9 +33,15 @@ jobs:
               if img and 'cdninstagram.com/rsrc' not in img:
                 data=read(img);print('PHOTO '+json.dumps({'source':url,'mime':'image/jpeg','base64':base64.b64encode(data).decode()}))
             except Exception as e: print('ERROR '+str(e)[:200])
-          for url in ['https://soundcloud.com/link-academy-radio','https://www.linkacademyradio.com/','https://www.youtube.com/@linkacademyradio/videos']:
+          for url in ['https://linktr.ee/plug.radio','https://www.youtube.com/@plugradio/videos','https://www.instagram.com/thats_kist/']:
             try:
               text=read(url).decode()
-              for match in re.finditer('kist',text,re.I): print('MATCH '+url+' '+text[max(0,match.start()-300):match.end()+800].replace('\n',' ')[:1200])
+              for match in re.finditer('kist|soundcloud.com/',text,re.I): print('MATCH '+url+' '+text[max(0,match.start()-300):match.end()+800].replace('\n',' ')[:1200])
+            except Exception as e:print('ERROR '+str(e)[:200])
+          with yt_dlp.YoutubeDL({'quiet':True,'extract_flat':True,'skip_download':True,'ignoreerrors':True,'playlistend':200}) as y:
+            try:
+              result=y.extract_info('https://www.youtube.com/@plugradio/videos',download=False)
+              for e in (result or {}).get('entries',[]):
+                if e and 'kist' in e.get('title','').lower(): print('KIST_SESSION '+json.dumps(e,ensure_ascii=False))
             except Exception as e:print('ERROR '+str(e)[:200])
           PY
