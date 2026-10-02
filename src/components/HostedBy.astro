@@ -1,1 +1,16 @@
-<nav class="hosted-by" aria-label="Luoghi e sessioni"><span>Luoghi & sessioni</span><a href="https://www.instagram.com/reel/DbbEcZJt6uv/" target="_blank" rel="noopener noreferrer">All For Music</a><a href="https://fillamontagnola.it/archivio-eventi/" target="_blank" rel="noopener noreferrer">Filla / Montagnola</a><a href="https://www.instagram.com/cantinaletterariabologna/p/DY7Oy9Gowk_/" target="_blank" rel="noopener noreferrer">Cantina Letteraria</a><a href="https://www.facebook.com/100090713703534/posts/960403370326778/" target="_blank" rel="noopener noreferrer">Love (P)ride</a></nav>
+---
+const places = [
+ {name:'All For Music',city:'Bologna',context:'Fifteen Frames / S01—E29',image:'/media/kist-fifteen-frames-clean-v2.webp',alt:'KIST da All For Music durante Fifteen Frames',url:'https://www.instagram.com/reel/DbbEcZJt6uv/',tone:'#67eaff'},
+ {name:'Filla',city:'Montagnola, Bologna',context:'Sinergie / 09 luglio 2026',image:'/media/sinergie-2026.jpg',alt:'Locandina di Sinergie alla Filla',url:'https://fillamontagnola.it/archivio-eventi/',tone:'#db91ff'},
+ {name:'Cantina Letteraria',city:'Bologna',context:'KIST DJ Set / 10 giugno 2026',image:'/media/cantina-letteraria-2026.jpg',alt:'Locandina del DJ set alla Cantina Letteraria',url:'https://www.instagram.com/cantinaletterariabologna/p/DY7Oy9Gowk_/',tone:'#c9ff55'},
+];
+---
+<section class="places-section section" id="places" aria-labelledby="places-title">
+ <div class="places-heading"><h2 id="places-title">Luoghi.</h2><p>Dove ci siamo incontrati.</p></div>
+ <div class="places-deck" tabindex="0" aria-label="Luoghi che hanno ospitato KIST, scorri per esplorarli">
+  {places.map(place=><a class="place-card" href={place.url} target="_blank" rel="noopener noreferrer" style={'--place-tone:'+place.tone}>
+   <div class="place-image"><img src={place.image} alt={place.alt} loading="lazy"/><span class="place-context">{place.context}</span></div>
+   <div class="place-detail"><span class="place-city"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>{place.city}</span><h3>{place.name}</h3><span class="place-link">Esplora il luogo <i class="ui-icon icon-external" aria-hidden="true"></i></span></div>
+  </a>)}
+ </div>
+</section>

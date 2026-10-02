@@ -9,6 +9,8 @@ import EventViewer from '../components/EventViewer.astro';
 import FrequencySculpture from '../components/FrequencySculpture.astro';
 import SonicCrystal from '../components/SonicCrystal.astro';
 import HostedBy from '../components/HostedBy.astro';
+import ContactSection from '../components/ContactSection.astro';
+import '../styles/places.css';
 const today = new Date().toISOString().slice(0,10);
 const future = events.filter(e => e.date >= today);
 const past = events.filter(e => e.date < today).sort((a,b)=>b.date.localeCompare(a.date));
@@ -64,7 +66,7 @@ const featured = mixes[0];
 {photographs.length > 0 && <section class="photo-wall" aria-label="Diario fotografico">{photographs.map((photo,i)=><button class={'photo photo-'+i%3} data-photo={photo.src} data-caption={photo.caption} aria-label={'Ingrandisci: '+photo.alt}><img src={photo.src} alt={photo.alt} loading="lazy"/><span>{photo.caption}</span></button>)}</section>}
 <HostedBy/>
 <section class="about section" id="about"><div class="about-photo">{artist.portrait ? <img src={artist.portrait} alt="Ritratto di KIST" loading="lazy"/> : <div class="portrait-await"><span>BEHIND THE SOUND</span><img src="/media/kist-wordmark-imagegen.webp" alt="KIST"/></div>}</div><div class="about-copy"><span>04 / A LITTLE CLOSER</span><h2>La musica.<br/>E chi la sceglie.</h2><p>{artist.bio}</p><a href={artist.instagram} target="_blank" rel="noopener noreferrer">@thats_kist <span class="ui-icon icon-external" aria-hidden="true"></span></a></div></section>
-<section class="contact section"><div class="contact-orbits" aria-hidden="true"><i></i><i></i><i></i></div><span>FOR THE NEXT NIGHT</span><a href={artist.instagram} target="_blank" rel="noopener noreferrer">Let's make<br/><em>some noise.</em><span class="contact-star" aria-hidden="true"><img src="/kist-sigil.svg" alt=""/></span></a><p>Booking, collaborazioni, un messaggio.<br/>Ci sentiamo su Instagram.</p></section>
+<ContactSection/>
 </main>
 <footer><img src="/media/kist-wordmark-imagegen.webp" alt="KIST"/><span>PERSONAL FREQUENCY</span><a href={artist.instagram} target="_blank" rel="noopener noreferrer">Instagram</a><a href="/media/FREQUENCY-BODY-LICENSE.txt">3D credits</a><span>Crafted by DOGO Studio · 2026</span></footer>
 <dialog id="media-dialog"><button class="close-dialog" aria-label="Chiudi"><span class="ui-icon icon-close" aria-hidden="true"></span></button><div id="dialog-content"></div></dialog>
