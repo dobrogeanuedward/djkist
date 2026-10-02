@@ -30,15 +30,23 @@ function retry(message:string){clearTimeout(readyTimer);connecting=false;heroBut
 async function start(url:string){if(!url||connecting)return;if(widget){playing?widget.pause():widget.play();return}connecting=true;heroButton.disabled=true;popupPlay.disabled=true;status.textContent='Connessione a SoundCloud…';try{await api();const frame=document.createElement('iframe');frame.title='SoundCloud — KIST';frame.allow='autoplay';frame.src='https://w.soundcloud.com/player/?url='+encodeURIComponent(url)+'&auto_play=false&color=%23c9ff52&show_comments=false&show_reposts=false&hide_related=true';document.getElementById('player-mount')!.replaceChildren(frame);const current=window.SC!.Widget(frame);widget=current;const events=window.SC!.Widget.Events;readyTimer=setTimeout(()=>retry('SoundCloud impiega troppo. Riprova o apri il set dal link qui sotto.'),15000);current.bind(events.READY,()=>{if(widget!==current)return;clearTimeout(readyTimer);connecting=false;heroButton.disabled=false;popupPlay.disabled=false;status.textContent='Premi play per entrare con il suono.';dock.hidden=false;current.play()});current.bind(events.PLAY,()=>{if(widget!==current)return;transport(true);status.textContent='In ascolto.'});current.bind(events.PAUSE,()=>{if(widget!==current)return;transport(false);status.textContent='In pausa.'});current.bind(events.PLAY_PROGRESS,data=>{if(data&&widget===current&&playing)window.dispatchEvent(new CustomEvent('kist:audio',{detail:{playing:true,position:data.currentPosition}}))});current.bind(events.FINISH,()=>{transport(false);status.textContent='Set concluso.'});current.bind(events.ERROR,()=>retry('Set non disponibile. Riprova o ascolta su SoundCloud.'));}catch{retry('SoundCloud non raggiungibile. Riprova o apri il set dal link qui sotto.')}}
 const soundDialog=document.getElementById('sound-dialog') as HTMLDialogElement;
 const popupPlay=document.getElementById('popup-play') as HTMLButtonElement;
-function openPlayer(){if(!soundDialog.open)soundDialog.showModal()}
+let playerOpener:HTMLElement|undefined;
+function openPlayer(){if(!soundDialog.open){playerOpener=document.activeElement instanceof HTMLElement?document.activeElement:undefined;soundDialog.showModal()}}
 function closePlayer(){soundDialog.close()}
-soundDialog.addEventListener('close',()=>{document.getElementById('hero-listen')?.focus({preventScroll:true})});
-heroButton?.addEventListener('click',openPlayer);
-document.getElementById('hero-listen')?.addEventListener('click',openPlayer);
+soundDialog.addEventListener('close',()=>{(playerOpener&&playerOpener!==document.body?playerOpener:document.getElementById('hero-listen'))?.focus({preventScroll:true})});
+function heroTransport(){if(widget&&!connecting){playing?widget.pause():widget.play()}else openPlayer()}
+heroButton?.addEventListener('click',heroTransport);
+document.getElementById('hero-listen')?.addEventListener('click',heroTransport);
 document.getElementById('player-dismiss')?.addEventListener('click',closePlayer);
 document.getElementById('popup-quiet')?.addEventListener('click',()=>{widget?.pause();closePlayer()});
 soundDialog.addEventListener('click',e=>{if(e.target===soundDialog)closePlayer()});
 popupPlay.addEventListener('click',()=>{if(widget){playing?widget.pause():widget.play()}else start(document.querySelector<HTMLElement>('.sound-invitation')!.dataset.url||'')});
+const musicHeader=document.getElementById('header-music') as HTMLButtonElement;
+musicHeader.addEventListener('click',openPlayer);
+window.addEventListener('kist:audio',e=>{const active=(e as CustomEvent<{playing:boolean}>).detail.playing;heroButton.querySelector('.mini-label')!.textContent=active?'Pausa':'Riproduci';heroButton.querySelector('.ui-icon')!.className='ui-icon '+(active?'icon-pause':'icon-play');heroButton.setAttribute('aria-label',active?'Metti in pausa il set di KIST':'Riproduci il set di KIST');const hero=document.getElementById('hero-listen')!;hero.querySelector('span')!.textContent=active?'Pausa':'Riproduci';hero.setAttribute('aria-label',active?'Metti in pausa la musica':'Apri il player di KIST')});
+let enterWithMusic=false;
+popupPlay.addEventListener('click',()=>{enterWithMusic=!playing});
+window.addEventListener('kist:audio',e=>{const active=(e as CustomEvent<{playing:boolean}>).detail.playing;musicHeader.setAttribute('aria-pressed',String(active));musicHeader.setAttribute('aria-label',active?'Apri il player, musica in ascolto':'Attiva la musica');document.body.classList.toggle('sound-active',active);if(active&&enterWithMusic){enterWithMusic=false;closePlayer()}});
 document.getElementById('dock-open')?.addEventListener('click',openPlayer);
 window.addEventListener('kist:audio',e=>{const active=(e as CustomEvent<{playing:boolean}>).detail.playing;soundDialog.classList.toggle('is-playing',active);const icon=popupPlay.querySelector('.ui-icon');if(icon)icon.className='ui-icon '+(active?'icon-pause':'icon-play');const label=popupPlay.querySelector('.button-label');if(label)label.textContent=active?'Pausa':'Riprendi il set';popupPlay.setAttribute('aria-label',active?'Metti in pausa il set':'Riprendi il set');heroButton.classList.toggle('is-playing',active)});
 new MutationObserver(()=>{document.getElementById('popup-status')!.textContent=status.textContent}).observe(status,{childList:true,characterData:true,subtree:true});
