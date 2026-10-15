@@ -1,0 +1,12 @@
+---
+import KistSprite from './KistSprite.astro';
+interface Props { mode?: 'run' | 'groove'; id?: string; }
+const {mode='run',id}=Astro.props;
+---
+<div class:list={['arcade-interlude',`arcade-${mode}`]} data-arcade-interlude data-kind={mode} id={id} aria-hidden="true">
+  <canvas class="arcade-harmonics"></canvas>
+  <div class:list={['arcade-character',mode==='run'?'arcade-runner':'arcade-dancer']}>
+    <KistSprite mode={mode} size={144}/>
+  </div>
+  <div class="arcade-horizon"></div>
+</div>

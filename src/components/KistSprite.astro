@@ -1,6 +1,6 @@
 ---
 interface Props {
-  mode?: 'mix' | 'wave' | 'groove';
+  mode?: 'mix' | 'wave' | 'groove' | 'run';
   size?: number;
   speed?: number;
   eager?: boolean;
@@ -8,7 +8,7 @@ interface Props {
   class?: string;
 }
 const {mode='mix',size=240,speed=1,eager=false,label='KIST, personaggio animato in pixel art',class:className=''}=Astro.props;
-const safeMode=['mix','wave','groove'].includes(mode)?mode:'mix';
+const safeMode=['mix','wave','groove','run'].includes(mode)?mode:'mix';
 const safeSize=Math.max(48,Math.min(600,Number(size)||240));
 const safeSpeed=Math.max(.5,Math.min(3,Number(speed)||1));
 ---
@@ -20,11 +20,12 @@ const safeSpeed=Math.max(.5,Math.min(3,Number(speed)||1));
   .kist-sprite{width:min(var(--kist-size,240px),100%);aspect-ratio:3/4;background-size:100% 100%;background-position:0 0;background-repeat:no-repeat;image-rendering:pixelated;flex-shrink:0;pointer-events:none;contain:layout paint}
 </style>
 <script>
-  type Mode='mix'|'wave'|'groove';
+  type Mode='mix'|'wave'|'groove'|'run';
   const sequences:Record<Mode,{frames:number[];durations:number[]}>= {
     mix:{frames:[0,1,2,3,4,5,6,7],durations:[1300,120,100,120,150,130,150,600]},
     wave:{frames:[0,1,2,3,5,6,7],durations:[650,130,120,140,140,130,1000]},
-    groove:{frames:[0,1,2,3,4,6,7],durations:[170,150,120,150,170,150,170]}
+    groove:{frames:[0,1,2,3,4,6,7],durations:[170,150,120,150,170,150,170]},
+    run:{frames:[0,1,2,3,4,5,6,7],durations:[90,90,90,90,90,90,90,90]}
   };
   const controllers=new Set<()=>void>();
   function initSprites(){

@@ -8,3 +8,17 @@
 .player-character .kist-sprite{width:100%}
 @media(max-width:800px){.entrance-character{width:clamp(150px,39vw,200px)}.player-scene{width:min(100%,260px);margin:12px auto 18px}.player-scene .vinyl-scene{width:75%!important;max-width:none!important;margin:14px auto 28px}.player-character{width:126px;right:-3px;bottom:-16px}}
 @media(max-height:720px){.player-scene{width:215px}.player-character{width:108px}}
+
+/* Brief platformer passages between the photographic chapters. */
+.arcade-interlude{position:relative;height:238px;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 30% 75%,#35204b30,transparent 55%),#000}
+.arcade-harmonics{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;pointer-events:none}
+.arcade-character{position:absolute;bottom:22px;width:144px;z-index:2;pointer-events:none;filter:drop-shadow(0 8px 15px #0008)}
+.arcade-character .kist-sprite{width:100%}
+.arcade-runner{left:0;transform:translate3d(var(--run-x,30vw),0,0);will-change:transform}
+.arcade-dancer{left:50%;transform:translateX(-50%)}
+.arcade-horizon{position:absolute;bottom:22px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#77e5ff30,#976cff40,transparent)}
+.arcade-horizon:after{content:'';position:absolute;top:7px;left:0;right:0;height:3px;background:repeating-linear-gradient(90deg,transparent 0 22px,#976cff22 22px 25px,transparent 25px 68px)}
+.collab-character{position:absolute;right:-172px;top:45px;width:148px;pointer-events:none;filter:drop-shadow(0 8px 20px #0006)}
+.collab-character .kist-sprite{width:100%}
+@media(max-width:800px){.arcade-interlude{height:190px}.arcade-character{width:116px;bottom:19px}.arcade-horizon{bottom:19px}.collab-character{position:relative;right:auto;top:auto;width:116px;order:-1;margin:0 auto 18px}.collab-content{width:100%}}
+@media(prefers-reduced-motion:reduce){.arcade-runner{will-change:auto}}
