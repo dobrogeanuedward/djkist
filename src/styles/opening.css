@@ -1,0 +1,16 @@
+/* One short, composed entrance: the wordmark leads, KIST sits on its lower edge. */
+html.enhanced .entrance.entrance-refined{background:#000;animation:kist-opening-out .55s 2.55s cubic-bezier(.22,1,.36,1) forwards!important}
+.entrance-refined .entrance-identity{--opening-character-size:clamp(88px,12vw,124px);position:relative;isolation:isolate;width:min(72vw,480px);transform:translateY(-38px);text-align:center}
+.entrance-refined .entrance-dj{display:block;margin-bottom:20px;font-size:11px;letter-spacing:.22em;opacity:0;animation:kist-opening-caption .7s .25s ease-out forwards}
+.entrance-refined .entrance-mark{position:relative;width:100%}
+.entrance-refined .entrance-wordmark{width:100%!important;margin:0;position:relative;z-index:1;filter:none;animation:kist-opening-logo .9s .12s cubic-bezier(.22,1,.36,1) both!important;transform-origin:50% 60%}
+.entrance-refined .entrance-character{position:absolute;left:58%;top:calc(100% - clamp(14px,1.7vw,22px));width:var(--opening-character-size);transform:translateX(-50%);z-index:3;filter:drop-shadow(0 8px 17px #0008);pointer-events:none}
+.entrance-refined .entrance-character-motion{width:100%;animation:kist-opening-character .95s .55s cubic-bezier(.22,1,.36,1) both;transform-origin:50% 95%}
+.entrance-refined .entrance-location{position:absolute;left:50%;top:calc(100% + var(--opening-character-size)*1.333 + 10px);transform:translateX(-50%);white-space:nowrap;font-size:9px;letter-spacing:.18em;color:#c7c3d4;opacity:0;animation:kist-opening-caption .7s 1.05s ease-out forwards}
+.entrance-refined .entrance-waves{opacity:.62}
+@keyframes kist-opening-logo{from{opacity:0;filter:blur(9px);transform:translateY(7px) scale(.975)}to{opacity:1;filter:blur(0);transform:none}}
+@keyframes kist-opening-character{0%{opacity:0;transform:translateY(24px) rotate(-3deg)}65%{opacity:1;transform:translateY(-1px) rotate(.6deg)}100%{opacity:1;transform:translateY(0) rotate(0)}}
+@keyframes kist-opening-caption{from{opacity:0}to{opacity:1}}
+@keyframes kist-opening-out{0%{opacity:1;transform:none;visibility:visible}100%{opacity:0;transform:translateY(-10px);visibility:hidden}}
+@media(max-width:800px){.entrance-refined .entrance-identity{width:min(76vw,380px);--opening-character-size:clamp(82px,23vw,104px);transform:translateY(-30px)}.entrance-refined .entrance-dj{font-size:10px;margin-bottom:16px}.entrance-refined .entrance-location{font-size:8px;letter-spacing:.14em}}
+@media(prefers-reduced-motion:reduce){.entrance-refined{display:none!important}}

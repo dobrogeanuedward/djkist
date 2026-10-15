@@ -14,6 +14,7 @@ import KistSprite from '../components/KistSprite.astro';
 import KistInterlude from '../components/KistInterlude.astro';
 import '../styles/places.css';
 import '../styles/sprites.css';
+import '../styles/opening.css';
 const today = new Date().toISOString().slice(0,10);
 const future = events.filter(e => e.date >= today);
 const past = events.filter(e => e.date < today).sort((a,b)=>b.date.localeCompare(a.date));
@@ -32,7 +33,7 @@ const featured = mixes[0];
 </head>
 <body>
 <a class="skip" href="#main">Vai al contenuto</a>
-<div class="entrance" aria-hidden="true"><div class="entrance-halo"><i></i><i></i><i></i></div><canvas class="entrance-waves"></canvas><div class="entrance-identity"><span class="entrance-dj">DJ</span><img src="/media/kist-wordmark-imagegen.webp" alt=""/><span class="entrance-location">BASED IN BOLOGNA</span><div class="entrance-character"><KistSprite mode="mix" size={224} speed={2} eager/></div></div></div>
+<div class="entrance entrance-refined" aria-hidden="true"><canvas class="entrance-waves"></canvas><div class="entrance-identity"><span class="entrance-dj">DJ</span><div class="entrance-mark"><img class="entrance-wordmark" src="/media/kist-wordmark-imagegen.webp" alt=""/><div class="entrance-character"><div class="entrance-character-motion"><KistSprite mode="mix" size={124} opening eager/></div></div></div><span class="entrance-location">BASED IN BOLOGNA</span></div></div>
 <header>
 <a class="brand" href="#home" aria-label="KIST, inizio"><img src="/media/kist-wordmark-imagegen.webp" alt="KIST"/></a>
 <nav aria-label="Menu principale"><a href="#sound">Sound</a><a href="#diary">Diary</a><a href="#about">Kist</a></nav>

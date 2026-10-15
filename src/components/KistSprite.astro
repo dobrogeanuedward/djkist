@@ -4,16 +4,17 @@ interface Props {
   size?: number;
   speed?: number;
   eager?: boolean;
+  opening?: boolean;
   label?: string;
   class?: string;
 }
-const {mode='mix',size=240,speed=1,eager=false,label='KIST, personaggio animato in pixel art',class:className=''}=Astro.props;
+const {mode='mix',size=240,speed=1,eager=false,opening=false,label='KIST, personaggio animato in pixel art',class:className=''}=Astro.props;
 const safeMode=['mix','wave','groove','run'].includes(mode)?mode:'mix';
 const safeSize=Math.max(48,Math.min(600,Number(size)||240));
 const safeSpeed=Math.max(.5,Math.min(3,Number(speed)||1));
 ---
 <div class:list={['kist-sprite',className]} role="img" aria-label={label}
-  data-kist-sprite data-mode={safeMode} data-speed={safeSpeed} data-eager={eager?'true':undefined}
+  data-kist-sprite data-mode={safeMode} data-speed={safeSpeed} data-eager={eager?'true':undefined} data-opening={opening?'true':undefined}
   style={`--kist-size:${safeSize}px;background-image:url('/media/kist/kist-16bit-${safeMode}-poster.webp')`}
 ></div>
 <style>
@@ -33,7 +34,9 @@ const safeSpeed=Math.max(.5,Math.min(3,Number(speed)||1));
       if(el.dataset.kistBound)return;
       el.dataset.kistBound='true';
       const mode:Mode=Object.hasOwn(sequences,el.dataset.mode||'')?el.dataset.mode as Mode:'mix';
-      const seq=sequences[mode],motion=matchMedia('(prefers-reduced-motion: reduce)');
+      const opening=el.dataset.opening==='true';
+      const seq=opening&&mode==='mix'?{frames:[0,1,2,3,4,5,6,7],durations:[450,180,100,140,200,180,300,950]}:sequences[mode];
+      const motion=matchMedia('(prefers-reduced-motion: reduce)');
       const speed=Math.max(.5,Math.min(3,Number(el.dataset.speed)||1));
       let index=0,timer:ReturnType<typeof setTimeout>|undefined,inView=false,loaded=false,loading=false,dead=false;
       function render(){const frame=seq.frames[index];el.style.backgroundPosition=`${(frame%4)/3*100}% ${Math.floor(frame/4)*100}%`;el.dataset.frame=String(frame);}
@@ -41,6 +44,7 @@ const safeSpeed=Math.max(.5,Math.min(3,Number(speed)||1));
       function tick(){
         stop();
         if(dead||!loaded||!inView||document.hidden||motion.matches)return;
+        if(opening&&index===seq.frames.length-1)return;
         timer=setTimeout(()=>{index=(index+1)%seq.frames.length;render();tick();},seq.durations[index]/speed);
       }
       function load(){

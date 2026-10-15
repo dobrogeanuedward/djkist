@@ -31,7 +31,15 @@ jobs:
             const page=await browser.newPage({viewport:{width,height}});
             const errors=[];page.on('pageerror',e=>errors.push(e.message));
             await page.goto('http://127.0.0.1:4321',{waitUntil:'domcontentloaded'});
-            await page.waitForTimeout(2500);
+            await page.waitForTimeout(1350);
+            const opening=await page.evaluate(()=>{
+              const logo=document.querySelector('.entrance-wordmark').getBoundingClientRect();
+              const character=document.querySelector('.entrance-character').getBoundingClientRect();
+              return {logoWidth:logo.width,characterWidth:character.width,overlap:logo.bottom-character.top,logoHeight:logo.height};
+            });
+            if(opening.characterWidth>opening.logoWidth*.4||opening.overlap<0||opening.overlap>opening.logoHeight*.35)throw new Error('Opening character obscures the logo');
+            await page.screenshot({path:'screenshots/'+name+'-opening.png'});
+            await page.locator('#sound-dialog').waitFor({state:'visible',timeout:7000});
             if(!await page.locator('#sound-dialog').isVisible())throw new Error('Listening invitation failed');
             await page.locator('.player-character [data-kist-ready="true"]').waitFor();
             const spriteFrame=await page.locator('.player-character [data-kist-sprite]').getAttribute('data-frame');

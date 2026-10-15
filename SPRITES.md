@@ -15,7 +15,7 @@ Two generated poses that flipped details are intentionally excluded from wave an
 
 The harmonic trail is rendered as three mathematical sine waves on a low-resolution canvas with square pixels. It stays behind the running character; the same system provides the quieter groove backdrop. No waveform asset or third-party animation library is required.
 
-Both sprites and harmonics pause off screen and in hidden tabs. Reduced-motion preference freezes a composed first-frame view. The entrance retains its existing duration.
+Both sprites and harmonics pause off screen and in hidden tabs. Reduced-motion preference freezes a composed first-frame view. The entrance is a single 3.1-second logo-led sequence: a smaller character settles just below the wordmark, overlaps only its bottom edge, performs one listening gesture and then holds. The player invitation follows the completed entrance rather than interrupting it.
 
 ## Prompt set
 
