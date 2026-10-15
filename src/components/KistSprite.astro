@@ -1,0 +1,68 @@
+---
+interface Props {
+  mode?: 'mix' | 'wave' | 'groove';
+  size?: number;
+  speed?: number;
+  eager?: boolean;
+  label?: string;
+  class?: string;
+}
+const {mode='mix',size=240,speed=1,eager=false,label='KIST, personaggio animato in pixel art',class:className=''}=Astro.props;
+const safeMode=['mix','wave','groove'].includes(mode)?mode:'mix';
+const safeSize=Math.max(48,Math.min(600,Number(size)||240));
+const safeSpeed=Math.max(.5,Math.min(3,Number(speed)||1));
+---
+<div class:list={['kist-sprite',className]} role="img" aria-label={label}
+  data-kist-sprite data-mode={safeMode} data-speed={safeSpeed} data-eager={eager?'true':undefined}
+  style={`--kist-size:${safeSize}px;background-image:url('/media/kist/kist-16bit-${safeMode}-poster.webp')`}
+></div>
+<style>
+  .kist-sprite{width:min(var(--kist-size,240px),100%);aspect-ratio:3/4;background-size:100% 100%;background-position:0 0;background-repeat:no-repeat;image-rendering:pixelated;flex-shrink:0;pointer-events:none;contain:layout paint}
+</style>
+<script>
+  type Mode='mix'|'wave'|'groove';
+  const sequences:Record<Mode,{frames:number[];durations:number[]}>= {
+    mix:{frames:[0,1,2,3,4,5,6,7],durations:[1300,120,100,120,150,130,150,600]},
+    wave:{frames:[0,1,2,3,5,6,7],durations:[650,130,120,140,140,130,1000]},
+    groove:{frames:[0,1,2,3,4,6,7],durations:[170,150,120,150,170,150,170]}
+  };
+  const controllers=new Set<()=>void>();
+  function initSprites(){
+    document.querySelectorAll<HTMLElement>('[data-kist-sprite]').forEach(el=>{
+      if(el.dataset.kistBound)return;
+      el.dataset.kistBound='true';
+      const mode:Mode=Object.hasOwn(sequences,el.dataset.mode||'')?el.dataset.mode as Mode:'mix';
+      const seq=sequences[mode],motion=matchMedia('(prefers-reduced-motion: reduce)');
+      const speed=Math.max(.5,Math.min(3,Number(el.dataset.speed)||1));
+      let index=0,timer:ReturnType<typeof setTimeout>|undefined,inView=false,loaded=false,loading=false,dead=false;
+      function render(){const frame=seq.frames[index];el.style.backgroundPosition=`${(frame%4)/3*100}% ${Math.floor(frame/4)*100}%`;el.dataset.frame=String(frame);}
+      function stop(){clearTimeout(timer);timer=undefined;}
+      function tick(){
+        stop();
+        if(dead||!loaded||!inView||document.hidden||motion.matches)return;
+        timer=setTimeout(()=>{index=(index+1)%seq.frames.length;render();tick();},seq.durations[index]/speed);
+      }
+      function load(){
+        if(loaded||loading||dead)return;
+        loading=true;
+        const im=new Image();im.src=`/media/kist/kist-16bit-${mode}.webp`;
+        im.decode().then(()=>{
+          if(dead)return;
+          loaded=true;el.style.backgroundImage=`url("${im.src}")`;el.style.backgroundSize='400% 200%';el.dataset.kistReady='true';render();tick();
+        }).catch(()=>{loading=false;el.dataset.kistError='true';});
+      }
+      const observer=new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;if(inView){if(!loaded)load();else tick();}else stop();},{rootMargin:'80px'});
+      function updateMotion(){if(motion.matches){stop();index=0;render();}else tick();}
+      function updateVisibility(){document.hidden?stop():tick();}
+      observer.observe(el);
+      motion.addEventListener('change',updateMotion);
+      document.addEventListener('visibilitychange',updateVisibility);
+      if(el.dataset.eager==='true')load();
+      const dispose=()=>{dead=true;stop();observer.disconnect();motion.removeEventListener('change',updateMotion);document.removeEventListener('visibilitychange',updateVisibility);controllers.delete(dispose);delete el.dataset.kistBound;};
+      controllers.add(dispose);
+    });
+  }
+  initSprites();
+  document.addEventListener('astro:page-load',initSprites);
+  document.addEventListener('astro:before-swap',()=>{for(const dispose of [...controllers])dispose();});
+</script>

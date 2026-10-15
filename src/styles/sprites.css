@@ -1,0 +1,10 @@
+/* KIST's arcade alter ego lives in the entrance and listening room. */
+.entrance-identity{isolation:isolate}
+.entrance-character{position:absolute;left:50%;top:50%;width:clamp(155px,24vw,224px);transform:translate(-50%,-39%);z-index:3;filter:drop-shadow(0 12px 24px #0009);pointer-events:none}
+.entrance-character .kist-sprite{width:100%}
+.player-scene{position:relative;width:min(100%,320px);margin:14px auto 24px;isolation:isolate}
+.player-scene .vinyl-scene{width:76%!important;max-width:none;margin:14px auto 30px}
+.player-character{position:absolute;right:-5px;bottom:-18px;width:144px;z-index:2;filter:drop-shadow(0 8px 14px #0008);pointer-events:none}
+.player-character .kist-sprite{width:100%}
+@media(max-width:800px){.entrance-character{width:clamp(150px,39vw,200px)}.player-scene{width:min(100%,260px);margin:12px auto 18px}.player-scene .vinyl-scene{width:75%!important;max-width:none!important;margin:14px auto 28px}.player-character{width:126px;right:-3px;bottom:-16px}}
+@media(max-height:720px){.player-scene{width:215px}.player-character{width:108px}}

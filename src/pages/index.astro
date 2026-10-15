@@ -10,7 +10,9 @@ import FrequencySculpture from '../components/FrequencySculpture.astro';
 import SonicCrystal from '../components/SonicCrystal.astro';
 import HostedBy from '../components/HostedBy.astro';
 import ContactSection from '../components/ContactSection.astro';
+import KistSprite from '../components/KistSprite.astro';
 import '../styles/places.css';
+import '../styles/sprites.css';
 const today = new Date().toISOString().slice(0,10);
 const future = events.filter(e => e.date >= today);
 const past = events.filter(e => e.date < today).sort((a,b)=>b.date.localeCompare(a.date));
@@ -24,10 +26,12 @@ const featured = mixes[0];
 <meta name="description" content="Lo spazio di KIST. DJ set, immagini, video e incontri sulla pista."/>
 <meta name="theme-color" content="#111113"/><meta name="robots" content="noindex,nofollow"/>
 <link rel="icon" href="/favicon.svg"/>
+<link rel="preload" as="image" href="/media/kist/kist-16bit-mix-poster.webp"/>
+<link rel="preload" as="image" href="/media/kist/kist-16bit-mix.webp"/>
 </head>
 <body>
 <a class="skip" href="#main">Vai al contenuto</a>
-<div class="entrance" aria-hidden="true"><div class="entrance-halo"><i></i><i></i><i></i></div><canvas class="entrance-waves"></canvas><div class="entrance-identity"><span class="entrance-dj">DJ</span><img src="/media/kist-wordmark-imagegen.webp" alt=""/><span class="entrance-location">BASED IN BOLOGNA</span></div></div>
+<div class="entrance" aria-hidden="true"><div class="entrance-halo"><i></i><i></i><i></i></div><canvas class="entrance-waves"></canvas><div class="entrance-identity"><span class="entrance-dj">DJ</span><img src="/media/kist-wordmark-imagegen.webp" alt=""/><span class="entrance-location">BASED IN BOLOGNA</span><div class="entrance-character"><KistSprite mode="mix" size={224} speed={2} eager/></div></div></div>
 <header>
 <a class="brand" href="#home" aria-label="KIST, inizio"><img src="/media/kist-wordmark-imagegen.webp" alt="KIST"/></a>
 <nav aria-label="Menu principale"><a href="#sound">Sound</a><a href="#diary">Diary</a><a href="#about">Kist</a></nav>
@@ -70,9 +74,10 @@ const featured = mixes[0];
 </main>
 <footer><img src="/media/kist-wordmark-imagegen.webp" alt="KIST"/><span>PERSONAL FREQUENCY</span><a href={artist.instagram} target="_blank" rel="noopener noreferrer">Instagram</a><a href="/media/FREQUENCY-BODY-LICENSE.txt">3D credits</a><span>Crafted by DOGO Studio · 2026</span></footer>
 <dialog id="media-dialog"><button class="close-dialog" aria-label="Chiudi"><span class="ui-icon icon-close" aria-hidden="true"></span></button><div id="dialog-content"></div></dialog>
-<dialog id="sound-dialog" aria-labelledby="sound-dialog-title"><div class="player-stage"><canvas data-prism aria-hidden="true"></canvas><button id="player-dismiss" class="player-dismiss" aria-label="Chiudi il player"><span class="ui-icon icon-close" aria-hidden="true"></span></button><div class="player-intro"><img src="/kist-sigil.svg" alt=""/><span>KIST / SoundCloud</span></div><div class="vinyl-scene" aria-hidden="true"><div class="vinyl-disc"><div class="vinyl-art"><img src="/media/kist-fifteen-frames-clean-v2.webp" alt=""/></div><i></i></div><div class="vinyl-needle"></div></div><div class="player-copy"><h2 id="sound-dialog-title">Apri il sito di DJ KIST<br/>ascoltando i suoi brani.</h2><p>{featured?.title || 'Personal frequency'}</p></div><div class="player-actions"><button id="popup-play" class="popup-play"><span class="ui-icon icon-play" aria-hidden="true"></span><span class="button-label">Daje</span></button><button id="popup-quiet">Continua senza musica</button></div><p id="popup-status" role="status" aria-live="polite"></p><div id="player-mount"></div><a class="player-source" href={featured?.url || artist.soundcloud} target="_blank" rel="noopener noreferrer">SoundCloud <span class="ui-icon icon-external" aria-hidden="true"></span></a></div></dialog>
+<dialog id="sound-dialog" aria-labelledby="sound-dialog-title"><div class="player-stage"><canvas data-prism aria-hidden="true"></canvas><button id="player-dismiss" class="player-dismiss" aria-label="Chiudi il player"><span class="ui-icon icon-close" aria-hidden="true"></span></button><div class="player-intro"><img src="/kist-sigil.svg" alt=""/><span>KIST / SoundCloud</span></div><div class="player-scene"><div class="vinyl-scene" aria-hidden="true"><div class="vinyl-disc"><div class="vinyl-art"><img src="/media/kist-fifteen-frames-clean-v2.webp" alt=""/></div><i></i></div><div class="vinyl-needle"></div></div><div class="player-character" aria-hidden="true"><KistSprite mode="mix" size={144}/></div></div><div class="player-copy"><h2 id="sound-dialog-title">Apri il sito di DJ KIST<br/>ascoltando i suoi brani.</h2><p>{featured?.title || 'Personal frequency'}</p></div><div class="player-actions"><button id="popup-play" class="popup-play"><span class="ui-icon icon-play" aria-hidden="true"></span><span class="button-label">Daje</span></button><button id="popup-quiet">Continua senza musica</button></div><p id="popup-status" role="status" aria-live="polite"></p><div id="player-mount"></div><a class="player-source" href={featured?.url || artist.soundcloud} target="_blank" rel="noopener noreferrer">SoundCloud <span class="ui-icon icon-external" aria-hidden="true"></span></a></div></dialog>
 <div class="audio-dock" hidden><button id="dock-close" aria-label="Chiudi il lettore"><span class="ui-icon icon-close" aria-hidden="true"></span></button><button id="dock-toggle" aria-label="Metti in pausa il set"><span class="ui-icon icon-pause" aria-hidden="true"></span><span class="transport-label">Pausa</span></button><button id="dock-open" aria-label="Apri il player">KIST / SoundCloud</button></div>
 <script src="../scripts/experience.ts"></script><script src="../scripts/prism.ts"></script>
 <script src="../scripts/motion.ts"></script>
 <script src="../scripts/festival.ts"></script>
 </body></html>
+

@@ -33,6 +33,9 @@ jobs:
             await page.goto('http://127.0.0.1:4321',{waitUntil:'domcontentloaded'});
             await page.waitForTimeout(2500);
             if(!await page.locator('#sound-dialog').isVisible())throw new Error('Listening invitation failed');
+            await page.locator('.player-character [data-kist-ready="true"]').waitFor();
+            const spriteFrame=await page.locator('.player-character [data-kist-sprite]').getAttribute('data-frame');
+            await page.waitForFunction(frame=>document.querySelector('.player-character [data-kist-sprite]')?.dataset.frame!==frame,spriteFrame,{timeout:4000});
             await page.screenshot({path:'screenshots/'+name+'-player.png'});
             await page.getByRole('button',{name:'Chiudi il player'}).click();
             await page.getByRole('button',{name:'Apri il player di KIST'}).click();
@@ -104,3 +107,4 @@ jobs:
         with:
           name: kist-responsive-previews
           path: screenshots
+
