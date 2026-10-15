@@ -4,16 +4,16 @@ const loader=document.querySelector<HTMLCanvasElement>('.entrance-waves');
 if(loader&&!reduced){
  const ctx=loader.getContext('2d'),started=performance.now(),w=innerWidth,h=innerHeight,dpr=Math.min(devicePixelRatio||1,2);
  loader.width=w*dpr;loader.height=h*dpr;ctx?.scale(dpr,dpr);
- const colors=['119,229,255','151,108,255','255,135,199'];
  function wave(now:number){
   if(!ctx)return;
-  const t=(now-started)/1000,arrival=Math.min(1,t/.95),release=1-Math.max(0,Math.min(1,(t-2.35)/.75));
+  const t=(now-started)/1000;
   ctx.clearRect(0,0,w,h);
-  for(let band=0;band<6;band++){
-   ctx.beginPath();ctx.strokeStyle=`rgba(${colors[band%3]},${(.11+(band%3)*.035)*arrival*release})`;ctx.lineWidth=1.15;
-   for(let x=0;x<=w;x+=6){
-    const envelope=Math.exp(-Math.pow((x-w*.5)/(w*.4),2));
-    const y=h*.49+Math.sin(x*.007-t*1.35+band*.4)*envelope*(18+band*9)*arrival+Math.sin(x*.003+t*.65)*12;
+  ctx.globalCompositeOperation='lighter';
+  for(let band=0;band<28;band++){
+   ctx.beginPath();ctx.strokeStyle=`hsla(${(band*12+t*50)%360},100%,65%,.4)`;ctx.lineWidth=1.5;
+   for(let x=0;x<=w;x+=5){
+    const envelope=Math.exp(-Math.pow((x-w*.5)/(w*.36),2));
+    const y=h*.5+Math.sin(x*.009+t*3+band*.17)*envelope*(50+band*6)+Math.cos(x*.004-t*2)*35;
     x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
    }
    ctx.stroke();
