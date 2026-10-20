@@ -17,16 +17,16 @@ The interrupted chat “Aggiorna evento ottobre” was recovered. This revision 
 
 The first world revision shipped in PR #2 (merge commit 186fda3). The development notes below describe the subsequent continuous-city experience.
 
-No source video files were found in the repository or accessible project folders. `heroVideo` remains empty and `films` contains no verified YouTube set. The Fifteen Frames Instagram embed is available; its poster and the other JPG/WebP frames are still images. Original video attachments from other chats have not been recovered. Do not substitute unverified footage or invent event details.
+No source video files were found in the repository or accessible project folders. `heroVideo` remains empty and `films` contains no verified YouTube set. The Fifteen Frames Instagram embed is available; its poster and the other JPG/WebP frames are still images. The selected video originals were supplied on 20 October 2026; see asset-manifest.md. Do not substitute unverified footage or invent event details.
 
-## Bologna / Frequency Quest
+## Bologna / 16-bit scrolling world
 
-The world is now a continuous, original imaginary Bologna: portici, Due Torri, terracotta roofs, Colli and a piazza. Six districts follow the site content from arrival and music to nights, places, the artist and booking. Camera, color, architecture and lighting interpolate rather than changing with hard cuts. This is an artistic interpretation, not a geographic map.
+The background is an imagined Bologna in 16-bit arcade pixel art: portici, piazza and rooftops share a restrained palette. Separate sky, city, transparent foreground and character planes create 2.5D parallax. There is no separate game, game dialog or required input beyond scrolling.
 
-- `WorldExperience.astro`, `world.ts` and `world-renderer.ts` own one fixed background, chapter navigation, lighting and pause. Motion preferences and document/dialog visibility control rendering. Only `kist:audio` playback state and position are consumed; no PCM, BPM or beat analysis is claimed.
-- `WorldGate.astro` is the optional quest entrance. The same SoundCloud player, widget lifecycle, persistence, transport and artwork remain in `experience.ts` without changes.
-- `world-game.ts` provides a complete optional platformer with three frequencies, safe checkpoints, coyote time, jump buffering, pause/resume, restart, keyboard and touch controls. Falling keeps collected signals. Reach the console to unlock the ending; all site content remains available without playing.
-- The game ends by linking back to real listening and dates. Opening the player uses `header-music`, avoiding the hero toggle that could stop existing playback.
-- Old isolated interludes and duplicated procedural background loops were retired. The unused Three.js festival entry is no longer shipped; the continuous world and quest use Canvas 2D with no new dependencies.
+`WorldExperience.astro`, `world.ts`, `world-renderer.ts` and `world.css` own the continuous background, six-stop navigation, lighting and pause. `WorldGate.astro` places the approved KIST character directly in the scrolling route: she runs with scroll input and pauses when it stops. The world consumes SoundCloud playback state and track progress only; no beat or spectral analysis is claimed. Rendering sleeps while a dialog is open or the document is hidden; reduced motion keeps a static composition.
 
-Build with `npm run build`. The browser workflow checks responsive layout, scrolling chapters, scene pause, game input and completion, reduced motion, poster navigation and the existing SoundCloud persistence contract. Original performance video recovery remains separate from this interaction work.
+`experience.ts` keeps the same SoundCloud widget, session and seek behavior. Its header transport now displays the current artwork and title, play/pause and close. Navigation includes Sound, Mondo KIST, Notti, Luoghi, Kist and Contatti, with an accessible compact menu on smaller screens.
+
+`hero-video.ts` selects the user-supplied desktop/mobile silent footage. The hero has its own pause control and static posters for reduced motion. The verified Plug Radio session opens through YouTube only after a click. Provenance is recorded in `asset-manifest.md`; final built-in imagegen prompts and pixel-art assets are recorded in `design/world-art-prompts.md`.
+
+Build with `npm run build`. Browser validation covers the header, hero video, scrolling world and character, parallax layers, reduced motion, media dialogs, event navigation and the SoundCloud persistence contract.
