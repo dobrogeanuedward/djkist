@@ -12,7 +12,7 @@ if(root&&canvas&&context){
  const mapToggle=document.querySelector<HTMLButtonElement>('#world-map-toggle')!;
  const labels=['L’arrivo','La centrale sonora','La piazza','Le connessioni','La terrazza','La prossima notte'];
  const ids=['home','sound','diary','places','about','contact'];
- let boundaries:number[]=[],width=0,height=0,raf=0,last=0,lastPaint=0,elapsed=0,frames=0;
+ let boundaries:number[]=[],activationInset=0,width=0,height=0,raf=0,last=0,lastPaint=0,elapsed=0,frames=0;
  let targetChapter=0,chapter=0,scroll=0,targetScroll=0,energy=0,playing=false,position=0,positionAt=0;
  let pointerX=0,pointerY=0,paused=false,initialized=false,lastDistrict=-1;
  try{paused=localStorage.getItem('kist:world-paused:v1')==='true'}catch{}
@@ -27,7 +27,7 @@ if(root&&canvas&&context){
  }
  function track(){
   const end=scrollY+innerHeight>=document.documentElement.scrollHeight-5;
-  const y=end?boundaries[boundaries.length-1]+1:scrollY+innerHeight*.22;
+  const y=end?boundaries[boundaries.length-1]+1:scrollY+activationInset;
   let index=0;while(index<boundaries.length-1&&y>=boundaries[index+1])index++;
   const span=(boundaries[index+1]??boundaries[index]+1)-boundaries[index];
   targetChapter=Math.min(5,index+Math.max(0,Math.min(1,(y-boundaries[index])/Math.max(1,span))));
@@ -35,6 +35,10 @@ if(root&&canvas&&context){
   if(motion.matches&&!paused){chapter=targetChapter;scroll=targetScroll;paint()}
  }
  function measure(){
+  // Anchor landings include both page scroll padding and section scroll margin.
+  // Keep the map aligned with the reached section, including short viewports.
+  const anchorInset=(parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)||0)+Math.max(...ids.map(id=>parseFloat(getComputedStyle(document.getElementById(id)!).scrollMarginTop)||0));
+  activationInset=Math.max(innerHeight*.22,anchorInset+4);
   boundaries=ids.map(id=>document.getElementById(id)!.getBoundingClientRect().top+scrollY);
   width=Math.round(innerWidth*Math.min(devicePixelRatio||1,1.25));height=Math.round(innerHeight*Math.min(devicePixelRatio||1,1.25));
   // Cap rendering cost on large monitors; CSS scales the coherent composition.
