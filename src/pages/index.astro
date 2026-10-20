@@ -15,9 +15,10 @@ import KistInterlude from '../components/KistInterlude.astro';
 import '../styles/places.css';
 import '../styles/sprites.css';
 import '../styles/opening.css';
-const today = new Date().toISOString().slice(0,10);
-const future = events.filter(e => e.date >= today);
+const today = new Date().toLocaleDateString('en-CA', {timeZone:'Europe/Rome'});
+const future = events.filter(e => e.date >= today).sort((a,b)=>a.date.localeCompare(b.date));
 const past = events.filter(e => e.date < today).sort((a,b)=>b.date.localeCompare(a.date));
+const showFuture = future.length > 0;
 const featured = mixes[0];
 ---
 <!doctype html>
@@ -66,8 +67,8 @@ const featured = mixes[0];
 {films.length > 0 && <section class="film-section" aria-label="Video di KIST">{films.map(film=><div class="film"><button class="film-open" data-youtube={film.youtubeId} aria-label={'Guarda '+film.title}><img src={'https://i.ytimg.com/vi/'+film.youtubeId+'/hqdefault.jpg'} alt={film.title} loading="lazy"/><span class="film-text"><small>{film.label}</small><strong>{film.title}</strong><span>Guarda il set</span></span></button></div>)}</section>}
 <section class="real-sessions section" aria-label="KIST, sessioni e immagini reali"><div class="section-heading"><span>02 / IN THE ROOM</span><h2>Behind the decks.<br/><em>Inside the moment.</em></h2><p>KIST alla console.<br/>La sessione originale.</p></div><div class="session-stage"><div class="session-identity"><span class="session-edition">FIFTEEN FRAMES / S01—E29</span><strong>In her<br/><em>element.</em></strong><div class="session-caption"><img src="/kist-sigil.svg" alt=""/><p>Una console.<br/>Il suo modo di abitarla.</p></div></div><div class="instagram-sessions"><article><div class="session-media"><button class="session-watch" aria-label="Guarda la sessione Fifteen Frames"><img src="/media/kist-fifteen-frames-clean-v2.webp" alt="KIST alla console — Fifteen Frames" loading="lazy"/><span><i class="ui-icon icon-play" aria-hidden="true"></i>Guarda la sessione</span></button></div><a href="https://www.instagram.com/reel/DbbEcZJt6uv/" target="_blank" rel="noopener noreferrer">S01—E29 / Guarda la sessione su Instagram</a></article></div></div></section><KistInterlude mode="run" id="frequency-break"/><section class="diary section" id="diary">
 <div class="night-heading"><h2>Notti.</h2><span>Passate e future.</span></div>
-<div class="night-tabs" role="group" aria-label="Mostra eventi"><button aria-pressed="true" data-events="past">Passate <span>{past.length}</span></button><button aria-pressed="false" data-events="future">Future <span>{future.length}</span></button></div>
-<div id="past-events"><EventViewer items={past} label="Archivio eventi di KIST"/></div><div id="future-events" hidden><EventViewer items={future} label="Prossimi eventi di KIST"/></div>
+<div class="night-tabs" role="group" aria-label="Mostra eventi"><button aria-pressed={!showFuture} data-events="past">Passate <span>{past.length}</span></button><button aria-pressed={showFuture} data-events="future">Future <span>{future.length}</span></button></div>
+<div id="past-events" hidden={showFuture}><EventViewer items={past} label="Archivio eventi di KIST"/></div><div id="future-events" hidden={!showFuture}><EventViewer items={future} label="Prossimi eventi di KIST"/></div>
 </section>
 {photographs.length > 0 && <section class="photo-wall" aria-label="Diario fotografico">{photographs.map((photo,i)=><button class={'photo photo-'+i%3} data-photo={photo.src} data-caption={photo.caption} aria-label={'Ingrandisci: '+photo.alt}><img src={photo.src} alt={photo.alt} loading="lazy"/><span>{photo.caption}</span></button>)}</section>}
 <KistInterlude mode="groove"/>

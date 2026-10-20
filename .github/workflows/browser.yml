@@ -52,9 +52,29 @@ jobs:
             const checks=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,canvas:!!document.querySelector('#prism'),brand:document.querySelector('h1')?.textContent?.trim()||!!document.querySelector('h1 img')}));
             await page.getByRole('button',{name:/Future/}).click();
             if(!await page.locator('#future-events').isVisible())throw new Error('Event tab failed');
+            // Keep this check valid after the event moves into the archive.
+            const marketIsUpcoming=await page.locator('#future-events time[datetime="2026-10-25"]').count();
+            if(!marketIsUpcoming)await page.getByRole('button',{name:/Passate/}).click();
+            const future=page.locator(marketIsUpcoming?'#future-events':'#past-events');
+            await future.getByRole('button',{name:'Mostra Market · KIST DJ set',exact:true}).click();
+            if(!await future.getByRole('heading',{name:'Market · KIST DJ set',exact:true}).isVisible())throw new Error('October market missing');
+            const marketDetails=future.locator('.night-details').filter({has:page.locator('time[datetime="2026-10-25"]')});
+            if(await marketDetails.locator('time').getAttribute('datetime')!=='2026-10-25')throw new Error('Wrong market date');
+            if(!await marketDetails.getByText('Market dalle 17:00',{exact:true}).isVisible())throw new Error('Confirmed market opening missing');
+            if(await marketDetails.getByRole('link',{name:'Post Instagram',exact:true}).getAttribute('href')!=='https://www.instagram.com/p/DdGmU9uoaxH/')throw new Error('Wrong official market post');
+            if(await future.getByRole('button',{name:'Mostra Market · KIST DJ set',exact:true}).locator('img').getAttribute('src')!=='/media/cantina-letteraria-market-2026-10-25.jpg')throw new Error('Wrong market poster');
+            await page.getByRole('link',{name:'Diary',exact:true}).click();
+            await page.waitForTimeout(800);
+            await page.screenshot({path:'screenshots/'+name+'-october-market.png'});
+            await future.getByRole('button',{name:'Apri locandina Market · KIST DJ set',exact:true}).click();
+            if(!await page.locator('#media-dialog').isVisible())throw new Error('Poster zoom failed');
+            if(await page.locator('#media-content img').count()===0 && await page.locator('#media-dialog img').count()===0)throw new Error('Poster image absent');
+            await page.getByRole('button',{name:'Chiudi',exact:true}).click();
+
             await page.getByRole('button',{name:/Passate/}).click();
+            const currentTitle=await page.locator('#past-events [data-night-title]:visible').innerText();
             await page.getByRole('button',{name:'Evento successivo'}).click();
-            if(!await page.getByRole('heading',{name:'Love (P)ride Parade',exact:true}).isVisible())throw new Error('Event navigation failed');
+            if(await page.locator('#past-events [data-night-title]:visible').innerText()===currentTitle)throw new Error('Event navigation failed');
             await page.getByRole('link',{name:'Diary',exact:true}).click();
             await page.waitForTimeout(800);
             const night=await page.locator('#diary').boundingBox();
