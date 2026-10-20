@@ -245,7 +245,9 @@ function initFrequencyQuest() {
  }
  function frame(now:number) {
   raf=0;if(disposed||!dialog!.open||document.hidden||state!=='running')return;
-  const dt=last?Math.min((now-last)/1000,.04):0;last=now;time+=dt;
+  // Keep real-time movement on slower devices. Fixed physics substeps below
+  // prevent tunnelling; hidden-page pauses reset the clock before resuming.
+  const dt=last?Math.min((now-last)/1000,.1):0;last=now;time+=dt;
   // Fixed substeps prevent tunnelling through a platform after a slow frame.
   let remainder=dt;while(remainder>0&&state==='running'){const step=Math.min(remainder,1/120);move(step);remainder-=step;}
   draw();if(state==='running')raf=requestAnimationFrame(frame);

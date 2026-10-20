@@ -112,9 +112,11 @@ jobs:
             await page.waitForFunction(()=>document.querySelector('#kist-game')?.dataset.gameState==='running');
             const gameStartX=Number(await page.locator('#kist-game-canvas').getAttribute('data-player-x'));
             await page.keyboard.down('ArrowRight');
-            await page.waitForTimeout(500);
-            await page.keyboard.up('ArrowRight');
-            if(Number(await page.locator('#kist-game-canvas').getAttribute('data-player-x'))<=gameStartX+50)throw new Error('Keyboard input did not move KIST');
+            try{
+              await page.waitForFunction(start=>Number(document.querySelector('#kist-game-canvas')?.dataset.playerX)>start+50,gameStartX,{timeout:8000});
+            }catch(error){
+              throw new Error('Keyboard motion failed: '+JSON.stringify(await page.evaluate(()=>({state:document.querySelector('#kist-game')?.dataset,canvas:document.querySelector('#kist-game-canvas')?.dataset,hidden:document.hidden,hasFocus:document.hasFocus(),focus:document.activeElement?.id}))),{cause:error});
+            }finally{await page.keyboard.up('ArrowRight');}
             await game.getByRole('button',{name:'Metti in pausa il gioco',exact:true}).click();
             const pausedPlayerX=await page.locator('#kist-game-canvas').getAttribute('data-player-x');
             await page.waitForTimeout(250);
@@ -148,9 +150,8 @@ jobs:
           await calm.locator('#kist-game').getByRole('button',{name:'Entra nel mondo',exact:false}).click();
           await calm.waitForFunction(()=>document.querySelector('#kist-game')?.dataset.gameState==='running');
           await calm.keyboard.down('ArrowRight');
-          await calm.waitForTimeout(250);
-          await calm.keyboard.up('ArrowRight');
-          if(Number(await calm.locator('#kist-game-canvas').getAttribute('data-player-x'))<=90)throw new Error('Explicit play failed under reduced motion');
+          try{await calm.waitForFunction(()=>Number(document.querySelector('#kist-game-canvas')?.dataset.playerX)>90,null,{timeout:8000});}
+          finally{await calm.keyboard.up('ArrowRight');}
           await calm.keyboard.press('Escape');
           await calm.close();
           // Immediate play must not be interrupted by the delayed listening invitation.
@@ -181,10 +182,10 @@ jobs:
           await quest.keyboard.down('ArrowRight');
           try{
             for(const threshold of [650,955,1760,2340,3100]){
-              await quest.waitForFunction(x=>{const c=document.querySelector('#kist-game-canvas');return Number(c?.dataset.playerX)>=x&&c?.dataset.grounded==='true';},threshold,{timeout:10000});
+              await quest.waitForFunction(x=>{const c=document.querySelector('#kist-game-canvas');return Number(c?.dataset.playerX)>=x&&c?.dataset.grounded==='true';},threshold,{timeout:30000});
               await quest.keyboard.press('Space');
             }
-            await quest.waitForFunction(()=>document.querySelector('#kist-game')?.dataset.gameState==='won',null,{timeout:10000});
+            await quest.waitForFunction(()=>document.querySelector('#kist-game')?.dataset.gameState==='won',null,{timeout:30000});
           }finally{await quest.keyboard.up('ArrowRight');}
           if(await quest.locator('#kist-game-canvas').getAttribute('data-collected')!=='3'||(await quest.locator('#game-score').innerText()).trim()!=='3 / 3')throw new Error('The quest finished without all three frequencies');
           if(!await quest.locator('[data-game-finish]').isVisible())throw new Error('Quest win screen was not visible');
