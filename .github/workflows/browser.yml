@@ -153,6 +153,15 @@ jobs:
           if(Number(await calm.locator('#kist-game-canvas').getAttribute('data-player-x'))<=90)throw new Error('Explicit play failed under reduced motion');
           await calm.keyboard.press('Escape');
           await calm.close();
+          // Immediate play must not be interrupted by the delayed listening invitation.
+          const early=await browser.newPage({viewport:{width:1440,height:1000}});
+          await early.goto('http://127.0.0.1:4321',{waitUntil:'domcontentloaded'});
+          await early.getByRole('button',{name:'Gioca',exact:true}).click();
+          await early.locator('#kist-game').getByRole('button',{name:'Entra nel mondo',exact:false}).click();
+          await early.waitForTimeout(3800);
+          if(!await early.locator('#kist-game').isVisible()||await early.locator('#sound-dialog').isVisible())throw new Error('The entry invitation interrupted immediate play');
+          await early.keyboard.press('Escape');
+          await early.close();
           // A real input path must collect all signals and reach the console.
           // A deterministic provider stub proves that opening/playing the quest cannot steal transport.
           const quest=await browser.newPage({viewport:{width:1440,height:1000}});

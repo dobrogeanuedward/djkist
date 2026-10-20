@@ -266,6 +266,9 @@ function initFrequencyQuest() {
  function openGame(event:Event) {
   opener=event.currentTarget instanceof HTMLElement?event.currentTarget:document.activeElement instanceof HTMLElement?document.activeElement:undefined;
   if(dialog!.open)return;
+  // Choosing play also resolves the delayed entry invitation. Dismiss only its UI;
+  // the existing handler never toggles or replaces the SoundCloud transport.
+  document.querySelector<HTMLButtonElement>('#player-dismiss')?.click();
   dialog!.showModal();loadAssets();resize();
   if(started&&state!=='won'){updateState('paused');announce('La tua partita è qui. Premi Riprendi per tornare in pista.');draw();pauseButton.focus({preventScroll:true});}
   else if(state==='won')dialog!.querySelector<HTMLElement>('[data-game-listen]')?.focus({preventScroll:true});
