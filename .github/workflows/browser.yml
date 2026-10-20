@@ -52,7 +52,11 @@ jobs:
             const checks=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,canvas:!!document.querySelector('#prism'),brand:document.querySelector('h1')?.textContent?.trim()||!!document.querySelector('h1 img')}));
             await page.getByRole('button',{name:/Future/}).click();
             if(!await page.locator('#future-events').isVisible())throw new Error('Event tab failed');
-            const future=page.locator('#future-events');
+            // Keep this check valid after the event moves into the archive.
+            const marketIsUpcoming=await page.locator('#future-events time[datetime="2026-10-25"]').count();
+            if(!marketIsUpcoming)await page.getByRole('button',{name:/Passate/}).click();
+            const future=page.locator(marketIsUpcoming?'#future-events':'#past-events');
+            await future.getByRole('button',{name:'Mostra Market · KIST DJ set',exact:true}).click();
             if(!await future.getByRole('heading',{name:'Market · KIST DJ set',exact:true}).isVisible())throw new Error('October market missing');
             if(await future.locator('time').getAttribute('datetime')!=='2026-10-25')throw new Error('Wrong market date');
             if(!await future.getByText('Orario da annunciare',{exact:true}).isVisible())throw new Error('Unconfirmed time not disclosed');
@@ -67,8 +71,9 @@ jobs:
             await page.getByRole('button',{name:'Chiudi',exact:true}).click();
 
             await page.getByRole('button',{name:/Passate/}).click();
+            const currentTitle=await page.locator('#past-events [data-night-title]:visible').innerText();
             await page.getByRole('button',{name:'Evento successivo'}).click();
-            if(!await page.getByRole('heading',{name:'Love (P)ride Parade',exact:true}).isVisible())throw new Error('Event navigation failed');
+            if(await page.locator('#past-events [data-night-title]:visible').innerText()===currentTitle)throw new Error('Event navigation failed');
             await page.getByRole('link',{name:'Diary',exact:true}).click();
             await page.waitForTimeout(800);
             const night=await page.locator('#diary').boundingBox();
