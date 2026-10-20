@@ -2,7 +2,7 @@
 body.world-enabled{background:#090b17;isolation:isolate}
 .world-scene{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;background:radial-gradient(ellipse at 80% 70%,#3d2033,#090b17 72%);contain:strict}
 .world-scene canvas{display:block;width:100%;height:100%;image-rendering:auto}
-.world-reading-light{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 43%,#070b1599 0,transparent 75%),linear-gradient(180deg,#0709122b,transparent 30%,#07091226)}
+.world-reading-light{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 43%,#070b1526 0,transparent 75%),linear-gradient(180deg,#0709121a,transparent 30%,#07091212)}
 .world-enabled main,.world-enabled footer{position:relative}
 .world-enabled .hero{background:transparent}
 .world-enabled .hero .hero-media{background:transparent}
@@ -11,7 +11,7 @@ body.world-enabled{background:#090b17;isolation:isolate}
 .world-enabled #prism{display:none}
 .world-enabled .sound-section,.world-enabled .real-sessions,.world-enabled .diary.section,.world-enabled .places-section,.world-enabled .about,.world-enabled .photo-wall,.world-enabled .collab-section{background:transparent}
 .world-enabled .section{border-top:1px solid #b8a2e015}
-.world-enabled .sound-section,.world-enabled .diary.section,.world-enabled .places-section,.world-enabled .about{background:linear-gradient(90deg,#080c158c,#080c1540 45%,#080c1560)}
+.world-enabled .sound-section,.world-enabled .diary.section,.world-enabled .places-section,.world-enabled .about{background:linear-gradient(90deg,#080c1520,transparent 45%,#080c151a)}
 .world-enabled .sound-section:before,.world-enabled .sound-section:after,.world-enabled .real-sessions:before,.world-enabled .real-sessions:after{display:none}
 .world-enabled .real-sessions{padding-top:72px;padding-bottom:80px}
 .world-enabled .session-heading{max-width:960px;margin:0 auto 28px}
@@ -67,7 +67,7 @@ body.world-enabled{background:#090b17;isolation:isolate}
 .world-map-foot>span{font-size:10px;color:#a8a1bf}
 .world-map-foot button{display:flex;justify-content:space-between;align-items:center;min-height:44px;border:1px solid #c9ff5233;background:#c9ff5209;border-radius:12px;padding:10px 13px;color:#c9ff52;font-size:12px}
 /* The optional quest belongs to the city; it never gates the portfolio. */
-.world-gate{display:grid;grid-template-columns:1fr 1fr;gap:4%;min-height:550px;align-items:center;position:relative;overflow:hidden;background:linear-gradient(90deg,#090b1799,transparent);scroll-margin-top:85px}
+.world-gate{display:grid;grid-template-columns:1fr 1fr;gap:4%;min-height:550px;align-items:center;position:relative;overflow:hidden;background:linear-gradient(90deg,#090b1740,transparent);scroll-margin-top:85px}
 .gate-copy{position:relative;z-index:2;max-width:510px}
 .gate-copy h2{font-family:'Space Grotesk',sans-serif;font-size:clamp(46px,6.5vw,98px);font-weight:400;letter-spacing:-.065em;line-height:.98;margin:25px 0}
 .gate-copy h2 em{font-family:Georgia,serif;letter-spacing:-.06em;font-weight:400;color:#c9ff52}
