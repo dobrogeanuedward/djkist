@@ -10,3 +10,5 @@
 /* Poster access keeps tall original flyers readable at every viewport. */
 .night-actions{display:flex;flex-wrap:wrap;gap:8px}.night-actions button{font:inherit;color:inherit;cursor:pointer}.night-description{grid-column:2/-1;margin:0;color:#e6dfff;font-size:14px;line-height:1.5}.night-meta{flex-wrap:wrap}.night-sleeve:only-child{transform:translate(-50%,-50%)}
 @media(max-width:800px){.night-actions{grid-column:1/-1}.night-actions .night-link{flex:1}.night-description{grid-column:1/-1;font-size:12px}}
+
+.night-actions .night-link{gap:8px;padding-inline:12px;white-space:nowrap;font-size:14px}

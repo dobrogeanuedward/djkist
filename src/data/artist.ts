@@ -10,12 +10,12 @@ export const mixes = [
 ];
 export const films: {title:string;youtubeId:string;label:string}[] = [];
 export const photographs: {src:string;alt:string;caption:string}[] = [{src:'/media/kist-fifteen-frames-clean-second.webp',alt:'KIST alla console, secondo fotogramma ritoccato',caption:'Fifteen Frames'},{src:'/media/kist-techno-console.jpg',alt:'Dettaglio della console nel reel di KIST',caption:'Dalla console'}];
-export type ArtistEvent = {date:string;name:string;place:string;url?:string;cover?:string;time?:string;organizer:string;description?:string};
+export type ArtistEvent = {date:string;name:string;place:string;url?:string;cover?:string;time?:string;organizer:string;description?:string;showPoster?:boolean;urlLabel?:string};
 export const events: ArtistEvent[] = [{date:'2026-06-20',name:'Love (P)ride Parade',cover:'/media/love-pride-2026.jpg',place:'Medicina',time:'Dalle 14:30',organizer:'Love (P)ride',url:'https://www.facebook.com/100090713703534/posts/960403370326778/'}];
 
 // Original poster supplied on 15 October; year confirmed by Edo. See ASSET-SOURCES.md.
-// No time, admission conditions, address or event URL are stated in that source.
-events.push({date:'2026-10-25',name:'Market · KIST DJ set',place:'Cantina Letteraria · Bologna',organizer:'Cantina Letteraria',cover:'/media/cantina-letteraria-market-2026-10-25.jpg',description:'Market alla Cantina Letteraria con DJ set di KIST.'});
+// Official 25 October market poster confirms the event opens at 17:00; no separate KIST set time is announced.
+events.push({date:'2026-10-25',name:'Market · KIST DJ set',place:'Cantina Letteraria · Via Mascarella 35/A, Bologna',time:'Market dalle 17:00',organizer:'Cantina Letteraria',cover:'/media/cantina-letteraria-market-2026-10-25.jpg',showPoster:true,url:'https://www.instagram.com/p/DdGmU9uoaxH/',urlLabel:'Post Instagram',description:'Market con DJ set di KIST. L’orario di inizio del set non è indicato nel programma.'});
 
 events.push({date:'2026-07-09',name:'Sinergie',place:'Filla · Montagnola, Bologna',time:'Dalle 22:00',organizer:'Up To You',cover:'/media/sinergie-2026.jpg',url:'https://www.instagram.com/thats_kist/p/DadiXP_KgNF/'},{date:'2026-06-10',name:'KIST DJ Set',place:'Cantina Letteraria · Bologna',time:'19:00',organizer:'Cantina Letteraria',cover:'/media/cantina-letteraria-2026.jpg',url:'https://www.instagram.com/cantinaletterariabologna/p/DY7Oy9Gowk_/'});
 export const heroSlides: {src:string;mobile?:string;alt:string;position?:string;mobilePosition?:string}[] = [{src:'/media/kist-fifteen-frames-clean-v2.webp',alt:'KIST alla console — Fifteen Frames, immagine ritoccata',position:'center 58%',mobilePosition:'48% 58%'},{src:'/media/kist-fifteen-frames-clean-second.webp',alt:'KIST — Fifteen Frames, secondo fotogramma ritoccato',position:'center 58%',mobilePosition:'48% 58%'}];

@@ -60,8 +60,8 @@ jobs:
             if(!await future.getByRole('heading',{name:'Market · KIST DJ set',exact:true}).isVisible())throw new Error('October market missing');
             const marketDetails=future.locator('.night-details').filter({has:page.locator('time[datetime="2026-10-25"]')});
             if(await marketDetails.locator('time').getAttribute('datetime')!=='2026-10-25')throw new Error('Wrong market date');
-            if(!await marketDetails.getByText('Orario da annunciare',{exact:true}).isVisible())throw new Error('Unconfirmed time not disclosed');
-            if(await marketDetails.getByRole('link',{name:'La serata',exact:true}).count())throw new Error('Unverified event URL');
+            if(!await marketDetails.getByText('Market dalle 17:00',{exact:true}).isVisible())throw new Error('Confirmed market opening missing');
+            if(await marketDetails.getByRole('link',{name:'Post Instagram',exact:true}).getAttribute('href')!=='https://www.instagram.com/p/DdGmU9uoaxH/')throw new Error('Wrong official market post');
             if(await future.getByRole('button',{name:'Mostra Market · KIST DJ set',exact:true}).locator('img').getAttribute('src')!=='/media/cantina-letteraria-market-2026-10-25.jpg')throw new Error('Wrong market poster');
             await page.getByRole('link',{name:'Diary',exact:true}).click();
             await page.waitForTimeout(800);
