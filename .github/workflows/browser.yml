@@ -26,7 +26,8 @@ jobs:
           import { chromium } from 'playwright';
           import { mkdir } from 'node:fs/promises';
           await mkdir('screenshots',{recursive:true});
-          const browser=await chromium.launch({args:['--enable-webgl','--use-gl=angle','--use-angle=swiftshader']});
+          // The world is Canvas 2D; Chromium's default raster path avoids forcing software WebGL.
+          const browser=await chromium.launch();
           for(const [name,width,height] of [['desktop',1440,1000],['portrait-desktop',801,1100],['mobile',390,844],['small-mobile',320,740]]){
             const page=await browser.newPage({viewport:{width,height}});
             const errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -38,13 +39,13 @@ jobs:
               return {logoWidth:logo.width,characterWidth:character.width,overlap:logo.bottom-character.top,logoHeight:logo.height};
             });
             if(opening.characterWidth>opening.logoWidth*.4||opening.overlap<0||opening.overlap>opening.logoHeight*.35)throw new Error('Opening character obscures the logo');
-            await page.screenshot({path:'screenshots/'+name+'-opening.png'});
+            await page.screenshot({animations:'disabled',path:'screenshots/'+name+'-opening.png'});
             await page.locator('#sound-dialog').waitFor({state:'visible',timeout:7000});
             if(!await page.locator('#sound-dialog').isVisible())throw new Error('Listening invitation failed');
             await page.locator('.player-character [data-kist-ready="true"]').waitFor();
             const spriteFrame=await page.locator('.player-character [data-kist-sprite]').getAttribute('data-frame');
             await page.waitForFunction(frame=>document.querySelector('.player-character [data-kist-sprite]')?.dataset.frame!==frame,spriteFrame,{timeout:4000});
-            await page.screenshot({path:'screenshots/'+name+'-player.png'});
+            await page.screenshot({animations:'disabled',path:'screenshots/'+name+'-player.png'});
             await page.getByRole('button',{name:'Chiudi il player'}).click();
             await page.getByRole('button',{name:'Apri il player di KIST'}).click();
             if(!await page.locator('#sound-dialog').isVisible())throw new Error('Player reopen failed');
@@ -65,7 +66,7 @@ jobs:
             if(await future.getByRole('button',{name:'Mostra Market · KIST DJ set',exact:true}).locator('img').getAttribute('src')!=='/media/cantina-letteraria-market-2026-10-25.jpg')throw new Error('Wrong market poster');
             await page.getByRole('link',{name:'Diary',exact:true}).click();
             await page.waitForTimeout(800);
-            await page.screenshot({path:'screenshots/'+name+'-october-market.png'});
+            await page.screenshot({animations:'disabled',path:'screenshots/'+name+'-october-market.png'});
             await future.getByRole('button',{name:'Apri locandina Market · KIST DJ set',exact:true}).click();
             if(!await page.locator('#media-dialog').isVisible())throw new Error('Poster zoom failed');
             if(await page.locator('#media-content img').count()===0 && await page.locator('#media-dialog img').count()===0)throw new Error('Poster image absent');
@@ -79,7 +80,7 @@ jobs:
             await page.waitForTimeout(800);
             const night=await page.locator('#diary').boundingBox();
             if(width<800&&night.height>height-90)throw new Error('Night archive exceeds mobile viewport');
-            await page.screenshot({path:'screenshots/'+name+'-nights.png'});
+            await page.screenshot({animations:'disabled',path:'screenshots/'+name+'-nights.png'});
             const world=page.locator('#kist-world');
             await page.locator('#kist-world[data-world-ready="true"]').waitFor();
             const worldSize=await page.locator('#kist-world-canvas').evaluate(el=>{const b=el.getBoundingClientRect();return {left:b.left,top:b.top,width:b.width,height:b.height,viewportWidth:document.documentElement.clientWidth,viewportHeight:innerHeight};});
@@ -103,7 +104,7 @@ jobs:
             await page.locator('#world-motion').click();
             await page.waitForFunction(frame=>document.querySelector('#kist-world')?.dataset.worldFrame!==frame,pausedWorldFrame,{timeout:4000});
             await page.waitForFunction(frame=>document.querySelector('#frequency-break [data-kist-sprite]')?.dataset.frame!==frame,pausedSpriteFrame,{timeout:4000});
-            await page.screenshot({path:'screenshots/'+name+'-world.png'});
+            await page.screenshot({animations:'disabled',path:'screenshots/'+name+'-world.png'});
             const gameOpener=page.getByRole('button',{name:'Gioca',exact:true});
             await gameOpener.click();
             const game=page.locator('#kist-game');
@@ -121,7 +122,7 @@ jobs:
             const pausedPlayerX=await page.locator('#kist-game-canvas').getAttribute('data-player-x');
             await page.waitForTimeout(250);
             if(await page.locator('#kist-game-canvas').getAttribute('data-player-x')!==pausedPlayerX)throw new Error('The quest kept moving while paused');
-            await page.screenshot({path:'screenshots/'+name+'-quest.png'});
+            await page.screenshot({animations:'disabled',path:'screenshots/'+name+'-quest.png'});
             await page.keyboard.press('Escape');
             if(await game.isVisible())throw new Error('Escape did not close the quest');
             if(!await gameOpener.evaluate(el=>document.activeElement===el))throw new Error('Quest close lost its opener focus');
@@ -130,7 +131,7 @@ jobs:
             await page.getByRole('button',{name:'Chiudi',exact:true}).click();
             for(const section of await page.locator('main>section').all())await section.scrollIntoViewIfNeeded();
             await page.evaluate(()=>scrollTo(0,0));
-            await page.screenshot({path:'screenshots/'+name+'.png',fullPage:true});
+            await page.screenshot({animations:'disabled',path:'screenshots/'+name+'.png',fullPage:true});
             console.log(name,JSON.stringify(checks),JSON.stringify(errors));
             if(checks.overflow||!checks.canvas||errors.length)throw new Error('Browser validation failed');
             await page.close();
@@ -160,7 +161,7 @@ jobs:
           await early.getByRole('button',{name:'Gioca',exact:true}).click();
           await early.locator('#kist-game').getByRole('button',{name:'Entra nel mondo',exact:false}).click();
           await early.waitForTimeout(3800);
-          if(!await early.locator('#kist-game').isVisible()||await early.locator('#sound-dialog').isVisible())throw new Error('The entry invitation interrupted immediate play');
+          if(!await early.locator('#kist-game').isVisible()||await early.locator('#kist-game').getAttribute('data-game-state')!=='running'||await early.locator('#sound-dialog').isVisible())throw new Error('The entry invitation interrupted immediate play');
           await early.keyboard.press('Escape');
           await early.close();
           // A real input path must collect all signals and reach the console.
@@ -189,7 +190,7 @@ jobs:
           }finally{await quest.keyboard.up('ArrowRight');}
           if(await quest.locator('#kist-game-canvas').getAttribute('data-collected')!=='3'||(await quest.locator('#game-score').innerText()).trim()!=='3 / 3')throw new Error('The quest finished without all three frequencies');
           if(!await quest.locator('[data-game-finish]').isVisible())throw new Error('Quest win screen was not visible');
-          await quest.screenshot({path:'screenshots/desktop-quest-won.png'});
+          await quest.screenshot({animations:'disabled',path:'screenshots/desktop-quest-won.png'});
           await quest.getByRole('button',{name:'Ascolta KIST',exact:true}).click();
           if(!await quest.locator('#sound-dialog').isVisible()||await quest.locator('#kist-game').isVisible())throw new Error('Winning quest handoff did not open the player');
           if(await quest.locator('#player-mount iframe').count()!==1||await quest.locator('#player-mount iframe').getAttribute('src')!==originalAudioSource)throw new Error('Quest replaced or duplicated the SoundCloud mount');
@@ -203,7 +204,7 @@ jobs:
             await phone.getByRole('button',{name:'Gioca',exact:true}).click();
             const controls=await phone.locator('#kist-game').evaluate(el=>[...el.querySelectorAll('[data-game-close],[data-game-left],[data-game-right],[data-game-jump]')].map(button=>{const b=button.getBoundingClientRect();return {label:button.getAttribute('aria-label')||button.textContent,left:b.left,top:b.top,right:b.right,bottom:b.bottom,width:innerWidth,height:innerHeight};}));
             if(controls.some(b=>b.left<0||b.top<0||b.right>b.width+1||b.bottom>b.height+1))throw new Error(name+' hides a game control: '+JSON.stringify(controls));
-            await phone.screenshot({path:'screenshots/'+name+'-quest.png'});
+            await phone.screenshot({animations:'disabled',path:'screenshots/'+name+'-quest.png'});
             await phone.keyboard.press('Escape');
             await phone.close();
           }
