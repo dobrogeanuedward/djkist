@@ -10,3 +10,12 @@ Public profile: https://www.instagram.com/thats_kist/
 Only publicly displayed images were downloaded. Instagram requires sign-in for opening the complete posts and carousel. No private assets, hidden endpoints or authentication bypass were used. Public preview resolution is limited; original files from the artist are still preferable. Rights clearance for promotional reuse should be confirmed with the artist and photographers before public launch.
 
 The All For Music 7 July carousel first slide shows MMELL, not KIST: excluded from all site assets.
+
+## Cantina Letteraria market — 25 October 2026
+
+- Original flyer supplied by Edo on 15 October 2026 at 17:35 UTC: `92d0da59-d347-4a7e-a34f-2523685eb6b8.jpeg`, Library `libfile_34adffa64e3c8191889451c8816cc064` (DJ KIST folder). Preserved unchanged as `public/media/cantina-letteraria-market-2026-10-25.jpg`.
+- Visually verified: “Cantina Letteraria”, “AL MARKET DEL 25/10” and “DJ SET DELLA SPLENDIDA KIST”. Edo separately confirmed all three supplied event posters refer to 2026 in the 15–16 October conversation. Bologna is confirmed by the task brief and existing venue context.
+- The poster names market exhibitors, not a DJ lineup. The site's event title is a descriptive label, not an invented official event name.
+- The source does not provide a start/end time, street address, admission price, booking conditions or event-specific URL. Those fields are omitted; the UI explicitly says “Orario da annunciare”. The poster can be opened at full size.
+- Nothing is inherited from the 10 June event: its 19:00 time and Instagram post remain attached only to June.
+- Release status: prepared for preview; confirm the missing time or a release with the time unannounced before production.
