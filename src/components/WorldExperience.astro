@@ -1,0 +1,37 @@
+---
+const districts = [
+ {id:'home',name:'L’arrivo',detail:'Bologna, dopo il tramonto'},
+ {id:'sound',name:'La centrale sonora',detail:'Scegli la tua frequenza'},
+ {id:'diary',name:'La piazza',detail:'Le notti, passate e future'},
+ {id:'places',name:'Le connessioni',detail:'I luoghi della città'},
+ {id:'about',name:'La terrazza',detail:'La persona dietro il suono'},
+ {id:'contact',name:'La prossima notte',detail:'Facciamola succedere'},
+];
+---
+<div id="kist-world" class="world-scene" aria-hidden="true" data-world-chapter="0" data-world-paused="false">
+ <canvas id="kist-world-canvas"></canvas><div class="world-reading-light"></div>
+</div>
+<aside class="world-dock" aria-label="Mondo KIST">
+ <div class="world-map" id="world-map" hidden>
+  <div class="world-map-heading"><span>BOLOGNA / PERSONAL FREQUENCY</span><strong>Una città.<br/>La tua frequenza.</strong><p>Segui il suono. Scegli dove andare.</p></div>
+  <nav aria-label="Esplora il mondo KIST"><ol>{districts.map((district,i)=><li><a href={'#'+district.id} data-world-route={i}><span class="world-route-number">0{i+1}</span><span><strong>{district.name}</strong><small>{district.detail}</small></span><span aria-hidden="true">↗</span></a></li>)}</ol></nav>
+  <div class="world-map-foot"><span data-world-audio>La città aspetta il suono.</span><button data-game-open>Gioca a Frequency Quest <span aria-hidden="true">↗</span></button></div>
+ </div>
+ <div class="world-dock-bar">
+  <button id="world-map-toggle" aria-expanded="false" aria-controls="world-map"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Z M9 3v15 M15 6v15"/></svg><span><small>BOLOGNA / KIST WORLD</small><strong data-world-label>L’arrivo</strong></span><span class="world-audio-light" aria-hidden="true"></span></button>
+  <button id="world-motion" aria-pressed="false" aria-label="Metti in pausa lo sfondo"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5v10 M13 5v10"/></svg></button>
+  <button class="world-play" data-game-open><span aria-hidden="true">▷</span> Gioca</button>
+ </div>
+ <div class="world-route-progress" aria-hidden="true">{districts.map((_,i)=><i data-world-stop={i}></i>)}</div>
+</aside>
+<dialog id="kist-game" aria-labelledby="kist-game-title">
+ <div class="game-shell">
+  <header class="game-header"><div><span>KIST / FREQUENCY QUEST</span><h2 id="kist-game-title">Tre frequenze. Una console.</h2></div><button data-game-close aria-label="Chiudi il gioco"><span aria-hidden="true">×</span></button></header>
+  <div class="game-status"><p id="game-message" role="status">Dai portici alla piazza. Accendi la notte.</p><span id="game-score" aria-label="Frequenze raccolte">0 / 3</span><button data-game-reset aria-label="Ricomincia il gioco" title="Ricomincia">↺</button><button data-game-pause aria-pressed="false">Pausa</button></div>
+  <div class="game-stage"><canvas id="kist-game-canvas" tabindex="0" aria-label="Mondo KIST. Frecce per muoverti e spazio per saltare."></canvas>
+   <div class="game-start" data-game-start><span>BOLOGNA, SU UN’ALTRA FREQUENZA</span><h3>La notte aspetta te.</h3><p>Attraversa i portici, raggiungi le torri, ritrova tre segnali. Poi accendi la console in piazza.</p><button data-game-start-button>Entra nel mondo <span aria-hidden="true">↗</span></button><small>Nessuna fretta. Se cadi, riparti dall’ultimo checkpoint.</small></div>
+   <div class="game-finish" data-game-finish hidden><span>FREQUENZA RITROVATA / BOLOGNA ACCESA</span><h3>La notte è tua.</h3><p>Tre segnali, una sola frequenza. Ora lascia suonare KIST.</p><button data-game-listen>Ascolta KIST</button><a href="#diary" data-game-dates>La prossima notte <span aria-hidden="true">↗</span></a><button data-game-restart>Gioca ancora</button></div>
+  </div>
+  <div class="game-controls"><div><button data-game-left aria-label="Muoviti a sinistra">←</button><button data-game-right aria-label="Muoviti a destra">→</button></div><span>← → muoviti · SPAZIO salta</span><button data-game-jump>Salta ↑</button></div>
+ </div>
+</dialog>

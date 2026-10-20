@@ -80,23 +80,49 @@ jobs:
             const night=await page.locator('#diary').boundingBox();
             if(width<800&&night.height>height-90)throw new Error('Night archive exceeds mobile viewport');
             await page.screenshot({path:'screenshots/'+name+'-nights.png'});
-            await page.locator('#frequency-break').scrollIntoViewIfNeeded();
-            await page.locator('#frequency-break [data-kist-ready="true"]').waitFor();
-            const runnerX=await page.locator('#frequency-break').getAttribute('data-arcade-position');
-            await page.waitForFunction(x=>document.querySelector('#frequency-break')?.dataset.arcadePosition!==x,runnerX);
-            const world=page.locator('#frequency-break');
-            await world.getByRole('button',{name:'Metti in pausa lo sfondo animato',exact:true}).click();
-            const pausedX=await world.getAttribute('data-arcade-position');
-            const pausedFrame=await world.locator('[data-kist-sprite]').getAttribute('data-frame');
-            await page.waitForTimeout(250);
-            if(await world.getAttribute('data-arcade-position')!==pausedX || await world.locator('[data-kist-sprite]').getAttribute('data-frame')!==pausedFrame)throw new Error('World pause did not stop both scenery and sprite');
-            await world.getByRole('button',{name:'Riprendi lo sfondo animato',exact:true}).click();
-            await page.waitForFunction(x=>document.querySelector('#frequency-break')?.dataset.arcadePosition!==x,pausedX);
-            for(const [act,progress] of [[0,1/6],[1,.5],[2,5/6]]){
-              await world.evaluate((el,p)=>{const top=el.getBoundingClientRect().top+scrollY;scrollTo({top:top-innerHeight+p*(innerHeight+el.clientHeight),behavior:'instant'});},progress);
-              await page.waitForFunction(value=>document.querySelector('#frequency-break')?.dataset.worldAct===String(value),act);
+            const world=page.locator('#kist-world');
+            await page.locator('#kist-world[data-world-ready="true"]').waitFor();
+            const worldSize=await page.locator('#kist-world-canvas').evaluate(el=>{const b=el.getBoundingClientRect();return {left:b.left,top:b.top,width:b.width,height:b.height,viewportWidth:document.documentElement.clientWidth,viewportHeight:innerHeight};});
+            if(Math.abs(worldSize.left)>1||Math.abs(worldSize.top)>1||Math.abs(worldSize.width-worldSize.viewportWidth)>1||Math.abs(worldSize.height-worldSize.viewportHeight)>1)throw new Error('The continuous world does not fill the viewport');
+            for(const [id,district] of [['sound',1],['diary',2],['places',3],['about',4],['contact',5]]){
+              await page.evaluate(id=>document.getElementById(id).scrollIntoView({block:'start',behavior:'instant'}),id);
+              await page.waitForFunction(value=>document.querySelector('#kist-world')?.dataset.worldChapter===String(value),district,{timeout:6000});
             }
-            await page.screenshot({path:'screenshots/'+name+'-arcade.png'});
+            await page.locator('#world-map-toggle').click();
+            if(!await page.locator('#world-map').isVisible())throw new Error('World map did not open');
+            await page.locator('[data-world-route="1"]').click();
+            if(await page.locator('#world-map').isVisible())throw new Error('World route left the map open');
+            await page.waitForFunction(()=>document.querySelector('#kist-world')?.dataset.worldChapter==='1',null,{timeout:6000});
+            await page.evaluate(()=>document.querySelector('#frequency-break').scrollIntoView({block:'center',behavior:'instant'}));
+            await page.locator('#frequency-break [data-kist-ready="true"]').waitFor();
+            await page.locator('#world-motion').click();
+            const pausedWorldFrame=await world.getAttribute('data-world-frame');
+            const pausedSpriteFrame=await page.locator('#frequency-break [data-kist-sprite]').getAttribute('data-frame');
+            await page.waitForTimeout(300);
+            if(await world.getAttribute('data-world-frame')!==pausedWorldFrame||await page.locator('#frequency-break [data-kist-sprite]').getAttribute('data-frame')!==pausedSpriteFrame)throw new Error('World pause did not stop scenery and the gate character');
+            await page.locator('#world-motion').click();
+            await page.waitForFunction(frame=>document.querySelector('#kist-world')?.dataset.worldFrame!==frame,pausedWorldFrame,{timeout:4000});
+            await page.waitForFunction(frame=>document.querySelector('#frequency-break [data-kist-sprite]')?.dataset.frame!==frame,pausedSpriteFrame,{timeout:4000});
+            await page.screenshot({path:'screenshots/'+name+'-world.png'});
+            const gameOpener=page.getByRole('button',{name:'Gioca',exact:true});
+            await gameOpener.click();
+            const game=page.locator('#kist-game');
+            if(!await game.isVisible())throw new Error('Frequency Quest did not open');
+            await game.getByRole('button',{name:'Entra nel mondo',exact:false}).click();
+            await page.waitForFunction(()=>document.querySelector('#kist-game')?.dataset.gameState==='running');
+            const gameStartX=Number(await page.locator('#kist-game-canvas').getAttribute('data-player-x'));
+            await page.keyboard.down('ArrowRight');
+            await page.waitForTimeout(500);
+            await page.keyboard.up('ArrowRight');
+            if(Number(await page.locator('#kist-game-canvas').getAttribute('data-player-x'))<=gameStartX+50)throw new Error('Keyboard input did not move KIST');
+            await game.getByRole('button',{name:'Metti in pausa il gioco',exact:true}).click();
+            const pausedPlayerX=await page.locator('#kist-game-canvas').getAttribute('data-player-x');
+            await page.waitForTimeout(250);
+            if(await page.locator('#kist-game-canvas').getAttribute('data-player-x')!==pausedPlayerX)throw new Error('The quest kept moving while paused');
+            await page.screenshot({path:'screenshots/'+name+'-quest.png'});
+            await page.keyboard.press('Escape');
+            if(await game.isVisible())throw new Error('Escape did not close the quest');
+            if(!await gameOpener.evaluate(el=>document.activeElement===el))throw new Error('Quest close lost its opener focus');
             await page.locator('.photo').first().click();
             if(!await page.locator('#media-dialog').isVisible())throw new Error('Photo viewer failed');
             await page.getByRole('button',{name:'Chiudi',exact:true}).click();
@@ -110,13 +136,67 @@ jobs:
           const calm=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
           await calm.goto('http://127.0.0.1:4321');
           await calm.getByRole('button',{name:'Continua senza musica'}).click();
-          await calm.locator('#frequency-break').scrollIntoViewIfNeeded();
+          await calm.evaluate(()=>document.querySelector('#frequency-break').scrollIntoView({block:'center',behavior:'instant'}));
+          await calm.locator('#kist-world[data-world-ready="true"]').waitFor();
           await calm.locator('#frequency-break [data-kist-ready="true"]').waitFor();
-          const calmX=await calm.locator('#frequency-break').getAttribute('data-arcade-position');
+          const calmFrame=await calm.locator('#kist-world').getAttribute('data-world-frame');
           await calm.waitForTimeout(500);
-          if(await calm.locator('#frequency-break').getAttribute('data-arcade-position')!==calmX)throw new Error('Reduced-motion runner kept moving');
+          if(await calm.locator('#kist-world').getAttribute('data-world-frame')!==calmFrame)throw new Error('Reduced-motion world kept rendering');
+          if(await calm.locator('#kist-world').getAttribute('data-world-paused')!=='true')throw new Error('Reduced-motion world was not marked static');
           if(await calm.locator('#frequency-break [data-kist-sprite]').getAttribute('data-frame')!=='0')throw new Error('Reduced-motion sprite kept animating');
+          await calm.getByRole('button',{name:'Gioca',exact:true}).click();
+          await calm.locator('#kist-game').getByRole('button',{name:'Entra nel mondo',exact:false}).click();
+          await calm.waitForFunction(()=>document.querySelector('#kist-game')?.dataset.gameState==='running');
+          await calm.keyboard.down('ArrowRight');
+          await calm.waitForTimeout(250);
+          await calm.keyboard.up('ArrowRight');
+          if(Number(await calm.locator('#kist-game-canvas').getAttribute('data-player-x'))<=90)throw new Error('Explicit play failed under reduced motion');
+          await calm.keyboard.press('Escape');
           await calm.close();
+          // A real input path must collect all signals and reach the console.
+          // A deterministic provider stub proves that opening/playing the quest cannot steal transport.
+          const quest=await browser.newPage({viewport:{width:1440,height:1000}});
+          await quest.addInitScript(()=>{
+            window.questPlayCalls=0;window.questPauseCalls=0;
+            function Widget(){const listeners={};return {bind:(event,fn)=>{listeners[event]=fn;if(event==='READY')setTimeout(fn,30)},play:()=>{window.questPlayCalls++;listeners.PLAY?.();listeners.PLAY_PROGRESS?.({currentPosition:12000})},pause:()=>{window.questPauseCalls++;listeners.PAUSE?.()},seekTo:()=>{},getDuration:fn=>fn(100000),getPosition:fn=>fn(12000),getCurrentSound:fn=>fn({})}};
+            Widget.Events={READY:'READY',PLAY:'PLAY',PAUSE:'PAUSE',ERROR:'ERROR',FINISH:'FINISH',PLAY_PROGRESS:'PLAY_PROGRESS'};window.SC={Widget};
+          });
+          await quest.goto('http://127.0.0.1:4321',{waitUntil:'domcontentloaded'});
+          await quest.locator('#sound-dialog').waitFor({state:'visible',timeout:7000});
+          await quest.getByRole('button',{name:'Daje',exact:true}).click();
+          await quest.waitForFunction(()=>document.body.classList.contains('sound-active'));
+          const originalAudioSource=await quest.locator('#player-mount iframe').getAttribute('src');
+          await quest.getByRole('button',{name:'Gioca',exact:true}).click();
+          await quest.locator('#kist-game').getByRole('button',{name:'Entra nel mondo',exact:false}).click();
+          await quest.waitForFunction(()=>document.querySelector('#kist-game')?.dataset.gameState==='running');
+          await quest.keyboard.down('ArrowRight');
+          try{
+            for(const threshold of [650,955,1760,2340,3100]){
+              await quest.waitForFunction(x=>{const c=document.querySelector('#kist-game-canvas');return Number(c?.dataset.playerX)>=x&&c?.dataset.grounded==='true';},threshold,{timeout:10000});
+              await quest.keyboard.press('Space');
+            }
+            await quest.waitForFunction(()=>document.querySelector('#kist-game')?.dataset.gameState==='won',null,{timeout:10000});
+          }finally{await quest.keyboard.up('ArrowRight');}
+          if(await quest.locator('#kist-game-canvas').getAttribute('data-collected')!=='3'||(await quest.locator('#game-score').innerText()).trim()!=='3 / 3')throw new Error('The quest finished without all three frequencies');
+          if(!await quest.locator('[data-game-finish]').isVisible())throw new Error('Quest win screen was not visible');
+          await quest.screenshot({path:'screenshots/desktop-quest-won.png'});
+          await quest.getByRole('button',{name:'Ascolta KIST',exact:true}).click();
+          if(!await quest.locator('#sound-dialog').isVisible()||await quest.locator('#kist-game').isVisible())throw new Error('Winning quest handoff did not open the player');
+          if(await quest.locator('#player-mount iframe').count()!==1||await quest.locator('#player-mount iframe').getAttribute('src')!==originalAudioSource)throw new Error('Quest replaced or duplicated the SoundCloud mount');
+          if(!await quest.evaluate(()=>document.body.classList.contains('sound-active')&&window.questPlayCalls===1&&window.questPauseCalls===0))throw new Error('Quest handoff changed active music transport');
+          await quest.close();
+          // Portrait and short landscape phones must keep close/move/jump controls in view.
+          for(const [name,width,height] of [['short-mobile',320,600],['landscape-mobile',844,390]]){
+            const phone=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});
+            await phone.goto('http://127.0.0.1:4321',{waitUntil:'domcontentloaded'});
+            await phone.getByRole('button',{name:'Continua senza musica',exact:true}).click();
+            await phone.getByRole('button',{name:'Gioca',exact:true}).click();
+            const controls=await phone.locator('#kist-game').evaluate(el=>[...el.querySelectorAll('[data-game-close],[data-game-left],[data-game-right],[data-game-jump]')].map(button=>{const b=button.getBoundingClientRect();return {label:button.getAttribute('aria-label')||button.textContent,left:b.left,top:b.top,right:b.right,bottom:b.bottom,width:innerWidth,height:innerHeight};}));
+            if(controls.some(b=>b.left<0||b.top<0||b.right>b.width+1||b.bottom>b.height+1))throw new Error(name+' hides a game control: '+JSON.stringify(controls));
+            await phone.screenshot({path:'screenshots/'+name+'-quest.png'});
+            await phone.keyboard.press('Escape');
+            await phone.close();
+          }
           // Deterministic widget contract test: entry must PLAY, never toggle.
           // Real provider playback is separately checked in the visual audit.
           const music=await browser.newPage({viewport:{width:390,height:844}});

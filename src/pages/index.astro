@@ -6,16 +6,17 @@ import '../styles/vinyl.css';
 import '../styles/transport.css';
 import '../styles/festival.css';
 import EventViewer from '../components/EventViewer.astro';
-import FrequencySculpture from '../components/FrequencySculpture.astro';
-import SonicCrystal from '../components/SonicCrystal.astro';
 import HostedBy from '../components/HostedBy.astro';
 import ContactSection from '../components/ContactSection.astro';
 import KistSprite from '../components/KistSprite.astro';
-import KistInterlude from '../components/KistInterlude.astro';
+import WorldGate from '../components/WorldGate.astro';
+import WorldExperience from '../components/WorldExperience.astro';
 import '../styles/places.css';
 import '../styles/sprites.css';
 import '../styles/opening.css';
 import '../styles/desktop.css';
+import '../styles/world.css';
+import '../styles/world-game.css';
 const today = new Date().toLocaleDateString('en-CA', {timeZone:'Europe/Rome'});
 const future = events.filter(e => e.date >= today).sort((a,b)=>a.date.localeCompare(b.date));
 const past = events.filter(e => e.date < today).sort((a,b)=>b.date.localeCompare(a.date));
@@ -74,6 +75,7 @@ const structuredData = {
 <link rel="preload" as="image" href="/media/kist/kist-16bit-mix.webp"/>
 </head>
 <body>
+<WorldExperience/>
 <a class="skip" href="#main">Vai al contenuto</a>
 <div class="entrance entrance-refined" aria-hidden="true"><canvas class="entrance-waves"></canvas><div class="entrance-identity"><span class="entrance-dj">DJ</span><div class="entrance-mark"><img class="entrance-wordmark" src="/media/kist-wordmark-imagegen.webp" alt=""/><div class="entrance-character"><div class="entrance-character-motion"><KistSprite mode="mix" size={124} opening eager/></div></div></div><span class="entrance-location">BASED IN BOLOGNA</span></div></div>
 <header>
@@ -103,16 +105,16 @@ const structuredData = {
 <div class="ticker" aria-hidden="true"><div>FEEL THE ROOM. FIND YOUR FREQUENCY. KIST. FEEL THE ROOM. FIND YOUR FREQUENCY. KIST.</div></div>
 <section class="sound-section section" id="sound">
 <div class="section-heading"><h2>Sound.</h2></div>
-<SonicCrystal/><div class="record-shelf">{mixes.map((mix,i)=><button class="record-card" data-mix={mix.url} aria-pressed="false" style={'--tone:'+mix.palette+';--accent:'+mix.accent+';--art:url('+mix.artwork+')'}><span class="record-edition">0{i+1} / KIST</span><div class="record-object">{mix.sleeve?<img src={mix.sleeve} alt={'Copertina e vinile di '+mix.title} loading="lazy"/>:<img class="original-sleeve" src={mix.artwork} alt={'Copertina originale di '+mix.title} loading="lazy"/>}</div><div class="record-info"><span class="record-genre">{mix.label}</span><h3>{mix.title}</h3><span class="record-control"><i class="mix-play ui-icon icon-play" aria-hidden="true"></i><span class="mix-action">Riproduci</span></span></div></button>)}</div><a class="sound-profile" href={artist.soundcloud} target="_blank" rel="noopener noreferrer">Tutte le selezioni su SoundCloud <i class="ui-icon icon-external" aria-hidden="true"></i></a>
+<div class="record-shelf">{mixes.map((mix,i)=><button class="record-card" data-mix={mix.url} aria-pressed="false" style={'--tone:'+mix.palette+';--accent:'+mix.accent+';--art:url('+mix.artwork+')'}><span class="record-edition">0{i+1} / KIST</span><div class="record-object">{mix.sleeve?<img src={mix.sleeve} alt={'Copertina e vinile di '+mix.title} loading="lazy"/>:<img class="original-sleeve" src={mix.artwork} alt={'Copertina originale di '+mix.title} loading="lazy"/>}</div><div class="record-info"><span class="record-genre">{mix.label}</span><h3>{mix.title}</h3><span class="record-control"><i class="mix-play ui-icon icon-play" aria-hidden="true"></i><span class="mix-action">Riproduci</span></span></div></button>)}</div><a class="sound-profile" href={artist.soundcloud} target="_blank" rel="noopener noreferrer">Tutte le selezioni su SoundCloud <i class="ui-icon icon-external" aria-hidden="true"></i></a>
 </section>
 {films.length > 0 && <section class="film-section" aria-label="Video di KIST">{films.map(film=><div class="film"><button class="film-open" data-youtube={film.youtubeId} aria-label={'Guarda '+film.title}><img src={'https://i.ytimg.com/vi/'+film.youtubeId+'/hqdefault.jpg'} alt={film.title} loading="lazy"/><span class="film-text"><small>{film.label}</small><strong>{film.title}</strong><span>Guarda il set</span></span></button></div>)}</section>}
-<section class="real-sessions section" aria-label="KIST, sessioni e immagini reali"><div class="section-heading"><span>02 / IN THE ROOM</span><h2>Behind the decks.<br/><em>Inside the moment.</em></h2><p>KIST alla console.<br/>La sessione originale.</p></div><div class="session-stage"><div class="session-identity"><span class="session-edition">FIFTEEN FRAMES / S01—E29</span><strong>In her<br/><em>element.</em></strong><div class="session-caption"><img src="/kist-sigil.svg" alt=""/><p>Una console.<br/>Il suo modo di abitarla.</p></div></div><div class="instagram-sessions"><article><div class="session-media"><button class="session-watch" aria-label="Guarda la sessione Fifteen Frames"><img src="/media/kist-fifteen-frames-clean-v2.webp" alt="KIST alla console — Fifteen Frames" loading="lazy"/><span><i class="ui-icon icon-play" aria-hidden="true"></i>Guarda la sessione</span></button></div><a href="https://www.instagram.com/reel/DbbEcZJt6uv/" target="_blank" rel="noopener noreferrer">S01—E29 / Guarda la sessione su Instagram</a></article></div></div></section><KistInterlude mode="run" id="frequency-break"/><section class="diary section" id="diary">
+<section class="real-sessions section" aria-label="KIST, sessioni e immagini reali"><div class="session-heading"><span>BOLOGNA / DIETRO LA CONSOLE</span><h2>Dentro il suono.</h2></div><div class="session-stage"><div class="session-identity"><span class="session-edition">FIFTEEN FRAMES / S01—E29</span><strong>In her<br/><em>element.</em></strong><div class="session-caption"><img src="/kist-sigil.svg" alt=""/><p>Una console.<br/>Il suo modo di abitarla.</p></div></div><div class="instagram-sessions"><article><div class="session-media"><button class="session-watch" aria-label="Guarda la sessione Fifteen Frames"><img src="/media/kist-fifteen-frames-clean-v2.webp" alt="KIST alla console — Fifteen Frames" loading="lazy"/><span><i class="ui-icon icon-play" aria-hidden="true"></i>Guarda la sessione</span></button></div><a href="https://www.instagram.com/reel/DbbEcZJt6uv/" target="_blank" rel="noopener noreferrer">S01—E29 / Guarda la sessione su Instagram</a></article></div></div></section><WorldGate/><section class="diary section" id="diary">
 <div class="night-heading"><h2>Notti.</h2><span>Passate e future.</span></div>
 <div class="night-tabs" role="group" aria-label="Mostra eventi"><button aria-pressed={!showFuture} data-events="past">Passate <span>{past.length}</span></button><button aria-pressed={showFuture} data-events="future">Future <span>{future.length}</span></button></div>
 <div id="past-events" hidden={showFuture}><EventViewer items={past} label="Archivio eventi di KIST"/></div><div id="future-events" hidden={!showFuture}><EventViewer items={future} label="Prossimi eventi di KIST"/></div>
 </section>
 {photographs.length > 0 && <section class="photo-wall" aria-label="Diario fotografico">{photographs.map((photo,i)=><button class={'photo photo-'+i%3} data-photo={photo.src} data-caption={photo.caption} aria-label={'Ingrandisci: '+photo.alt}><img src={photo.src} alt={photo.alt} loading="lazy"/><span>{photo.caption}</span></button>)}</section>}
-<KistInterlude mode="groove"/>
+
 <HostedBy/>
 <section class="about section" id="about"><div class="about-photo">{artist.portrait ? <img src={artist.portrait} alt="Ritratto di KIST" loading="lazy"/> : <div class="portrait-await"><span>BEHIND THE SOUND</span><img src="/media/kist-wordmark-imagegen.webp" alt="KIST"/></div>}</div><div class="about-copy"><span>04 / A LITTLE CLOSER</span><h2>La musica.<br/>E chi la sceglie.</h2><p>{artist.bio}</p><a href={artist.instagram} target="_blank" rel="noopener noreferrer">@thats_kist <span class="ui-icon icon-external" aria-hidden="true"></span></a></div></section>
 <ContactSection/>
@@ -122,8 +124,7 @@ const structuredData = {
 <dialog id="sound-dialog" aria-labelledby="sound-dialog-title"><div class="player-stage"><canvas data-prism aria-hidden="true"></canvas><button id="player-dismiss" class="player-dismiss" aria-label="Chiudi il player"><span class="ui-icon icon-close" aria-hidden="true"></span></button><div class="player-intro"><img src="/kist-sigil.svg" alt=""/><span>KIST / SoundCloud</span></div><div class="player-scene"><div class="vinyl-scene" aria-hidden="true"><div class="vinyl-disc"><div class="vinyl-art"><img src="/media/kist-fifteen-frames-clean-v2.webp" alt=""/></div><i></i></div><div class="vinyl-needle"></div></div><div class="player-character" aria-hidden="true"><KistSprite mode="mix" size={144}/></div></div><div class="player-copy"><h2 id="sound-dialog-title">Apri il sito di DJ KIST<br/>ascoltando i suoi brani.</h2><p>{featured?.title || 'Personal frequency'}</p></div><div class="player-actions"><button id="popup-play" class="popup-play"><span class="ui-icon icon-play" aria-hidden="true"></span><span class="button-label">Daje</span></button><button id="popup-quiet">Continua senza musica</button></div><p id="popup-status" role="status" aria-live="polite"></p><div id="player-mount"></div><a class="player-source" href={featured?.url || artist.soundcloud} target="_blank" rel="noopener noreferrer">SoundCloud <span class="ui-icon icon-external" aria-hidden="true"></span></a></div></dialog>
 <div class="audio-dock" hidden><button id="dock-close" aria-label="Chiudi il lettore"><span class="ui-icon icon-close" aria-hidden="true"></span></button><button id="dock-toggle" aria-label="Metti in pausa il set"><span class="ui-icon icon-pause" aria-hidden="true"></span><span class="transport-label">Pausa</span></button><button id="dock-open" aria-label="Apri il player">KIST / SoundCloud</button></div>
 <script src="../scripts/experience.ts"></script><script src="../scripts/prism.ts"></script>
-<script src="../scripts/motion.ts"></script>
-<script src="../scripts/festival.ts"></script>
-<script src="../scripts/interludes.ts"></script>
+<script src="../scripts/section-motion.ts"></script>
+<script src="../scripts/world.ts"></script>
+<script src="../scripts/world-game.ts"></script>
 </body></html>
-

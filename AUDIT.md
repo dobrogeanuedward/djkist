@@ -60,3 +60,14 @@ The interrupted chat “Aggiorna evento ottobre” was recovered and its last re
 - No source video files were found in the repository or accessible project folders. `artist.heroVideo` is empty and `films` is empty.
 - The verified Fifteen Frames session uses the Instagram reel embed `DbbEcZJt6uv`. `kist-techno-console.jpg` is a thumbnail from reel `DYpWOdks35v`, not a source video. The other performance frames are JPG/WebP stills; the character animations are WebP assets.
 - Original video attachments mentioned in other chats have not been recovered. Integrating them into the hero or other sections requires recovering the actual files or a verified usable source; no substitute footage was added.
+
+
+## Continuous Bologna world / 20 October 2026
+
+The next revision replaces standalone arcade interludes with one coherent city across the portfolio. Original portici, asymmetric Due Torri, roofs, Colli/San Luca and a musical piazza share a horizon and smoothly interpolated lighting. A six-stop route follows actual website sections; the current navigation label is derived from the active section, while the background can interpolate continuously.
+
+Frequency Quest is an optional platformer: collect Portici, Torri and Piazza frequencies, reach the console, then return to listening or upcoming nights. It uses the approved KIST sprite, three safe-ground checkpoints, forgiving jump input, pause/reopen/restart, native modal focus and touch controls that remain visible in landscape. No essential content is gated by gameplay.
+
+The world subscribes to real SoundCloud playback state and progress. No player ownership or iframe/session behavior changes were made. The global scene sleeps while any modal is open or the document is hidden; reduced motion produces a static ambient composition. World pause also freezes its own character without altering the player character or audio.
+
+Build succeeds without the former large Three.js chunk: the unused festival entry point and duplicated ambient loops were removed. New rendering uses no additional runtime packages. Responsive and full-flow release verification is recorded by the accompanying browser workflow; original video files remain unlocated.
