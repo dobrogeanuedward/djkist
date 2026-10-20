@@ -58,10 +58,11 @@ jobs:
             const future=page.locator(marketIsUpcoming?'#future-events':'#past-events');
             await future.getByRole('button',{name:'Mostra Market · KIST DJ set',exact:true}).click();
             if(!await future.getByRole('heading',{name:'Market · KIST DJ set',exact:true}).isVisible())throw new Error('October market missing');
-            if(await future.locator('time').getAttribute('datetime')!=='2026-10-25')throw new Error('Wrong market date');
-            if(!await future.getByText('Orario da annunciare',{exact:true}).isVisible())throw new Error('Unconfirmed time not disclosed');
-            if(await future.getByRole('link',{name:'La serata',exact:true}).count())throw new Error('Unverified event URL');
-            if(await future.locator('.night-sleeve img').getAttribute('src')!=='/media/cantina-letteraria-market-2026-10-25.jpg')throw new Error('Wrong market poster');
+            const marketDetails=future.locator('.night-details').filter({has:page.locator('time[datetime="2026-10-25"]')});
+            if(await marketDetails.locator('time').getAttribute('datetime')!=='2026-10-25')throw new Error('Wrong market date');
+            if(!await marketDetails.getByText('Orario da annunciare',{exact:true}).isVisible())throw new Error('Unconfirmed time not disclosed');
+            if(await marketDetails.getByRole('link',{name:'La serata',exact:true}).count())throw new Error('Unverified event URL');
+            if(await future.getByRole('button',{name:'Mostra Market · KIST DJ set',exact:true}).locator('img').getAttribute('src')!=='/media/cantina-letteraria-market-2026-10-25.jpg')throw new Error('Wrong market poster');
             await page.getByRole('link',{name:'Diary',exact:true}).click();
             await page.waitForTimeout(800);
             await page.screenshot({path:'screenshots/'+name+'-october-market.png'});
