@@ -15,19 +15,60 @@ import KistInterlude from '../components/KistInterlude.astro';
 import '../styles/places.css';
 import '../styles/sprites.css';
 import '../styles/opening.css';
+import '../styles/desktop.css';
 const today = new Date().toLocaleDateString('en-CA', {timeZone:'Europe/Rome'});
 const future = events.filter(e => e.date >= today).sort((a,b)=>a.date.localeCompare(b.date));
 const past = events.filter(e => e.date < today).sort((a,b)=>b.date.localeCompare(a.date));
 const showFuture = future.length > 0;
 const featured = mixes[0];
+const siteUrl = 'https://djkist.vercel.app/';
+const pageTitle = 'DJ KIST a Bologna — DJ set, musica e booking';
+const pageDescription = 'KIST, DJ e selector a Bologna. Ascolta i set su SoundCloud, scopri le prossime serate e scrivile su Instagram per booking e collaborazioni.';
+const shareImage = new URL(artist.hero, siteUrl).href;
+const artistId = siteUrl + '#kist';
+const structuredData = {
+ '@context': 'https://schema.org',
+ '@graph': [
+  {
+   '@type': 'Person', '@id': artistId, name: 'KIST', url: siteUrl,
+   jobTitle: 'DJ e selector', description: artist.bio, image: shareImage,
+   homeLocation: {'@type': 'City', name: 'Bologna', containedInPlace: {'@type': 'Country', name: 'Italia'}},
+   sameAs: [artist.instagram, artist.soundcloud],
+  },
+  {
+   '@type': 'WebSite', '@id': siteUrl + '#website', url: siteUrl,
+   name: 'DJ KIST — Personal frequency', inLanguage: 'it-IT', publisher: {'@id': artistId},
+  },
+  {
+   '@type': 'WebPage', '@id': siteUrl + '#webpage', url: siteUrl,
+   name: pageTitle, description: pageDescription, inLanguage: 'it-IT',
+   isPartOf: {'@id': siteUrl + '#website'}, mainEntity: {'@id': artistId},
+  },
+ ],
+};
 ---
 <!doctype html>
 <html lang="it">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>KIST — Personal frequency</title>
-<meta name="description" content="Lo spazio di KIST. DJ set, immagini, video e incontri sulla pista."/>
-<meta name="theme-color" content="#111113"/><meta name="robots" content="noindex,nofollow"/>
+<title>{pageTitle}</title>
+<meta name="description" content={pageDescription}/>
+<meta name="theme-color" content="#111113"/><meta name="robots" content="index,follow,max-image-preview:large"/>
+<link rel="canonical" href={siteUrl}/>
+<meta property="og:type" content="website"/>
+<meta property="og:locale" content="it_IT"/>
+<meta property="og:site_name" content="DJ KIST"/>
+<meta property="og:title" content={pageTitle}/>
+<meta property="og:description" content={pageDescription}/>
+<meta property="og:url" content={siteUrl}/>
+<meta property="og:image" content={shareImage}/>
+<meta property="og:image:alt" content="DJ KIST alla console durante Fifteen Frames"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content={pageTitle}/>
+<meta name="twitter:description" content={pageDescription}/>
+<meta name="twitter:image" content={shareImage}/>
+<meta name="twitter:image:alt" content="DJ KIST alla console durante Fifteen Frames"/>
+<script type="application/ld+json" set:html={JSON.stringify(structuredData).replace(/</g, '\\u003c')}/>
 <link rel="icon" href="/favicon.svg"/>
 <link rel="preload" as="image" href="/media/kist/kist-16bit-mix-poster.webp"/>
 <link rel="preload" as="image" href="/media/kist/kist-16bit-mix.webp"/>
@@ -48,7 +89,7 @@ const featured = mixes[0];
 <div class="grain"></div>
 </div>
 <div class="hero-top"><span>DJ / SELECTOR</span><span>BOLOGNA · IT</span></div>
-<div class="hero-title"><span class="small">You're in my space.</span><h1><img src="/media/kist-wordmark-imagegen.webp" alt="KIST"/></h1></div>
+<div class="hero-title"><span class="small">You're in my space.</span><h1><img src="/media/kist-wordmark-imagegen.webp" alt="DJ KIST — DJ e selector a Bologna"/></h1></div>
 <div class="hero-bottom"><button class="hero-listen" id="hero-listen" aria-label="Apri il player di KIST"><span>Riproduci</span><i aria-hidden="true"></i></button>
 <div class="sound-invitation" data-url={featured?.url || artist.soundcloud} data-mixes={JSON.stringify(mixes)}>
 <div class="mini-record" aria-hidden="true"><img src="/media/kist-fifteen-frames-clean-v2.webp" alt=""/></div>

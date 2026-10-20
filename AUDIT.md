@@ -35,3 +35,28 @@
 - Real SoundCloud playback, pause/resume and transfer of the same dock to the header after leaving the hero verified manually. Circular shadowed close control is on the left.
 - Entrance: modular blurred color orbits, procedural waves, DJ above identity and smaller Based in Bologna below. Reduced-motion preference honored.
 - Social stack links to verified SoundCloud and Instagram; YouTube explicitly opens a search, not an unverified artist channel.
+
+## Resumed desktop, motion and SEO work — 20 October 2026
+
+The interrupted chat “Aggiorna evento ottobre” was recovered and its last requests reconciled with the repository. This update preserves the custom SoundCloud listening experience while improving the desktop layout and establishing local discovery for KIST in Bologna. Older “draft/noindex”, “no confirmed future dates” and pending-SoundCloud notes describe earlier states and are superseded by the current source and verified asset/event records.
+
+### Changes
+
+- `src/styles/desktop.css` reserves enough room for each tilted record and its metadata, preventing cover/title overlap. “Notti” uses a large poster beside the event information on desktop while keeping the mobile viewer responsive.
+- The KIST world now has three original scenes: Night Drive, Frequency Blocks and Afterhours Maze. Scroll changes the scene and parallax; the existing animated character remains part of the experience. A pause button and reduced-motion support apply to the background and character. Rendering pauses when the scene is offscreen or the document is hidden.
+- The world responds to SoundCloud playback state through lighting. No beat synchronization, spectral analysis or instantaneous audio reactivity is claimed.
+- The home page adds Bologna/booking title and description, canonical URL, Open Graph/Twitter previews and Person/WebSite/WebPage JSON-LD with the verified artist links. `robots.txt` and `sitemap.xml` permit discovery. The market's 17:00 opening is not represented as KIST's unconfirmed set start.
+- The 25 October 2026 Cantina Letteraria event and its source links are retained. The distinction between the market opening and the DJ set time remains visible.
+
+### Verification and release state
+
+- Production build passed locally.
+- Manual browser checks completed at widths 320, 390, 801, 1440 and 1920 px: no horizontal overflow and no record cover/text overlap.
+- Poster enlargement and event switching passed; the inspected application console had no errors.
+- Publication of this revision is in progress. The checks above establish the local result, not a completed deployment.
+
+### Video inventory and remaining evidence
+
+- No source video files were found in the repository or accessible project folders. `artist.heroVideo` is empty and `films` is empty.
+- The verified Fifteen Frames session uses the Instagram reel embed `DbbEcZJt6uv`. `kist-techno-console.jpg` is a thumbnail from reel `DYpWOdks35v`, not a source video. The other performance frames are JPG/WebP stills; the character animations are WebP assets.
+- Original video attachments mentioned in other chats have not been recovered. Integrating them into the hero or other sections requires recovering the actual files or a verified usable source; no substitute footage was added.

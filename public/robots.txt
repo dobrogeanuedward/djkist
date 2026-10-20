@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://djkist.vercel.app/sitemap.xml

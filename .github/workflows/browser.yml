@@ -84,6 +84,18 @@ jobs:
             await page.locator('#frequency-break [data-kist-ready="true"]').waitFor();
             const runnerX=await page.locator('#frequency-break').getAttribute('data-arcade-position');
             await page.waitForFunction(x=>document.querySelector('#frequency-break')?.dataset.arcadePosition!==x,runnerX);
+            const world=page.locator('#frequency-break');
+            await world.getByRole('button',{name:'Metti in pausa lo sfondo animato',exact:true}).click();
+            const pausedX=await world.getAttribute('data-arcade-position');
+            const pausedFrame=await world.locator('[data-kist-sprite]').getAttribute('data-frame');
+            await page.waitForTimeout(250);
+            if(await world.getAttribute('data-arcade-position')!==pausedX || await world.locator('[data-kist-sprite]').getAttribute('data-frame')!==pausedFrame)throw new Error('World pause did not stop both scenery and sprite');
+            await world.getByRole('button',{name:'Riprendi lo sfondo animato',exact:true}).click();
+            await page.waitForFunction(x=>document.querySelector('#frequency-break')?.dataset.arcadePosition!==x,pausedX);
+            for(const [act,progress] of [[0,1/6],[1,.5],[2,5/6]]){
+              await world.evaluate((el,p)=>{const top=el.getBoundingClientRect().top+scrollY;scrollTo({top:top-innerHeight+p*(innerHeight+el.clientHeight),behavior:'instant'});},progress);
+              await page.waitForFunction(value=>document.querySelector('#frequency-break')?.dataset.worldAct===String(value),act);
+            }
             await page.screenshot({path:'screenshots/'+name+'-arcade.png'});
             await page.locator('.photo').first().click();
             if(!await page.locator('#media-dialog').isVisible())throw new Error('Photo viewer failed');
