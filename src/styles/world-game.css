@@ -1,0 +1,77 @@
+/* The quest is optional: one contained play surface, separate from listening controls. */
+#kist-game{width:min(1100px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 32px);padding:0;border:1px solid #b6a0ee42;border-radius:26px;background:#0b0d1c;color:#efedff;box-shadow:0 35px 150px #000c;overflow:auto;overscroll-behavior:contain}
+#kist-game::backdrop{background:#040610dc;backdrop-filter:blur(16px)}
+#kist-game .game-shell{display:flex;flex-direction:column;width:100%;max-height:calc(100dvh - 34px);overflow:hidden;isolation:isolate}
+#kist-game .game-header{position:relative!important;inset:auto;top:auto;left:auto;display:flex;justify-content:space-between;align-items:center;gap:24px;padding:23px 28px 18px;width:auto;background:none;border:0;backdrop-filter:none;z-index:auto;flex-shrink:0}
+#kist-game .game-header>div>span{font-size:9px;letter-spacing:.19em;color:#a69bc6}
+#kist-game .game-header h2{font-family:'Space Grotesk',sans-serif;font-size:clamp(20px,3vw,30px);line-height:1.2;letter-spacing:-.045em;font-weight:400;margin:8px 0 0}
+#kist-game [data-game-close]{flex-shrink:0;display:grid;place-items:center;width:40px;height:40px;border:1px solid #ffffff30;border-radius:50%;background:#ffffff05;color:#eeeaff;font-size:18px}
+#kist-game [data-game-close]:hover{color:#c9ff52;border-color:#c9ff52}
+#kist-game .game-status{display:flex;align-items:center;gap:18px;padding:11px 28px;border-top:1px solid #b6a0ee1a;border-bottom:1px solid #b6a0ee1a;min-height:58px;flex-shrink:0}
+#kist-game #game-message{font-size:12px;color:#bcb6d0;line-height:1.5;margin:0;flex:1;min-width:0}
+#kist-game #game-score{font-family:'Space Grotesk',sans-serif;font-size:16px;white-space:nowrap;color:#c9ff52;font-variant-numeric:tabular-nums}
+#kist-game [data-game-pause]{background:transparent;color:#d6d0e8;border:1px solid #ffffff24;border-radius:20px;padding:7px 14px;font-size:11px;min-height:36px}
+#kist-game [data-game-pause][aria-pressed=true]{color:#c9ff52;border-color:#c9ff5266}
+#kist-game [data-game-reset]{background:transparent;border:0;color:#9d92b8;font-size:10px;padding:8px;min-height:40px}
+#kist-game [data-game-reset]:hover{color:#c9ff52}
+#kist-game [data-game-pause]:disabled{opacity:.3}
+#kist-game .game-stage{position:relative;width:100%;height:clamp(270px,43vw,440px);flex:1 1 auto;min-height:160px;overflow:hidden;isolation:isolate;background:#090c1b}
+#kist-game-canvas{display:block;width:100%;height:100%;touch-action:none;outline-offset:-4px}
+#kist-game .game-start,#kist-game .game-finish{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;background:radial-gradient(ellipse at 50% 40%,#11132cea,#080b1ddd);backdrop-filter:blur(7px);z-index:2;overflow-y:auto}
+#kist-game .game-start>span,#kist-game .game-finish>span{font-size:8px;letter-spacing:.15em;color:#a79bc8;line-height:1.5;margin-bottom:15px}
+#kist-game .game-start>small{font-size:10px;line-height:1.5;color:#8d85a5;max-width:35ch;margin-top:14px}
+#kist-game .game-start h3,#kist-game .game-finish h3{font-family:'Space Grotesk',sans-serif;font-size:clamp(26px,4vw,44px);font-weight:400;line-height:1.08;letter-spacing:-.05em;margin:0 0 16px;max-width:16ch}
+#kist-game .game-start p,#kist-game .game-finish p{max-width:38ch;font-size:13px;line-height:1.65;color:#bfb8d4;margin:0 0 22px}
+#kist-game [data-game-start-button],#kist-game [data-game-listen]{border:0;border-radius:28px;padding:13px 25px;min-height:48px;background:#c9ff52;color:#101315;font-size:13px;font-weight:600;box-shadow:0 0 35px #c9ff5217}
+#kist-game [data-game-dates]{margin-top:15px;padding:9px 14px;font-size:13px;color:#d4cced}
+#kist-game [data-game-restart]{padding:8px 14px;border:0;background:transparent;font-size:11px;color:#a99dc4}
+#kist-game .game-controls{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:14px 24px;background:#0e1022;border-top:1px solid #b6a0ee20;flex-shrink:0}
+#kist-game .game-controls>div{display:flex;gap:8px}
+#kist-game .game-controls>span{font-size:10px;letter-spacing:.06em;color:#a49bbd;line-height:1.4;text-align:center}
+#kist-game .game-controls button{display:grid;place-items:center;min-width:52px;min-height:48px;padding:8px 15px;background:#ffffff05;border:1px solid #b6a0ee35;border-radius:22px;color:#e6dff9;font-size:19px;touch-action:none;user-select:none;-webkit-user-select:none}
+#kist-game .game-controls [data-game-jump]{font-size:12px;letter-spacing:.04em;white-space:nowrap;padding-inline:22px;color:#c9ff52;border-color:#c9ff5259;background:#c9ff5208}
+#kist-game .game-controls button[data-held=true],#kist-game .game-controls button:active{background:#976cff28;border-color:#b7a2ec}
+@media(max-width:600px){
+ #kist-game{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);border-radius:18px}
+ #kist-game .game-shell{max-height:calc(100dvh - 18px)}
+ #kist-game .game-header{padding:18px 16px 14px;gap:14px}
+ #kist-game .game-header h2{font-size:21px;max-width:18ch}
+ #kist-game .game-header>div>span{font-size:8px;letter-spacing:.12em}
+ #kist-game .game-status{padding:10px 16px;gap:10px;min-height:72px}
+ #kist-game #game-message{font-size:10px;line-height:1.45}
+ #kist-game #game-score{font-size:14px}
+ #kist-game [data-game-pause]{padding:7px 10px;font-size:10px}
+ #kist-game .game-stage{height:clamp(260px,48dvh,350px)}
+ #kist-game .game-start,#kist-game .game-finish{padding:20px}
+ #kist-game .game-start h3,#kist-game .game-finish h3{font-size:30px}
+ #kist-game .game-start p,#kist-game .game-finish p{font-size:12px;margin-bottom:18px}
+ #kist-game .game-controls{padding:12px 14px;gap:8px}
+ #kist-game .game-controls>span{font-size:8px;max-width:11ch;letter-spacing:0}
+ #kist-game .game-controls button{min-width:48px;min-height:52px;padding:8px 13px}
+ #kist-game .game-controls [data-game-jump]{padding-inline:17px}
+}
+@media(max-height:650px){#kist-game .game-header{padding-block:12px}#kist-game .game-header h2{font-size:20px;margin-top:4px}#kist-game .game-stage{height:clamp(210px,42dvh,290px)}#kist-game .game-status{min-height:50px}#kist-game .game-controls{padding-block:9px}#kist-game .game-start,#kist-game .game-finish{padding:16px}#kist-game .game-start>small{display:none}#kist-game .game-start>span,#kist-game .game-finish>span{margin-bottom:10px;font-size:7px}#kist-game .game-start h3,#kist-game .game-finish h3{font-size:26px;margin-bottom:10px}#kist-game .game-start p,#kist-game .game-finish p{font-size:11px;line-height:1.5;margin-bottom:12px}#kist-game .game-finish{justify-content:flex-start}#kist-game .game-finish h3{max-width:none}#kist-game .game-finish p{display:none}#kist-game [data-game-dates]{margin-top:4px}}
+@media(max-height:500px) and (orientation:landscape){
+ #kist-game{width:min(1100px,calc(100vw - 16px));max-height:calc(100dvh - 16px);border-radius:16px;overflow:hidden}
+ #kist-game .game-shell{height:calc(100dvh - 18px);max-height:calc(100dvh - 18px)}
+ #kist-game .game-header{gap:12px;padding:4px 16px;min-height:40px}
+ #kist-game .game-header>div>span{display:none}
+ #kist-game .game-header h2{font-size:18px;line-height:1.2;margin:0;max-width:none}
+ #kist-game [data-game-close]{width:32px;height:32px;font-size:17px}
+ #kist-game .game-status{min-height:36px;padding:2px 16px;gap:14px}
+ #kist-game #game-message{font-size:10px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #kist-game #game-score{font-size:13px}
+ #kist-game [data-game-pause],#kist-game [data-game-reset]{min-height:30px;padding:5px 10px;font-size:10px}
+ #kist-game .game-stage{height:auto;flex:1 1 160px;min-height:140px}
+ #kist-game .game-controls{padding:8px 16px;gap:14px}
+ #kist-game .game-controls button{min-width:48px;min-height:48px}
+ #kist-game .game-controls>span{max-width:none;font-size:9px}
+ #kist-game .game-start,#kist-game .game-finish{display:grid;grid-template-columns:minmax(0,1fr) auto;align-content:center;align-items:center;gap:8px 22px;padding:12px 24px;text-align:left;overflow-y:auto}
+ #kist-game .game-start>span,#kist-game .game-finish>span{grid-column:1;margin:0;font-size:7px}
+ #kist-game .game-start h3,#kist-game .game-finish h3{grid-column:1;grid-row:2;margin:0;font-size:24px;max-width:none}
+ #kist-game .game-start p{grid-column:1;grid-row:3;margin:0;max-width:55ch;font-size:10px;line-height:1.35}
+ #kist-game [data-game-start-button],#kist-game [data-game-listen]{grid-column:2;grid-row:1/4;min-height:48px;padding:12px 20px;white-space:nowrap}
+ #kist-game [data-game-dates]{grid-column:1;grid-row:3;padding:3px 0;margin:0}
+ #kist-game [data-game-restart]{grid-column:2;grid-row:4;padding-block:2px}
+}
+@media(prefers-reduced-motion:reduce){#kist-game,#kist-game *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
