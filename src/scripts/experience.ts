@@ -41,7 +41,7 @@ let widget:Widget|undefined;
 let loadedUrl='';
 const invitation=document.querySelector<HTMLElement>('.sound-invitation')!;
 const choices: {title:string;url:string;artwork?:string}[]=JSON.parse(invitation.dataset.mixes||'[]');
-function showTrack(sound:Sound){if(sound.title){invitation.querySelector('strong')!.textContent=sound.title;document.querySelector('.player-copy p')!.textContent=sound.title}if(sound.permalink_url?.startsWith('https://soundcloud.com/')){invitation.dataset.url=sound.permalink_url;document.querySelector<HTMLAnchorElement>('.player-source')!.href=sound.permalink_url}if(sound.artwork_url&&(sound.artwork_url.startsWith('https://')||sound.artwork_url.startsWith('/media/'))){const cover=sound.artwork_url.replace('-large.','-t500x500.');document.querySelectorAll<HTMLImageElement>('.mini-record img,.vinyl-art img').forEach(img=>img.src=cover);invitation.style.setProperty('--cover-art',`url("${cover.replace(/["\\]/g,'')}")`)}}
+function showTrack(sound:Sound){if(sound.title){invitation.querySelector('strong')!.textContent=sound.title;document.querySelector('.player-copy p')!.textContent=sound.title;document.querySelectorAll<HTMLElement>('[data-track-title]').forEach(el=>{el.textContent=sound.title!;el.title=sound.title!})}if(sound.permalink_url?.startsWith('https://soundcloud.com/')){invitation.dataset.url=sound.permalink_url;document.querySelector<HTMLAnchorElement>('.player-source')!.href=sound.permalink_url}if(sound.artwork_url&&(sound.artwork_url.startsWith('https://')||sound.artwork_url.startsWith('/media/'))){const cover=sound.artwork_url.replace('-large.','-t500x500.');document.querySelectorAll<HTMLImageElement>('.mini-record img,.vinyl-art img,[data-track-cover]').forEach(img=>img.src=cover);invitation.style.setProperty('--cover-art',`url("${cover.replace(/["\\]/g,'')}")`)}}
 type PlayerSession={version:1;url:string;position:number;playing:boolean};
 const sessionKey='kist:player-session:v1';
 let session:PlayerSession|undefined;
@@ -60,7 +60,7 @@ const heroButton=document.getElementById('hero-play') as HTMLButtonElement;
 let apiPromise:Promise<void>|undefined;
 function api(){return apiPromise ||=new Promise<void>((resolve,reject)=>{if(window.SC){resolve();return}const script=document.createElement('script');let done=false;const timer=setTimeout(()=>fail(),12000);function fail(){if(done)return;done=true;clearTimeout(timer);apiPromise=undefined;script.remove();reject(new Error('SoundCloud non disponibile'))}script.src='https://w.soundcloud.com/player/api.js';script.onload=()=>{if(done)return;done=true;clearTimeout(timer);resolve()};script.onerror=fail;document.head.append(script)})}
 let connecting=false,readyTimer:ReturnType<typeof setTimeout>|undefined;
-function transport(active:boolean){playing=active;toggle.querySelector('.transport-label')!.textContent=active?'Pausa':'Riprendi';toggle.querySelector('.ui-icon')!.className='ui-icon '+(active?'icon-pause':'icon-play');toggle.setAttribute('aria-label',active?'Metti in pausa il set':'Riprendi il set');window.dispatchEvent(new CustomEvent('kist:audio',{detail:{playing:active}}))}
+function transport(active:boolean){playing=active;toggle.querySelector('.transport-label')!.textContent=active?'Pausa':'Riprendi';toggle.querySelector('.ui-icon')!.className='ui-icon '+(active?'icon-pause':'icon-play');toggle.setAttribute('aria-label',active?'Metti in pausa il set':'Riprendi il set');toggle.title=active?'Metti in pausa':'Riprendi il set';document.querySelector('[data-track-status]')!.textContent=active?'IN ASCOLTO':'IN PAUSA';window.dispatchEvent(new CustomEvent('kist:audio',{detail:{playing:active}}))}
 function retry(message:string){clearTimeout(readyTimer);connecting=false;heroButton.disabled=false;popupPlay.disabled=false;transport(false);widget=undefined;status.textContent=message;popupPlay.querySelector('.button-label')!.textContent='Riprova';popupPlay.setAttribute('aria-label','Riprova la connessione a SoundCloud')}
 async function start(url:string){
  if(!url||connecting)return;
@@ -119,7 +119,7 @@ let playerOpener:HTMLElement|undefined;
 let entryInvitation=true;
 function openPlayer(){if(!soundDialog.open){playerOpener=document.activeElement instanceof HTMLElement?document.activeElement:undefined;soundDialog.showModal()}}
 function closePlayer(){entryInvitation=false;soundDialog.close()}
-soundDialog.addEventListener('close',()=>{(playerOpener&&playerOpener!==document.body?playerOpener:document.getElementById('hero-listen'))?.focus({preventScroll:true})});
+soundDialog.addEventListener('close',()=>{const visibleOpener=playerOpener?.isConnected&&playerOpener!==document.body&&playerOpener.getClientRects().length>0;const target=visibleOpener?playerOpener:!dock.hidden?document.getElementById('dock-open'):document.getElementById('hero-listen');target?.focus({preventScroll:true})});
 function heroTransport(){if(widget&&!connecting){playing?widget.pause():widget.play()}else openPlayer()}
 heroButton?.addEventListener('click',heroTransport);
 document.getElementById('hero-listen')?.addEventListener('click',heroTransport);
@@ -149,22 +149,60 @@ if(invitation.dataset.url){
 document.querySelectorAll<HTMLButtonElement>('[data-mix]').forEach(button=>button.addEventListener('click',()=>{if(widget&&loadedUrl===button.dataset.mix){playing?widget.pause():widget.play()}else{entryInvitation=false;enterWithMusic=true;openPlayer();start(button.dataset.mix!)}}));
 window.addEventListener('kist:audio',()=>{document.querySelectorAll<HTMLButtonElement>('[data-mix]').forEach(button=>{const active=playing&&button.dataset.mix===loadedUrl;button.classList.toggle('is-playing',active);button.setAttribute('aria-pressed',String(active));button.querySelector('.mix-action')!.textContent=active?'Pausa':'Riproduci';button.querySelector('.mix-play')!.className='mix-play ui-icon '+(active?'icon-pause':'icon-play')})});
 toggle.addEventListener('click',()=>{playing?widget?.pause():widget?.play()});
-document.getElementById('dock-close')?.addEventListener('click',()=>{widget?.pause();dock.hidden=true});
+document.getElementById('dock-close')?.addEventListener('click',()=>{widget?.pause();dock.hidden=true;queueMicrotask(()=>musicHeader.focus({preventScroll:true}))});
 const headerSlot=document.querySelector('.header-transport-slot')!;
 const social=document.querySelector<HTMLElement>('.listen-social')!;
-let beyondHero=false;
-function dockPlacement(){if(beyondHero){headerSlot.append(dock)}else document.body.append(dock);dock.classList.toggle('in-header',beyondHero);social.hidden=beyondHero&&!dock.hidden}
-new IntersectionObserver(entries=>{const hero=entries[0];beyondHero=!hero.isIntersecting&&hero.boundingClientRect.bottom<90;dockPlacement()},{rootMargin:'-90px 0px 0px 0px',threshold:0}).observe(document.querySelector('.hero')!);
+function dockPlacement(){if(dock.parentElement!==headerSlot)headerSlot.append(dock);dock.classList.add('in-header');social.hidden=!dock.hidden;headerSlot.classList.toggle('has-transport',!dock.hidden)}
 new MutationObserver(dockPlacement).observe(dock,{attributes:true,attributeFilter:['hidden']});
+dockPlacement();
+
+// A single navigation tree becomes a disclosure on smaller viewports.
+const navigation=document.getElementById('site-navigation')!;
+const navToggle=document.getElementById('header-nav-toggle') as HTMLButtonElement;
+const siteHeader=document.querySelector<HTMLElement>('.site-header')!;
+const compactNavigation=matchMedia('(max-width:1050px)');
+function setNavigation(open:boolean,restoreFocus=false){
+ const expanded=compactNavigation.matches&&open;
+ navigation.hidden=compactNavigation.matches&&!expanded;
+ navToggle.hidden=!compactNavigation.matches;
+ navToggle.setAttribute('aria-expanded',String(expanded));
+ siteHeader.classList.toggle('navigation-open',expanded);
+ if(restoreFocus)navToggle.focus({preventScroll:true});
+}
+navToggle.addEventListener('click',()=>{const open=navToggle.getAttribute('aria-expanded')!=='true';setNavigation(open);if(open)navigation.querySelector<HTMLAnchorElement>('a')?.focus({preventScroll:true})});
+compactNavigation.addEventListener('change',()=>setNavigation(false));
+navigation.querySelectorAll<HTMLAnchorElement>('a').forEach(link=>link.addEventListener('click',()=>{
+ if(!compactNavigation.matches)return;
+ setNavigation(false);
+ const target=document.querySelector<HTMLElement>(link.hash);
+ if(target)requestAnimationFrame(()=>{if(!target.hasAttribute('tabindex'))target.setAttribute('tabindex','-1');target.focus({preventScroll:true})});
+}));
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&navToggle.getAttribute('aria-expanded')==='true'){event.preventDefault();setNavigation(false,true)}});
+document.addEventListener('pointerdown',event=>{if(navToggle.getAttribute('aria-expanded')==='true'&&event.target instanceof Node&&!siteHeader.contains(event.target))setNavigation(false)});
+document.addEventListener('focusin',event=>{if(navToggle.getAttribute('aria-expanded')==='true'&&event.target instanceof Node&&!siteHeader.contains(event.target))setNavigation(false)});
+setNavigation(false);
+const navLinks=Array.from(navigation.querySelectorAll<HTMLAnchorElement>('a'));
+let navigationFrame=0;
+function markNavigation(){
+ navigationFrame=0;
+ const threshold=siteHeader.offsetHeight+innerHeight*.15;
+ let current:HTMLAnchorElement|undefined;
+ for(const link of navLinks){const section=document.querySelector<HTMLElement>(link.hash);if(section&&section.getBoundingClientRect().top<=threshold)current=link;}
+ if(scrollY+innerHeight>=document.documentElement.scrollHeight-5)current=navLinks[navLinks.length-1];
+ navLinks.forEach(link=>{if(link===current)link.setAttribute('aria-current','location');else link.removeAttribute('aria-current')});
+}
+window.addEventListener('scroll',()=>{if(!navigationFrame)navigationFrame=requestAnimationFrame(markNavigation)},{passive:true});
+window.addEventListener('resize',markNavigation,{passive:true});
+markNavigation();
 document.getElementById('quiet')?.addEventListener('click',()=>{widget?.pause();status.textContent='Continua a esplorare. Il suono può aspettare.';document.getElementById('sound')?.scrollIntoView({behavior:reduced?'auto':'smooth'})});
 
 const slides=Array.from(document.querySelectorAll<HTMLElement>('.hero-slide'));
 const slideToggle=document.getElementById('slides-toggle');
 let slideIndex=0,slidePaused=reduced,slideTimer:ReturnType<typeof setTimeout>|undefined;
 function scheduleSlide(){clearTimeout(slideTimer);if(slides.length<2||slidePaused||document.hidden)return;slideTimer=setTimeout(()=>{const next=(slideIndex+1)%slides.length;const image=slides[next].querySelector('img')!;image.loading='eager';image.decode().catch(()=>{}).then(()=>{slides[slideIndex].classList.remove('active');slideIndex=next;slides[slideIndex].classList.add('active');const count=document.getElementById('slide-count');if(count)count.textContent=String(slideIndex+1).padStart(2,'0')+' / '+String(slides.length).padStart(2,'0');scheduleSlide()})},6500)}
-slideToggle?.addEventListener('click',()=>{slidePaused=!slidePaused;slideToggle.setAttribute('aria-pressed',String(slidePaused));slideToggle.setAttribute('aria-label',slidePaused?'Riprendi lo slideshow':'Metti in pausa lo slideshow');slideToggle.querySelector('.ui-icon')?.setAttribute('class','ui-icon '+(slidePaused?'icon-play':'icon-pause'));scheduleSlide()});
+if(slides.length>1)slideToggle?.addEventListener('click',()=>{slidePaused=!slidePaused;slideToggle.setAttribute('aria-pressed',String(slidePaused));slideToggle.setAttribute('aria-label',slidePaused?'Riprendi lo slideshow':'Metti in pausa lo slideshow');slideToggle.querySelector('.ui-icon')?.setAttribute('class','ui-icon '+(slidePaused?'icon-play':'icon-pause'));scheduleSlide()});
 document.addEventListener('visibilitychange',scheduleSlide);
-if(reduced&&slideToggle){slideToggle.setAttribute('aria-pressed','true');slideToggle.querySelector('.ui-icon')?.setAttribute('class','ui-icon icon-play');slideToggle.setAttribute('aria-label','Riprendi lo slideshow')}
+if(reduced&&slides.length>1&&slideToggle){slideToggle.setAttribute('aria-pressed','true');slideToggle.querySelector('.ui-icon')?.setAttribute('class','ui-icon icon-play');slideToggle.setAttribute('aria-label','Riprendi lo slideshow')}
 scheduleSlide();
 
 document.querySelectorAll<HTMLElement>('.night-viewer').forEach(viewer=>{

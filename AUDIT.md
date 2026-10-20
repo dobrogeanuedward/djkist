@@ -71,3 +71,10 @@ Frequency Quest is an optional platformer: collect Portici, Torri and Piazza fre
 The world subscribes to real SoundCloud playback state and progress. No player ownership or iframe/session behavior changes were made. The global scene sleeps while any modal is open or the document is hidden; reduced motion produces a static ambient composition. World pause also freezes its own character without altering the player character or audio.
 
 Build succeeds without the former large Three.js chunk: the unused festival entry point and duplicated ambient loops were removed. New rendering uses no additional runtime packages. Responsive and full-flow release verification is recorded by the accompanying browser workflow; original video files remain unlocated.
+
+
+## Final direction: integrated 16-bit arcade / 20 October 2026
+
+The standalone Frequency Quest was withdrawn at the user's request. Its dialog, entry buttons and runtime are removed. KIST again runs in response to scrolling, directly within the page. Three original pixel-art Bologna environments and a transparent foreground provide layered 2.5D parallax; the rejected cinematic concept drafts are not shipped. The route remains navigable independently of the character, and motion can be paused without changing SoundCloud.
+
+The header now links all six sections and contains one persistent artwork/title transport. Desktop Notti tabs are larger and centered. The user's newly supplied silent footage replaces the hero slideshow with separate desktop/mobile crops and matching posters; the actual Plug Radio session is linked through a verified YouTube embed. See asset-manifest.md and design/world-art-prompts.md for sources and production prompts. Previous notes describing missing original video and the standalone platformer are superseded by this revision.
