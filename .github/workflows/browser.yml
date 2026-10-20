@@ -96,6 +96,10 @@ jobs:
             await page.waitForFunction(()=>document.querySelector('#kist-world')?.dataset.worldChapter==='1',null,{timeout:6000});
             await page.evaluate(()=>document.querySelector('#frequency-break').scrollIntoView({block:'center',behavior:'instant'}));
             await page.locator('#frequency-break [data-kist-ready="true"]').waitFor();
+            const gateSprite=page.locator('#frequency-break [data-kist-sprite]');
+            await gateSprite.scrollIntoViewIfNeeded();
+            const liveSpriteFrame=await gateSprite.getAttribute('data-frame');
+            await page.waitForFunction(frame=>document.querySelector('#frequency-break [data-kist-sprite]')?.dataset.frame!==frame,liveSpriteFrame,{timeout:4000});
             await page.locator('#world-motion').click();
             const pausedWorldFrame=await world.getAttribute('data-world-frame');
             const pausedSpriteFrame=await page.locator('#frequency-break [data-kist-sprite]').getAttribute('data-frame');
@@ -103,7 +107,9 @@ jobs:
             if(await world.getAttribute('data-world-frame')!==pausedWorldFrame||await page.locator('#frequency-break [data-kist-sprite]').getAttribute('data-frame')!==pausedSpriteFrame)throw new Error('World pause did not stop scenery and the gate character');
             await page.locator('#world-motion').click();
             await page.waitForFunction(frame=>document.querySelector('#kist-world')?.dataset.worldFrame!==frame,pausedWorldFrame,{timeout:4000});
-            await page.waitForFunction(frame=>document.querySelector('#frequency-break [data-kist-sprite]')?.dataset.frame!==frame,pausedSpriteFrame,{timeout:4000});
+            await gateSprite.scrollIntoViewIfNeeded();
+            try{await page.waitForFunction(frame=>document.querySelector('#frequency-break [data-kist-sprite]')?.dataset.frame!==frame,pausedSpriteFrame,{timeout:4000});}
+            catch(error){throw new Error('Gate resume failed: '+JSON.stringify(await page.evaluate(()=>({sprite:document.querySelector('#frequency-break [data-kist-sprite]')?.dataset,rect:document.querySelector('#frequency-break [data-kist-sprite]')?.getBoundingClientRect(),world:document.querySelector('#kist-world')?.dataset,scrollY,hidden:document.hidden,dialogs:[...document.querySelectorAll('dialog[open]')].map(el=>el.id)}))),{cause:error});}
             await page.screenshot({animations:'disabled',path:'screenshots/'+name+'-world.png'});
             const gameOpener=page.getByRole('button',{name:'Gioca',exact:true});
             await gameOpener.click();
