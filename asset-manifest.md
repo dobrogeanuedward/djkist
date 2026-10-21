@@ -51,3 +51,10 @@ The user requested faster rotation through the supplied content. These assets su
 ## Notti sky — 21 October 2026
 
 The Canvas2D sky is original procedural code with cached nebula and star textures. The Galaxy background at https://reactbits.dev/backgrounds/galaxy was used as a visual research reference; no third-party component, shader or source code was copied. No new runtime dependency or generated bitmap was added.
+
+## KIST signature v2 — 21 October 2026
+
+- Direction explored with the built-in imagegen tool from the existing wordmark. The user requested a typographic final mark without the mascot, fine multicolor vibration lines and cleaner lettering. Raster drafts were rejected and are not shipped.
+- Final production asset `public/media/kist-wordmark-v2.svg`: original geometric K/I/S/T paths, three clipped cyan/violet/lime signal traces and one subtle traveling highlight. Transparent, no external resources, no fonts or scripts. Reduced motion disables the highlight. Used consistently in header, hero, loading screen, footer and watch-page identity; the established separate loading/arcade character remains.
+- Transparent PNG export `design/kist-wordmark-v2-master.png` and lossless WebP `public/media/kist-wordmark-v2.webp`, both 2987 × 693, rendered from that SVG without retouching. The editable SVG remains the source.
+- Prompt and production notes: `design/kist-logo-v2-prompt.md`.
