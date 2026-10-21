@@ -12,7 +12,6 @@ import KistSprite from '../components/KistSprite.astro';
 import WorldGate from '../components/WorldGate.astro';
 import ArtistDiscovery from '../components/ArtistDiscovery.astro';
 import DiscoverySchema from '../components/DiscoverySchema.astro';
-import WorldExperience from '../components/WorldExperience.astro';
 import '../styles/places.css';
 import '../styles/sprites.css';
 import '../styles/opening.css';
@@ -80,7 +79,6 @@ const structuredData = {
 <link rel="preload" as="image" href="/media/kist/kist-16bit-mix.webp"/>
 </head>
 <body>
-<WorldExperience/>
 <a class="skip" href="#main">Vai al contenuto</a>
 <div class="entrance entrance-refined" aria-hidden="true"><canvas class="entrance-waves"></canvas><div class="entrance-identity"><span class="entrance-dj">DJ</span><div class="entrance-mark"><img class="entrance-wordmark" src="/media/kist-wordmark-imagegen.webp" alt=""/><div class="entrance-character"><div class="entrance-character-motion"><KistSprite mode="mix" size={124} opening eager/></div></div></div><span class="entrance-location">BASED IN BOLOGNA</span></div></div>
 <header class="site-header">
