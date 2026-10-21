@@ -123,6 +123,9 @@ jobs:
               await page.keyboard.press('Escape');
               if(await menu.getAttribute('aria-expanded')!=='false'||!await menu.evaluate(el=>document.activeElement===el))throw new Error('Mobile menu Escape did not restore focus');
             }
+            await page.mouse.wheel(0,20);
+            await page.waitForFunction(()=>document.querySelector('.site-header')?.classList.contains('is-scrolled'));
+            if(!await page.locator('#home').evaluate(hero=>hero.getBoundingClientRect().bottom>0))throw new Error('The header waited until after the hero to compact');
             const checks=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,canvas:!!document.querySelector('#prism'),brand:document.querySelector('h1')?.textContent?.trim()||!!document.querySelector('h1 img')}));
             await navigate(page,'Sessioni live');
             await page.waitForFunction(height=>document.querySelector('.site-header')?.getBoundingClientRect().height<height-2,expandedHeader.height);
