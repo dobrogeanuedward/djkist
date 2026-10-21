@@ -26,7 +26,7 @@ The user supplied both WhatsApp ZIP archives, the standalone video and the YouTu
 - User-supplied source: `https://www.youtube.com/live/sP0j9EdBOxc?si=7R97zFRsFIGHmjrK`.
 - Site embed ID: `sP0j9EdBOxc`.
 - Display title: `KIST — Plug Radio`; label: `PLUG RADIO / 26.09.2026`.
-- The session is embedded through YouTube; no YouTube media has been downloaded into the repository.
+- The session recording is streamed through YouTube; no recording has been downloaded into the repository. The public preview thumbnail is documented separately below.
 
 ## Verification
 
@@ -41,3 +41,13 @@ The user requested faster rotation through the supplied content. These assets su
 - Mobile purple clip input: same archive, `WhatsApp Video 2026-10-03 at 12.42.42.mp4`. Source range 3–11 seconds; automatic rotation honors the input −90° display matrix, then scales to 480 × 854. Output `public/media/hero/kist-purple-mobile-v1.mp4`: 8 seconds, 24 fps, H.264/yuv420p, silent, fast-start, 709,139 bytes. Matching poster `kist-purple-mobile-poster-v1.webp` is extracted at output second 1 (21,536 bytes). The first half shows the artist at the console; the camera subsequently pans toward the crowd.
 - Sharp mural portrait input: same archive, `WhatsApp Image 2026-10-03 at 12.42.37.jpeg`, original 4032 × 3024. Full-frame resizing without retouching to quality-80 WebP yields `public/media/hero/kist-mural-portrait-desktop-v1.webp` (1600 × 1200, 177,992 bytes) and `public/media/hero/kist-mural-portrait-mobile-v1.webp` (900 × 676, 68,552 bytes). The artist occupies the left half; responsive cropping should favor that side.
 - Verification: four distributed frames from each video and the optimized mobile portrait were visually inspected. Both videos are upright, contain one video stream and no audio, and have `moov` before `mdat`. Desktop video is below 1.4 MB and mobile below 1 MB. No artist data, page markup or playback runtime was changed in this asset preparation.
+
+## Plug Radio preview — 21 October 2026
+
+- Original public YouTube thumbnail: `https://i.ytimg.com/vi/sP0j9EdBOxc/maxresdefault.jpg`, from the performance supplied by the user. HTTP200 and image dimensions verified.
+- Stored unchanged at `public/media/plug-radio-poster-v2.jpg`: 1280 × 720 JPEG, 126,772 bytes. No upscaling, AI reconstruction or facial retouching.
+- Replaces a 480 × 360 thumbnail enlarged across the viewport. The new preview keeps 16:9 on all screens and caps its desktop width at 1120px; an explicit play control and 53:12 duration identify the video.
+
+## Notti sky — 21 October 2026
+
+The Canvas2D sky is original procedural code with cached nebula and star textures. The Galaxy background at https://reactbits.dev/backgrounds/galaxy was used as a visual research reference; no third-party component, shader or source code was copied. No new runtime dependency or generated bitmap was added.

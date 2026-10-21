@@ -7,7 +7,7 @@ const title='KIST — Plug Radio · DJ set del 26 settembre 2026';
 const description='Guarda la sessione di KIST per Plug Radio del 26 settembre 2026: 53 minuti di DJ set. Scopri il suo suono e proponi booking o collaborazioni.';
 const youtubeUrl='https://www.youtube.com/watch?v=sP0j9EdBOxc';
 const embedUrl='https://www.youtube-nocookie.com/embed/sP0j9EdBOxc';
-const thumbnail='https://i.ytimg.com/vi/sP0j9EdBOxc/hqdefault.jpg';
+const thumbnail=siteUrl+'media/plug-radio-poster-v2.jpg';
 const artistId=siteUrl+'#kist';
 const videoId=siteUrl+'#plug-radio-session';
 const structuredData={
@@ -21,7 +21,7 @@ const structuredData={
    uploadDate:'2026-09-26T23:02:32-07:00',about:{'@id':artistId},mainEntityOfPage:{'@id':canonical+'#webpage'},
    publisher:{'@type':'Organization',name:'Plug Radio',url:'https://www.youtube.com/@plugradio'},
   },
-  {'@type':'Person','@id':artistId,name:'KIST',url:siteUrl,jobTitle:'DJ e selector',homeLocation:{'@type':'City',name:'Bologna'},sameAs:[artist.instagram,artist.soundcloud]},
+  {'@type':'Person','@id':artistId,name:'KIST',alternateName:['DJ KIST','Benedetta Pasquariello'],url:siteUrl,jobTitle:'DJ e selector',homeLocation:{'@type':'City',name:'Bologna'},sameAs:[artist.instagram,artist.soundcloud]},
  ],
 };
 ---
@@ -62,7 +62,7 @@ const structuredData={
   <div class="session-heading"><span class="session-edition">SESSIONI / PLUG RADIO</span><h1>KIST — Plug Radio</h1><p><time datetime="2026-09-26">26 settembre 2026</time><span aria-hidden="true">·</span><span>53:12</span></p></div>
   <div class="session-player" id="session-video" tabindex="-1"><iframe src={embedUrl} title="DJ set KIST — Plug Radio, 26 settembre 2026" loading="eager" allow="encrypted-media; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
   <div class="session-notes">
-   <div><h2>Una sessione intera, da ascoltare.</h2><p>Il set di KIST per Plug Radio del 26 settembre 2026, pubblicato sul canale della radio. Premi play per guardare la sessione completa, oppure <a href={youtubeUrl} target="_blank" rel="noopener noreferrer">aprila su YouTube</a>.</p><p>KIST è una DJ di origini lucane, con base a Bologna. Dal breakbeat alla jungle e alla drum and bass, il suo percorso attraversa UK garage, funky e acid techno. <a href="/#about">Conosci KIST</a>.</p></div>
+   <div><h2>Una sessione intera, da ascoltare.</h2><p>Il set di KIST per Plug Radio del 26 settembre 2026, pubblicato sul canale della radio. Premi play per guardare la sessione completa, oppure <a href={youtubeUrl} target="_blank" rel="noopener noreferrer">aprila su YouTube</a>.</p><p>KIST è il nome d’arte di Benedetta Pasquariello, DJ di origini lucane con base a Bologna. Dal breakbeat alla jungle e alla drum and bass, il suo percorso attraversa UK garage, funky e acid techno. <a href="/#about">Conosci KIST</a>.</p></div>
    <aside class="session-booking" aria-labelledby="session-booking-title"><span>LA PROSSIMA NOTTE</span><h2 id="session-booking-title">Un set, un progetto, insieme.</h2><p>Per proporre una serata o una collaborazione, scrivi a KIST indicando data, città, luogo e idea dell’evento.</p><a class="session-cta" href={artist.instagram} target="_blank" rel="noopener noreferrer">Booking su Instagram <span aria-hidden="true">↗</span></a><a class="session-listen" href={artist.soundcloud} target="_blank" rel="noopener noreferrer">Ascolta gli altri set su SoundCloud <span aria-hidden="true">↗</span></a></aside>
   </div>
  </main>

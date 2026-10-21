@@ -1,5 +1,5 @@
 ---
-import { artist, mixes, films, photographs, events, heroSlides } from '../data/artist';
+import { artist, mixes, photographs, events, heroSlides } from '../data/artist';
 import '../styles/global.css';
 import '../styles/polish.css';
 import '../styles/vinyl.css';
@@ -12,27 +12,31 @@ import KistSprite from '../components/KistSprite.astro';
 import WorldGate from '../components/WorldGate.astro';
 import ArtistDiscovery from '../components/ArtistDiscovery.astro';
 import DiscoverySchema from '../components/DiscoverySchema.astro';
+import LiveSessionsLibrary from '../components/LiveSessionsLibrary.astro';
+import NightSky from '../components/NightSky.astro';
 import '../styles/places.css';
 import '../styles/sprites.css';
 import '../styles/opening.css';
 import '../styles/desktop.css';
 import '../styles/world.css';
 import '../styles/hero-video.css';
+import '../styles/artist-polish.css';
+import '../styles/header-refinement.css';
 const today = new Date().toLocaleDateString('en-CA', {timeZone:'Europe/Rome'});
 const future = events.filter(e => e.date >= today).sort((a,b)=>a.date.localeCompare(b.date));
 const past = events.filter(e => e.date < today).sort((a,b)=>b.date.localeCompare(a.date));
 const showFuture = future.length > 0;
 const featured = mixes[0];
 const siteUrl = 'https://www.djkist.it/';
-const pageTitle = 'DJ KIST a Bologna — DJ set, musica e booking';
-const pageDescription = 'DJ KIST a Bologna: breakbeat, UK garage, jungle, drum and bass e acid techno. Ascolta i set, guarda le sessioni e proponi booking o collaborazioni.';
+const pageTitle = 'DJ KIST — Benedetta Pasquariello, DJ a Bologna';
+const pageDescription = 'Benedetta Pasquariello, in arte DJ KIST: DJ a Bologna. Breakbeat, UK garage, jungle, drum and bass e acid techno. Set, video, booking e collaborazioni.';
 const shareImage = new URL(artist.hero, siteUrl).href;
 const artistId = siteUrl + '#kist';
 const structuredData = {
  '@context': 'https://schema.org',
  '@graph': [
   {
-   '@type': 'Person', '@id': artistId, name: 'KIST', url: siteUrl,
+   '@type': 'Person', '@id': artistId, name: 'KIST', alternateName: ['DJ KIST', 'Benedetta Pasquariello'], url: siteUrl,
    jobTitle: 'DJ e selector', description: artist.bio, image: shareImage,
    homeLocation: {'@type': 'City', name: 'Bologna', containedInPlace: {'@type': 'Country', name: 'Italia'}},
    sameAs: [artist.instagram, artist.soundcloud],
@@ -84,7 +88,7 @@ const structuredData = {
 <header class="site-header">
 <a class="brand" href="#home" aria-label="KIST, inizio"><img src="/media/kist-wordmark-imagegen.webp" alt="KIST"/></a>
 <button id="header-nav-toggle" class="header-nav-toggle" aria-expanded="false" aria-controls="site-navigation" hidden><span>Menu</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7h14M3 13h14"/></svg></button>
-<nav id="site-navigation" class="site-nav" aria-label="Menu principale"><a href="#sound">Sound</a><a href="#frequency-break">Mondo KIST</a><a href="#diary">Notti</a><a href="#places">Luoghi</a><a href="#about">Kist</a><a href="#contact">Contatti</a></nav>
+<nav id="site-navigation" class="site-nav" aria-label="Menu principale"><a href="#sound" aria-label="Sound">Sound</a><a href="#sessions" aria-label="Sessioni live">Sessioni</a><a href="#frequency-break" aria-label="Mondo KIST">Mondo KIST</a><a href="#diary" aria-label="Notti">Notti</a><a href="#places" aria-label="Luoghi">Luoghi</a><a href="#about" aria-label="Kist">Kist</a><a href="#contact" aria-label="Contatti">Contatti</a></nav>
 <div class="header-actions"><div class="listen-social"><button id="header-music" class="header-music" aria-describedby="header-track-title" aria-label="Attiva la musica" aria-pressed="false"><img class="header-track-cover" data-track-cover src={featured?.artwork || artist.hero} width="42" height="42" alt=""/><span class="header-track-copy"><small>KIST / SOUNDCLOUD</small><strong id="header-track-title" data-track-title>{featured?.title || 'Personal frequency'}</strong></span><span class="header-listen-icon ui-icon icon-play" aria-hidden="true"></span></button></div><div class="header-transport-slot"></div></div>
 </header>
 <main id="main">
@@ -100,7 +104,7 @@ const structuredData = {
 <div class="grain"></div>
 </div>
 <div class="hero-top"><span>DJ / SELECTOR</span><span>BOLOGNA · IT</span></div>
-<div class="hero-title"><span class="small">You're in my space.</span><h1><img src="/media/kist-wordmark-imagegen.webp" alt="DJ KIST — DJ e selector a Bologna"/></h1></div>
+<div class="hero-title"><span class="small">You're in my space.</span><h1><img src="/media/kist-wordmark-imagegen.webp" alt="DJ KIST — Benedetta Pasquariello, DJ e selector a Bologna"/></h1></div>
 <div class="hero-bottom"><button class="hero-listen" id="hero-listen" aria-label="Apri il player di KIST"><span>Riproduci</span><i aria-hidden="true"></i></button>
 <div class="sound-invitation" data-url={featured?.url || artist.soundcloud} data-mixes={JSON.stringify(mixes)}>
 <div class="mini-record" aria-hidden="true"><img src="/media/kist-fifteen-frames-clean-v2.webp" alt=""/></div>
@@ -113,12 +117,13 @@ const structuredData = {
 </section>
 <div class="ticker" aria-hidden="true"><div>FEEL THE ROOM. FIND YOUR FREQUENCY. KIST. FEEL THE ROOM. FIND YOUR FREQUENCY. KIST.</div></div>
 <section class="sound-section section" id="sound">
-<div class="section-heading"><h2>Sound.</h2></div>
+<div class="section-heading"><h2 class="prismatic-title">Sound.</h2></div>
 <div class="record-shelf">{mixes.map((mix,i)=><button class="record-card" data-mix={mix.url} aria-pressed="false" style={'--tone:'+mix.palette+';--accent:'+mix.accent+';--art:url('+mix.artwork+')'}><span class="record-edition">0{i+1} / KIST</span><div class="record-object">{mix.sleeve?<img src={mix.sleeve} alt={'Copertina e vinile di '+mix.title} loading="lazy"/>:<img class="original-sleeve" src={mix.artwork} alt={'Copertina originale di '+mix.title} loading="lazy"/>}</div><div class="record-info"><span class="record-genre">{mix.label}</span><h3>{mix.title}</h3><span class="record-control"><i class="mix-play ui-icon icon-play" aria-hidden="true"></i><span class="mix-action">Riproduci</span></span></div></button>)}</div><a class="sound-profile" href={artist.soundcloud} target="_blank" rel="noopener noreferrer">Tutte le selezioni su SoundCloud <i class="ui-icon icon-external" aria-hidden="true"></i></a>
 </section>
-{films.length > 0 && <section class="film-section" aria-label="Video di KIST">{films.map(film=><div class="film"><button class="film-open" data-youtube={film.youtubeId} aria-label={'Guarda '+film.title}><img src={'https://i.ytimg.com/vi/'+film.youtubeId+'/hqdefault.jpg'} alt={film.title} loading="lazy"/><span class="film-text"><small>{film.label}</small><strong>{film.title}</strong><span>Guarda il set</span></span></button></div>)}</section>}
-<section class="real-sessions section" aria-label="KIST, sessioni e immagini reali"><div class="session-heading"><span>BOLOGNA / DIETRO LA CONSOLE</span><h2>Dentro il suono.</h2></div><div class="session-stage"><div class="session-identity"><span class="session-edition">FIFTEEN FRAMES / S01—E29</span><strong>In her<br/><em>element.</em></strong><div class="session-caption"><img src="/kist-sigil.svg" alt=""/><p>Una console.<br/>Il suo modo di abitarla.</p></div></div><div class="instagram-sessions"><article><div class="session-media"><button class="session-watch" aria-label="Guarda la sessione Fifteen Frames"><img src="/media/kist-fifteen-frames-clean-v2.webp" alt="KIST alla console — Fifteen Frames" loading="lazy"/><span><i class="ui-icon icon-play" aria-hidden="true"></i>Guarda la sessione</span></button></div><a href="https://www.instagram.com/reel/DbbEcZJt6uv/" target="_blank" rel="noopener noreferrer">S01—E29 / Guarda la sessione su Instagram</a></article></div></div></section><WorldGate/><section class="diary section" id="diary">
-<div class="night-heading"><h2>Notti.</h2><span>Passate e future.</span></div>
+<LiveSessionsLibrary/>
+<WorldGate/><section class="diary section" id="diary">
+<NightSky/>
+<div class="night-heading"><h2 class="prismatic-title">Notti.</h2><span>Passate e future.</span></div>
 <div class="night-tabs" role="group" aria-label="Mostra eventi"><button aria-pressed={!showFuture} data-events="past">Passate <span>{past.length}</span></button><button aria-pressed={showFuture} data-events="future">Future <span>{future.length}</span></button></div>
 <div id="past-events" hidden={showFuture}><EventViewer items={past} label="Archivio eventi di KIST"/></div><div id="future-events" hidden={!showFuture}><EventViewer items={future} label="Prossimi eventi di KIST"/></div>
 </section>

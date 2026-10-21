@@ -1,0 +1,84 @@
+---
+import {films} from '../data/artist';
+import VideoSessionPreview from './VideoSessionPreview.astro';
+const plugRadio=films.find(film=>film.youtubeId==='sP0j9EdBOxc');
+const firstSession=plugRadio?'plug-radio':'fifteen-frames';
+---
+<section class="live-sessions-library" id="sessions" aria-labelledby="live-sessions-title" data-live-sessions data-live-session={firstSession}>
+ <div class="live-library-inner">
+  <header class="live-library-heading"><div><span>KIST / IN SESSION</span><h2 id="live-sessions-title">Sessioni live.</h2></div><p>Seleziona una sessione.</p></header>
+  <div class="live-library-layout">
+   <div class="live-library-choices" role="group" aria-label="Scegli la sessione live">
+    {plugRadio&&<button class="live-session-choice" id="live-choice-plug-radio" type="button" data-live-session-choice="plug-radio" aria-label="Plug Radio" aria-describedby="live-meta-plug-radio" aria-expanded="true" aria-controls="live-panel-plug-radio"><img class="live-choice-thumb" src={plugRadio.poster} alt="" width="96" height="72" loading="lazy" decoding="async"/><span class="live-choice-copy"><span class="live-choice-edition">01 / VIDEO</span><strong>Plug Radio</strong><small id="live-meta-plug-radio">26.09.2026 <span aria-hidden="true">·</span> 53:12</small></span><svg class="live-choice-chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg></button>}
+    <button class="live-session-choice" id="live-choice-fifteen-frames" type="button" data-live-session-choice="fifteen-frames" aria-label="Fifteen Frames" aria-describedby="live-meta-fifteen-frames" aria-expanded={!plugRadio} aria-controls="live-panel-fifteen-frames"><img class="live-choice-thumb" src="/media/kist-fifteen-frames-clean-v2.webp" alt="" width="96" height="72" loading="lazy" decoding="async"/><span class="live-choice-copy"><span class="live-choice-edition">02 / VIDEO</span><strong>Fifteen Frames</strong><small id="live-meta-fifteen-frames">S01—E29 <span aria-hidden="true">·</span> Instagram</small></span><svg class="live-choice-chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg></button>
+   </div>
+   <div class="live-library-panels">
+    {plugRadio&&<div class="live-session-panel" id="live-panel-plug-radio" role="region" aria-labelledby="live-choice-plug-radio" data-live-session-panel="plug-radio"><VideoSessionPreview film={plugRadio}/></div>}
+    <div class="live-session-panel" id="live-panel-fifteen-frames" role="region" aria-labelledby="live-choice-fifteen-frames" data-live-session-panel="fifteen-frames" hidden={!!plugRadio}>
+     <figure class="live-fifteen-session">
+      <div class="session-media live-session-media"><button class="session-watch live-session-open" aria-label="Guarda la sessione Fifteen Frames" aria-describedby="live-fifteen-description"><img src="/media/kist-fifteen-frames-clean-v2.webp" width="1280" height="720" alt="KIST alla console — Fifteen Frames" loading="lazy" decoding="async"/><span class="live-session-overlay" aria-hidden="true"><span class="live-session-badge"><span class="ui-icon icon-play"></span> VIDEO SESSION</span><span class="live-session-play"><span class="live-session-play-icon"><svg viewBox="0 0 24 24"><path d="m9 5 11 7-11 7Z"/></svg></span><span>Guarda la sessione</span></span></span></button></div>
+      <figcaption class="live-fifteen-caption"><div><span>FIFTEEN FRAMES / S01—E29</span><h3>Fifteen Frames</h3><p id="live-fifteen-description">KIST alla console. La sessione su Instagram.</p></div><a href="https://www.instagram.com/reel/DbbEcZJt6uv/" target="_blank" rel="noopener noreferrer">Guarda su Instagram <span aria-hidden="true">↗</span></a></figcaption>
+     </figure>
+    </div>
+   </div>
+  </div>
+ </div>
+</section>
+<style>
+ .live-sessions-library{position:relative;padding:clamp(42px,6vw,84px) 6%;background:radial-gradient(ellipse at 15% 24%,#58348a16,transparent 55%),#08090e;border-top:1px solid #a18dc21a}
+ .live-library-inner{width:min(1240px,100%);margin-inline:auto}
+ .live-library-heading{position:static;display:flex;align-items:end;justify-content:space-between;gap:24px;padding:0 0 30px;background:none;border:0;backdrop-filter:none;width:auto}
+ .live-library-heading>div>span{font-size:9px;letter-spacing:.16em;color:#a59ab7}
+ .live-library-heading h2{margin:12px 0 0;font-family:'Space Grotesk',sans-serif;font-size:clamp(36px,4.6vw,64px);font-weight:400;letter-spacing:-.055em;line-height:1.05;color:#e9e6f3}
+ .live-library-heading>p{margin:0 0 4px;font-size:11px;color:#aaa0ba}
+ .live-library-layout{display:grid;grid-template-columns:minmax(245px,.34fr) minmax(0,1fr);align-items:start;gap:clamp(22px,3.2vw,48px)}
+ .live-library-choices{display:grid;gap:10px;min-width:0}
+ .live-session-choice{display:grid;grid-template-columns:64px minmax(0,1fr) 16px;align-items:center;gap:12px;width:100%;min-height:104px;padding:14px;border:1px solid #a58bd12e;border-radius:12px;background:#0f101a;color:#c5bfd3;text-align:left;transition:background .2s,border-color .2s,color .2s}
+ .live-choice-thumb{display:block;width:64px;height:64px;border-radius:6px;object-fit:cover;object-position:48% 48%;image-rendering:auto;filter:brightness(.8) saturate(.85)}
+ .live-choice-copy{display:grid;gap:7px;min-width:0}
+ .live-choice-edition{font-size:8px;letter-spacing:.12em;color:#9c90ae}
+ .live-choice-copy strong{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:400;letter-spacing:-.025em;line-height:1.15}
+ .live-choice-copy small{font-size:9px;line-height:1.45;color:#a59ab3;font-variant-numeric:tabular-nums}
+ .live-choice-copy small>span{margin-inline:3px}
+ .live-choice-chevron{width:16px;height:16px;fill:none;stroke:#aaa0bd;stroke-width:1.4;transition:transform .2s}
+ .live-session-choice[aria-expanded=true]{background:linear-gradient(110deg,#211a30,#151725);border-color:#af96eb82;color:#f0ebfa;box-shadow:inset 2px 0 #ad95e7}
+ .live-session-choice[aria-expanded=true] .live-choice-edition{color:#a7dae2}
+ .live-session-choice[aria-expanded=true] .live-choice-thumb{filter:brightness(.95) saturate(.95)}
+ .live-session-choice[aria-expanded=true] .live-choice-chevron{transform:rotate(180deg);stroke:#b6a0e7}
+ .live-session-choice:hover{border-color:#a2d9e488;color:#fff}
+ .live-session-choice:focus-visible{outline:2px solid #a2dfe8;outline-offset:4px}
+ .live-library-panels{min-width:0}
+ .live-session-panel{animation:live-session-reveal .25s ease-out}
+ .live-session-panel[hidden]{display:none!important}
+ .live-sessions-library :global(.video-session){width:100%;margin:0}
+ .live-sessions-library :global(.video-session-caption h3){font-size:clamp(28px,2.8vw,38px)}
+ .live-sessions-library :global(.video-session-caption>a){font-size:11px}
+ .live-fifteen-session{margin:0}
+ .live-session-media{width:100%;overflow:hidden;border-radius:18px;background:#0c0d14}
+ .live-session-open.session-watch{position:relative;display:block;width:100%;aspect-ratio:16/9;padding:0;border:1px solid #a08bd64d;border-radius:18px;overflow:hidden;background:#0c0d14;text-align:center;box-shadow:0 20px 60px #0004}
+ .live-session-open.session-watch>img{display:block;width:100%;height:100%;aspect-ratio:auto;object-fit:cover;object-position:48% 58%;image-rendering:auto;filter:brightness(.84) saturate(.94);transform:none;transition:filter .25s}
+ .live-session-open.session-watch:after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#05051048,transparent 32%,#05051040)}
+ .live-session-open.session-watch>.live-session-overlay{position:absolute;inset:0;z-index:1;display:block;padding:0;border:0;border-radius:0;margin:0;background:none;backdrop-filter:none;text-shadow:0 2px 14px #000}
+ .live-session-badge{position:absolute;top:20px;left:20px;display:flex;align-items:center;gap:8px;min-height:32px;padding:7px 12px;border:1px solid #ffffff35;border-radius:30px;background:#0b0b17b8;backdrop-filter:blur(8px);font-size:9px;letter-spacing:.13em}
+ .live-session-badge .ui-icon{font-size:10px;color:#c9ff52}
+ .live-session-play{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;font-size:14px;font-weight:500}
+ .live-session-play-icon{display:grid;place-items:center;width:80px;height:80px;border:1px solid #e3deffb3;border-radius:50%;background:#101323bd;box-shadow:0 0 0 8px #ffffff0b,0 8px 35px #0004;backdrop-filter:blur(10px)}
+ .live-session-play-icon svg{width:30px;height:30px;margin-left:4px;fill:#c9ff52}
+ .live-session-open.session-watch:hover,.live-session-open.session-watch:focus-visible{border-color:#85e9ff}
+ .live-session-open.session-watch:hover>img,.live-session-open.session-watch:focus-visible>img{filter:brightness(.96) saturate(1);transform:none}
+ .live-session-open.session-watch:focus-visible{outline:2px solid #c9ff52;outline-offset:5px}
+ .live-fifteen-caption{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-top:25px;min-height:118px}
+ .live-fifteen-caption>div>span{font-size:9px;letter-spacing:.14em;color:#b8abd0}
+ .live-fifteen-caption h3{margin:10px 0 8px;font-family:'Space Grotesk',sans-serif;font-size:clamp(28px,2.8vw,38px);font-weight:400;line-height:1.1;letter-spacing:-.045em;color:#eeebf5}
+ .live-fifteen-caption p{margin:0;color:#a99fb9;font-size:12px;line-height:1.6}
+ .live-fifteen-caption>a{display:flex;align-items:center;justify-content:space-between;gap:22px;flex-shrink:0;min-height:46px;padding:10px 18px;border:1px solid #a68ed44d;border-radius:30px;font-size:11px;color:#ded6ec}
+ .live-fifteen-caption>a:hover{border-color:#83eaff;color:#fff}
+ .live-session-media :global(iframe){display:block;width:100%!important;max-width:100%;border:0}
+ @keyframes live-session-reveal{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+ @media(max-width:900px){.live-library-layout{grid-template-columns:1fr;gap:22px}.live-library-choices{grid-template-columns:1fr 1fr}.live-session-choice{min-height:96px}.live-choice-copy strong{font-size:16px}}
+ @media(max-width:700px){.live-sessions-library{padding:38px 20px 44px}.live-library-heading{display:block;padding-bottom:24px}.live-library-heading h2{font-size:38px}.live-library-heading>p{margin:12px 0 0;font-size:10px}.live-session-choice{grid-template-columns:minmax(0,1fr) 14px;gap:8px;min-height:106px;padding:12px}.live-choice-thumb{display:none}.live-choice-copy strong{font-size:16px}.live-choice-copy small{font-size:8px}.live-choice-copy small>span{margin-inline:1px}.live-choice-edition{font-size:7px}.live-choice-chevron{width:14px}.live-session-media,.live-session-open.session-watch{border-radius:12px}.live-session-badge{top:12px;left:12px;padding:5px 9px;min-height:27px;font-size:7px}.live-session-play{gap:11px;font-size:12px}.live-session-play-icon{width:58px;height:58px;box-shadow:0 0 0 6px #ffffff0b,0 8px 30px #0004}.live-session-play-icon svg{width:23px;height:23px}.live-fifteen-caption{display:block;padding-top:20px;min-height:0}.live-fifteen-caption h3{font-size:29px}.live-fifteen-caption p{font-size:11px}.live-fifteen-caption>a{width:max-content;margin-top:18px;min-height:44px}}
+ @media(max-width:380px){.live-choice-copy strong{font-size:15px}.live-session-play-icon{width:48px;height:48px;box-shadow:0 0 0 4px #ffffff0b,0 8px 25px #0004}.live-session-play{gap:7px;font-size:11px}}
+ @media(prefers-reduced-motion:reduce){.live-session-panel{animation:none}.live-session-choice,.live-choice-chevron,.live-session-open.session-watch>img{transition:none}}
+ @media(forced-colors:active){.live-session-choice[aria-expanded=true]{border:2px solid Highlight;box-shadow:none}.live-session-play-icon{border:1px solid ButtonText;background:Canvas;box-shadow:none}.live-session-play-icon svg{fill:ButtonText}}
+</style>
+<script src="../scripts/live-sessions.ts"></script>
