@@ -33,6 +33,9 @@ jobs:
             if(!await link.isVisible())await page.locator('#header-nav-toggle').click();
             await link.click();
           }
+          async function openHeaderPlayer(page){
+            if(!await page.locator('.site-header .header-actions').isVisible())await page.locator('#header-nav-toggle').click();
+          }
           async function settleWorldPixels(page){
             let previous='',stableFor=0;
             for(let attempt=0;attempt<60;attempt++){
@@ -105,17 +108,30 @@ jobs:
               await page.waitForFunction(()=>document.querySelector('#home')?.dataset.heroIndex==='0',null,{timeout:6000});
               await page.waitForFunction(()=>{const image=document.querySelector('#hero-sequence-photo'),hero=document.querySelector('#home');return hero.classList.contains('is-photo')&&image.complete&&new URL(image.currentSrc||image.src).pathname==='/media/kist-fifteen-frames-clean-v2.webp'&&Number(getComputedStyle(image).opacity)>.95;},null,{timeout:6000});
             }
+            await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));
+            await page.waitForFunction(()=>!document.querySelector('.site-header')?.classList.contains('is-scrolled'));
+            await page.waitForTimeout(350);
+            const expandedHeader=await page.locator('.site-header').evaluate(header=>{const box=header.getBoundingClientRect(),brand=header.querySelector('#header-nav-toggle img').getBoundingClientRect(),axis=document.documentElement.clientWidth/2;return {height:box.height,width:box.width,centered:Math.abs(brand.left+brand.width/2-axis)<2};});
+            const centeredHero=await page.locator('#home').evaluate(hero=>{const box=hero.getBoundingClientRect(),axis=box.left+box.width/2;return ['.hero-title h1','.hero-bottom'].every(selector=>{const item=hero.querySelector(selector).getBoundingClientRect();return Math.abs(item.left+item.width/2-axis)<2;});});
+            if(!expandedHeader.centered||!centeredHero)throw new Error('Header logo or hero content lost the central axis');
             const navLinks=await page.locator('#site-navigation a').evaluateAll(links=>links.map(el=>el.getAttribute('href')));
             for(const href of ['#sound','#sessions','#frequency-break','#diary','#places','#about','#contact'])if(navLinks.filter(value=>value===href).length!==1)throw new Error('Header is missing a unique section: '+href);
             const menu=page.locator('#header-nav-toggle');
-            if(await menu.isVisible()){
+            if(await menu.isVisible()&&await menu.getAttribute('aria-expanded')!==null){
               await menu.click();
               if(!await page.locator('#site-navigation').isVisible())throw new Error('Mobile menu did not open');
               await page.keyboard.press('Escape');
               if(await menu.getAttribute('aria-expanded')!=='false'||!await menu.evaluate(el=>document.activeElement===el))throw new Error('Mobile menu Escape did not restore focus');
             }
+            await page.mouse.wheel(0,20);
+            await page.waitForFunction(()=>document.querySelector('.site-header')?.classList.contains('is-scrolled'));
+            if(!await page.locator('#home').evaluate(hero=>hero.getBoundingClientRect().bottom>0))throw new Error('The header waited until after the hero to compact');
             const checks=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,canvas:!!document.querySelector('#prism'),brand:document.querySelector('h1')?.textContent?.trim()||!!document.querySelector('h1 img')}));
             await navigate(page,'Sessioni live');
+            await page.waitForFunction(height=>document.querySelector('.site-header')?.getBoundingClientRect().height<height-2,expandedHeader.height);
+            if(!await page.locator('#header-nav-toggle').isVisible()||!await page.locator('#header-panel').evaluate(panel=>panel.hidden))throw new Error('Scrolled header did not become a dropdown');
+            await menu.click();await page.keyboard.press('Escape');
+            if(await menu.getAttribute('aria-expanded')!=='false'||!await menu.evaluate(el=>document.activeElement===el))throw new Error('Collapsed menu Escape did not restore focus');
             if(await page.locator('#sessions').count()!==1||await page.getByRole('heading',{name:'Sessioni live.',exact:true}).count()!==1)throw new Error('Live sessions were not consolidated');
             const livePanels=page.locator('[data-live-session-panel]:visible');
             if(await livePanels.count()!==1||await page.locator('[data-live-sessions]').getAttribute('data-live-session')!=='plug-radio')throw new Error('The library should open one session');
@@ -326,10 +342,11 @@ jobs:
             await metadata.getByRole('button',{name:'Daje',exact:true}).click();
             await metadata.waitForFunction(()=>document.body.classList.contains('sound-active'));
             await navigate(metadata,'Notti');
+            await openHeaderPlayer(metadata);
             await metadata.locator('.site-header .audio-dock.in-header').waitFor({state:'visible'});
             await metadata.waitForFunction(()=>document.querySelector('#dock-title')?.textContent==='KIST / Metadati dal player');
             await metadata.waitForFunction(()=>{const cover=document.querySelector('#dock-cover');return cover?.complete&&cover.naturalWidth>0;});
-            const headerTrack=await metadata.evaluate(()=>{const cover=document.querySelector('#dock-cover'),title=document.querySelector('#dock-title'),header=document.querySelector('.site-header'),box=header.getBoundingClientRect(),art=cover.getBoundingClientRect();return {title:title.textContent,source:new URL(cover.currentSrc||cover.src).pathname,loaded:cover.complete&&cover.naturalWidth>0,inHeader:!!cover.closest('.site-header')&&!!title.closest('.site-header'),visible:art.width>0&&art.height>0&&art.left>=box.left&&art.right<=box.right+1,worldAudio:document.querySelector('#kist-world')?.dataset.worldAudio};});
+            const headerTrack=await metadata.evaluate(()=>{const cover=document.querySelector('#dock-cover'),title=document.querySelector('#dock-title'),header=document.querySelector('.site-header'),box=header.querySelector('#header-panel').getBoundingClientRect(),art=cover.getBoundingClientRect();return {title:title.textContent,source:new URL(cover.currentSrc||cover.src).pathname,loaded:cover.complete&&cover.naturalWidth>0,inHeader:!!cover.closest('.site-header')&&!!title.closest('.site-header'),visible:art.width>0&&art.height>0&&art.left>=box.left&&art.right<=box.right+1,worldAudio:document.querySelector('#kist-world')?.dataset.worldAudio};});
             if(headerTrack.title!=='KIST / Metadati dal player'||headerTrack.source!=='/media/bipolar-cover.webp'||!headerTrack.loaded||!headerTrack.inHeader||!headerTrack.visible||headerTrack.worldAudio!=='playing')throw new Error('Live header metadata did not follow the track: '+JSON.stringify(headerTrack));
             if(await metadata.locator('#player-mount iframe').count()!==1)throw new Error('Header transport duplicated its SoundCloud iframe');
             await metadata.locator('#dock-open').click();
@@ -365,6 +382,7 @@ jobs:
           await music.waitForFunction(()=>document.body.classList.contains('sound-active'));
           if(await music.evaluate(()=>window.testPlayCalls!==1||window.testPauseCalls!==0))throw new Error('Entry toggled instead of playing');
           await navigate(music,'Notti');
+          await openHeaderPlayer(music);
           await music.locator('.audio-dock.in-header').waitFor({state:'visible'});
           await music.getByRole('button',{name:'Metti in pausa il set',exact:true}).click();
           await music.getByRole('button',{name:'Riprendi il set',exact:true}).click();
@@ -378,6 +396,7 @@ jobs:
           if(await music.evaluate(()=>window.testPauseCalls!==0))throw new Error('Reload entry paused playback');
           if(await music.evaluate(()=>window.testSeekPosition)!==savedPosition)throw new Error('Refresh lost playback position');
           await navigate(music,'Notti');
+          await openHeaderPlayer(music);
           await music.locator('.audio-dock.in-header').waitFor({state:'visible'});
           await music.getByRole('button',{name:'Metti in pausa il set',exact:true}).click();
           await music.reload();

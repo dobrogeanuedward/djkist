@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 260" fill="none" role="img" aria-labelledby="kist-title">
+<title id="kist-title">KIST — Personal frequency</title>
+<defs>
+ <path id="kist-letters" d="M32 30H100V111L206 30H294L166 135L300 230H207L100 151V230H32Z M318 30H386V230H318Z M478 30H770L723 82H490Q478 82 478 96Q478 110 490 110H660Q740 110 740 170Q740 230 660 230H406L453 178H649Q663 178 663 164Q663 150 649 150H491Q410 150 410 90Q410 30 478 30Z M792 30H1096L1050 82H988V230H918V82H748Z"/>
+ <clipPath id="kist-clip"><use href="#kist-letters"/></clipPath>
+ <linearGradient id="signal-one" x1="32" y1="0" x2="1096" y2="0" gradientUnits="userSpaceOnUse"><stop stop-color="#43dafa"/><stop offset=".45" stop-color="#9254ef"/><stop offset=".76" stop-color="#92d93a"/><stop offset="1" stop-color="#43dafa"/></linearGradient>
+ <linearGradient id="signal-two" x1="32" y1="0" x2="1096" y2="0" gradientUnits="userSpaceOnUse"><stop stop-color="#8950e7"/><stop offset=".5" stop-color="#51d1ed"/><stop offset="1" stop-color="#9cd044"/></linearGradient>
+ <linearGradient id="signal-three" x1="32" y1="0" x2="1096" y2="0" gradientUnits="userSpaceOnUse"><stop stop-color="#83bc35"/><stop offset=".42" stop-color="#53cde8"/><stop offset="1" stop-color="#9958e6"/></linearGradient>
+ <path id="signal-a" d="M24 121H143C159 121 163 113 172 113S184 130 194 130S207 121 221 121H528C544 121 548 110 558 110S571 133 582 133S597 121 612 121H1110"/>
+ <path id="signal-b" d="M24 130H143C159 130 163 122 172 122S184 139 194 139S207 130 221 130H528C544 130 548 119 558 119S571 142 582 142S597 130 612 130H1110"/>
+ <path id="signal-c" d="M24 139H143C159 139 163 131 172 131S184 148 194 148S207 139 221 139H528C544 139 548 128 558 128S571 151 582 151S597 139 612 139H1110"/>
+</defs>
+<use href="#kist-letters" fill="#f8f9ff"/>
+<g clip-path="url(#kist-clip)" stroke-linecap="round" stroke-linejoin="round">
+ <g stroke="#080c27" stroke-width="4.4" opacity=".26"><use href="#signal-a"/><use href="#signal-b"/><use href="#signal-c"/></g>
+ <use href="#signal-a" stroke="url(#signal-one)" stroke-width="2.8"/>
+ <use href="#signal-b" stroke="url(#signal-two)" stroke-width="2.8"/>
+ <use href="#signal-c" stroke="url(#signal-three)" stroke-width="2.8"/>
+ <use class="signal-pulse" href="#signal-b" stroke="#fff" stroke-width="1.3" pathLength="1000" stroke-dasharray="28 1100"/>
+</g>
+<style>.signal-pulse{opacity:.7;animation:kist-signal 8s linear infinite}@keyframes kist-signal{from{stroke-dashoffset:1128}to{stroke-dashoffset:0}}@media(prefers-reduced-motion:reduce){.signal-pulse{animation:none;opacity:0}}</style>
+</svg>

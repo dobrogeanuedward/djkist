@@ -14,7 +14,7 @@ const safeSize=Math.max(48,Math.min(600,Number(size)||240));
 const safeSpeed=Math.max(.5,Math.min(3,Number(speed)||1));
 ---
 <div class:list={['kist-sprite',className]} role="img" aria-label={label}
-  data-kist-sprite data-mode={safeMode} data-speed={safeSpeed} data-eager={eager?'true':undefined} data-opening={opening?'true':undefined}
+  data-kist-sprite data-frame="0" data-mode={safeMode} data-speed={safeSpeed} data-eager={eager?'true':undefined} data-opening={opening?'true':undefined}
   style={`--kist-size:${safeSize}px;background-image:url('/media/kist/kist-16bit-${safeMode}-poster.webp')`}
 ></div>
 <style>
