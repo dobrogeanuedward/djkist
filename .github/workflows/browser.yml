@@ -34,7 +34,10 @@ jobs:
             await link.click();
           }
           async function openHeaderPlayer(page){
+            // Navigation starts a smooth scroll; wait for its disclosure mode before opening.
+            await page.waitForFunction(()=>document.querySelector('.site-header')?.classList.contains('is-scrolled'));
             if(!await page.locator('.site-header .header-actions').isVisible())await page.locator('#header-nav-toggle').click();
+            await page.waitForFunction(()=>{const panel=document.querySelector('#header-panel');return panel&&!panel.hidden&&panel.getBoundingClientRect().width>0;});
           }
           async function settleWorldPixels(page){
             let previous='',stableFor=0;
