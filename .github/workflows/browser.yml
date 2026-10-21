@@ -226,6 +226,7 @@ jobs:
             await page.waitForTimeout(250);
             if(await world.getAttribute('data-world-frame')!==dialogWorldFrame)throw new Error('The background kept rendering behind an open video dialog');
             await page.getByRole('button',{name:'Chiudi',exact:true}).click();
+            await page.locator('#media-dialog iframe').waitFor({state:'detached',timeout:2000});
             if(await page.locator('#media-dialog iframe').count())throw new Error('Closing the video retained its provider iframe');
             await page.waitForFunction(frame=>document.querySelector('#kist-world')?.dataset.worldFrame!==frame,dialogWorldFrame,{timeout:4000});
             await page.locator('.photo').first().click();
