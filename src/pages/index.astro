@@ -22,6 +22,7 @@ import '../styles/world.css';
 import '../styles/hero-video.css';
 import '../styles/artist-polish.css';
 import '../styles/header-refinement.css';
+import '../styles/hero-center.css';
 const today = new Date().toLocaleDateString('en-CA', {timeZone:'Europe/Rome'});
 const future = events.filter(e => e.date >= today).sort((a,b)=>a.date.localeCompare(b.date));
 const past = events.filter(e => e.date < today).sort((a,b)=>b.date.localeCompare(a.date));

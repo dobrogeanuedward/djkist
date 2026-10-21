@@ -161,18 +161,27 @@ const navigation=document.getElementById('site-navigation')!;
 const navToggle=document.getElementById('header-nav-toggle') as HTMLButtonElement;
 const siteHeader=document.querySelector<HTMLElement>('.site-header')!;
 const compactNavigation=matchMedia('(max-width:1050px)');
+let disclosureNavigation=compactNavigation.matches||scrollY>24;
 function setNavigation(open:boolean,restoreFocus=false){
- const expanded=compactNavigation.matches&&open;
- navigation.hidden=compactNavigation.matches&&!expanded;
- navToggle.hidden=!compactNavigation.matches;
+ const expanded=disclosureNavigation&&open;
+ navigation.hidden=disclosureNavigation&&!expanded;
+ navToggle.hidden=!disclosureNavigation;
  navToggle.setAttribute('aria-expanded',String(expanded));
+ siteHeader.classList.toggle('navigation-disclosure',disclosureNavigation);
  siteHeader.classList.toggle('navigation-open',expanded);
- if(restoreFocus)navToggle.focus({preventScroll:true});
+ if(restoreFocus){const target=disclosureNavigation?navToggle:navigation.querySelector<HTMLAnchorElement>('a[aria-current="location"],a');target?.focus({preventScroll:true})}
+}
+function syncNavigationMode(){
+ const scrolled=scrollY>24;siteHeader.classList.toggle('is-scrolled',scrolled);
+ const disclosure=compactNavigation.matches||scrolled;
+ if(disclosure===disclosureNavigation)return;
+ const restoreFocus=navigation.contains(document.activeElement)||document.activeElement===navToggle;
+ disclosureNavigation=disclosure;setNavigation(false,restoreFocus);
 }
 navToggle.addEventListener('click',()=>{const open=navToggle.getAttribute('aria-expanded')!=='true';setNavigation(open);if(open)navigation.querySelector<HTMLAnchorElement>('a')?.focus({preventScroll:true})});
-compactNavigation.addEventListener('change',()=>setNavigation(false));
+compactNavigation.addEventListener('change',()=>{syncNavigationMode();markNavigation()});
 navigation.querySelectorAll<HTMLAnchorElement>('a').forEach(link=>link.addEventListener('click',()=>{
- if(!compactNavigation.matches)return;
+ if(!disclosureNavigation)return;
  setNavigation(false);
  const target=document.querySelector<HTMLElement>(link.hash);
  if(target)requestAnimationFrame(()=>{if(!target.hasAttribute('tabindex'))target.setAttribute('tabindex','-1');target.focus({preventScroll:true})});
@@ -185,7 +194,7 @@ const navLinks=Array.from(navigation.querySelectorAll<HTMLAnchorElement>('a'));
 let navigationFrame=0;
 function markNavigation(){
  navigationFrame=0;
- siteHeader.classList.toggle('is-scrolled',scrollY>24);
+ syncNavigationMode();
  const threshold=siteHeader.offsetHeight+innerHeight*.15;
  let current:HTMLAnchorElement|undefined;
  for(const link of navLinks){const section=document.querySelector<HTMLElement>(link.hash);if(section&&section.getBoundingClientRect().top<=threshold)current=link;}

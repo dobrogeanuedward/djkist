@@ -105,6 +105,12 @@ jobs:
               await page.waitForFunction(()=>document.querySelector('#home')?.dataset.heroIndex==='0',null,{timeout:6000});
               await page.waitForFunction(()=>{const image=document.querySelector('#hero-sequence-photo'),hero=document.querySelector('#home');return hero.classList.contains('is-photo')&&image.complete&&new URL(image.currentSrc||image.src).pathname==='/media/kist-fifteen-frames-clean-v2.webp'&&Number(getComputedStyle(image).opacity)>.95;},null,{timeout:6000});
             }
+            await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));
+            await page.waitForFunction(()=>!document.querySelector('.site-header')?.classList.contains('is-scrolled'));
+            await page.waitForTimeout(350);
+            const expandedHeader=await page.locator('.site-header').evaluate(header=>{const box=header.getBoundingClientRect(),brand=header.querySelector('.brand').getBoundingClientRect(),axis=document.documentElement.clientWidth/2;return {height:box.height,width:box.width,centered:Math.abs(brand.left+brand.width/2-axis)<2};});
+            const centeredHero=await page.locator('#home').evaluate(hero=>{const box=hero.getBoundingClientRect(),axis=box.left+box.width/2;return ['.hero-title h1','.hero-bottom'].every(selector=>{const item=hero.querySelector(selector).getBoundingClientRect();return Math.abs(item.left+item.width/2-axis)<2;});});
+            if(!expandedHeader.centered||!centeredHero)throw new Error('Header logo or hero content lost the central axis');
             const navLinks=await page.locator('#site-navigation a').evaluateAll(links=>links.map(el=>el.getAttribute('href')));
             for(const href of ['#sound','#sessions','#frequency-break','#diary','#places','#about','#contact'])if(navLinks.filter(value=>value===href).length!==1)throw new Error('Header is missing a unique section: '+href);
             const menu=page.locator('#header-nav-toggle');
@@ -116,6 +122,8 @@ jobs:
             }
             const checks=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,canvas:!!document.querySelector('#prism'),brand:document.querySelector('h1')?.textContent?.trim()||!!document.querySelector('h1 img')}));
             await navigate(page,'Sessioni live');
+            await page.waitForFunction(height=>document.querySelector('.site-header')?.getBoundingClientRect().height<height-2,expandedHeader.height);
+            if(!await page.locator('#header-nav-toggle').isVisible()||!await page.locator('#site-navigation').evaluate(nav=>nav.hidden))throw new Error('Scrolled header did not become a dropdown');
             if(await page.locator('#sessions').count()!==1||await page.getByRole('heading',{name:'Sessioni live.',exact:true}).count()!==1)throw new Error('Live sessions were not consolidated');
             const livePanels=page.locator('[data-live-session-panel]:visible');
             if(await livePanels.count()!==1||await page.locator('[data-live-sessions]').getAttribute('data-live-session')!=='plug-radio')throw new Error('The library should open one session');
