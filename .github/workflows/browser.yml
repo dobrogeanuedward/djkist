@@ -36,12 +36,17 @@ jobs:
           async function settleWorldPixels(page){
             let previous='',stableFor=0;
             for(let attempt=0;attempt<60;attempt++){
-              const current=await page.evaluate(()=>JSON.stringify({progress:document.querySelector('#kist-world')?.dataset.worldProgress,transforms:[...document.querySelectorAll('#kist-world [data-world-art],#kist-world [data-world-foreground]')].map(image=>getComputedStyle(image).transform)}));
+              const current=await page.evaluate(()=>JSON.stringify({progress:document.querySelector('#kist-world')?.dataset.worldProgress,transforms:[...document.querySelectorAll('#kist-world [data-world-art],#frequency-break [data-world-foreground]')].map(image=>getComputedStyle(image).transform)}));
               stableFor=current===previous?stableFor+100:0;
               if(stableFor>=300)return;
               previous=current;await page.waitForTimeout(100);
             }
             throw new Error('The world did not settle at a stationary scroll position');
+          }
+          async function scrollWorldScene(page,progress){
+            await page.evaluate(value=>{const gate=document.querySelector('#frequency-break'),box=gate.getBoundingClientRect();scrollTo({top:box.top+scrollY-innerHeight+value*(innerHeight+box.height),behavior:'instant'});},progress);
+            await page.waitForFunction(()=>document.querySelector('#kist-world')?.dataset.worldVisible==='true',null,{timeout:4000});
+            await settleWorldPixels(page);
           }
           for(const [name,width,height] of [['desktop',1440,1000],['portrait-desktop',801,1100],['mobile',390,844],['small-mobile',320,740]]){
             const page=await browser.newPage({viewport:{width,height}});
@@ -142,42 +147,44 @@ jobs:
             await page.screenshot({animations:'disabled',path:'screenshots/'+name+'-nights.png'});
             if(await page.locator('#kist-game,[data-game-open]').count())throw new Error('A separate game remains in the integrated world');
             const world=page.locator('#kist-world');
+            await page.evaluate(()=>document.querySelector('#frequency-break').scrollIntoView({block:'center',behavior:'instant'}));
             await page.locator('#kist-world[data-world-ready="true"][data-world-art-ready="3"]').waitFor();
             const art=await page.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>({src:new URL(image.currentSrc||image.src).pathname,origin:new URL(image.currentSrc||image.src).origin,complete:image.complete,width:image.naturalWidth})));
             if(art.length!==3||new Set(art.map(image=>image.src)).size!==3||art.some(image=>!image.complete||image.width<100||image.origin!=='http://127.0.0.1:4321'||!image.src.startsWith('/media/world/')))throw new Error('The three local world environments did not load: '+JSON.stringify(art));
-            const foreground=page.locator('#kist-world [data-world-foreground]');
+            const foreground=page.locator('#frequency-break [data-world-foreground]');
             const foregroundAsset=await foreground.evaluate(async image=>{await image.decode();const source=new URL(image.currentSrc||image.src);const canvas=document.createElement('canvas');canvas.width=Math.min(320,image.naturalWidth);canvas.height=Math.max(1,Math.round(image.naturalHeight*canvas.width/image.naturalWidth));const context=canvas.getContext('2d');context.drawImage(image,0,0,canvas.width,canvas.height);const pixels=context.getImageData(0,0,canvas.width,canvas.height).data;let minAlpha=255,maxAlpha=0;for(let i=3;i<pixels.length;i+=4){minAlpha=Math.min(minAlpha,pixels[i]);maxAlpha=Math.max(maxAlpha,pixels[i]);}return {source:source.pathname,origin:source.origin,complete:image.complete,width:image.naturalWidth,minAlpha,maxAlpha,rendering:getComputedStyle(image).imageRendering};});
             if(foregroundAsset.source!=='/media/world/bologna-foreground-v1.webp'||foregroundAsset.origin!=='http://127.0.0.1:4321'||!foregroundAsset.complete||foregroundAsset.width<100||foregroundAsset.minAlpha!==0||foregroundAsset.maxAlpha===0||foregroundAsset.rendering!=='pixelated')throw new Error('The local foreground is not a transparent pixel plane: '+JSON.stringify(foregroundAsset));
-            const worldSize=await page.locator('#kist-world-canvas').evaluate(el=>{const b=el.getBoundingClientRect();return {left:b.left,top:b.top,width:b.width,height:b.height,viewportWidth:document.documentElement.clientWidth,viewportHeight:innerHeight};});
-            if(Math.abs(worldSize.left)>1||Math.abs(worldSize.top)>1||Math.abs(worldSize.width-worldSize.viewportWidth)>1||Math.abs(worldSize.height-worldSize.viewportHeight)>1)throw new Error('The continuous world does not fill the viewport');
+            const containment=await page.locator('#kist-world-canvas').evaluate(canvas=>{const scene=canvas.closest('#kist-world'),gate=canvas.closest('#frequency-break'),box=canvas.getBoundingClientRect(),sceneBox=scene.getBoundingClientRect(),gateBox=gate?.getBoundingClientRect();return {local:!!gate,position:getComputedStyle(scene).position,gatePosition:gate&&getComputedStyle(gate).position,overflow:gate&&getComputedStyle(gate).overflow,box:{left:box.left,top:box.top,width:box.width,height:box.height},sceneBox:{left:sceneBox.left,top:sceneBox.top,width:sceneBox.width,height:sceneBox.height},gateBox:gateBox&&{left:gateBox.left+gate.clientLeft,top:gateBox.top+gate.clientTop,width:gate.clientWidth,height:gate.clientHeight},globalClass:document.body.classList.contains('world-enabled'),outsideImages:[...document.querySelectorAll('img[src^="/media/world/"]')].filter(image=>!image.closest('#frequency-break')).length};});
+            if(!containment.local||containment.position!=='absolute'||containment.gatePosition==='static'||!['hidden','clip'].includes(containment.overflow)||containment.globalClass||containment.outsideImages||['left','top','width','height'].some(key=>Math.abs(containment.box[key]-containment.gateBox[key])>1||Math.abs(containment.sceneBox[key]-containment.gateBox[key])>1))throw new Error('Bologna escaped the local character scene: '+JSON.stringify(containment));
+            if(await page.locator('.world-dock,#world-map,#world-map-toggle,.world-route-progress,[data-world-stop],#frequency-break [role="progressbar"]').count())throw new Error('A global world dock, map or progression indicator remains');
+            const restoredGradients=await page.locator('#home .hero-media,#sound,#diary,#about,.collab-atmosphere').evaluateAll(elements=>elements.map(element=>({selector:element.id||element.className,background:getComputedStyle(element).backgroundImage})));
+            if(restoredGradients.length!==5||restoredGradients.some(element=>!element.background.includes('radial-gradient')))throw new Error('The original gradients outside the character scene were not restored: '+JSON.stringify(restoredGradients));
             const environments=[],foregroundPositions=[];
-            for(const [id,district] of [['home',0],['sound',1],['diary',2],['places',3],['about',4],['contact',5]]){
-              await page.evaluate(id=>document.getElementById(id).scrollIntoView({block:'start',behavior:'instant'}),id);
-              await page.waitForFunction(value=>document.querySelector('#kist-world')?.dataset.worldChapter===String(value),district,{timeout:6000});
-              if(id==='home'||id==='contact'){
-                const expected=id==='home'?0:2;
-                await page.waitForFunction(value=>Math.abs(Number(document.querySelector('#kist-world')?.dataset.worldEnvironment)-value)<.03,expected,{timeout:6000});
-                await settleWorldPixels(page);
-                environments.push(await page.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>{const style=getComputedStyle(image),matrix=new DOMMatrixReadOnly(style.transform);return {opacity:Number(style.opacity),transform:style.transform,x:matrix.m41,y:matrix.m42};})));
-                foregroundPositions.push(await foreground.evaluate(image=>{const matrix=new DOMMatrixReadOnly(getComputedStyle(image).transform);return {x:matrix.m41,y:matrix.m42};}));
-              }
+            for(const [progress,expected] of [[.04,0],[.96,2]]){
+              await scrollWorldScene(page,progress);
+              await page.waitForFunction(value=>Math.abs(Number(document.querySelector('#kist-world')?.dataset.worldEnvironment)-value)<.03,expected,{timeout:6000});
+              environments.push(await page.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>{const style=getComputedStyle(image),matrix=new DOMMatrixReadOnly(style.transform);return {opacity:Number(style.opacity),transform:style.transform,x:matrix.m41,y:matrix.m42};})));
+              foregroundPositions.push(await foreground.evaluate(image=>{const matrix=new DOMMatrixReadOnly(getComputedStyle(image).transform);return {x:matrix.m41,y:matrix.m42};}));
             }
             if(environments[0][0].opacity<.95||environments[1][2].opacity<.95)throw new Error('Scroll did not move from the portici to the rooftops');
             const artTravel={x:environments[1][0].x-environments[0][0].x,y:environments[1][0].y-environments[0][0].y};
             const foregroundTravel={x:foregroundPositions[1].x-foregroundPositions[0].x,y:foregroundPositions[1].y-foregroundPositions[0].y};
             if((artTravel.x===0&&artTravel.y===0)||(foregroundTravel.x===0&&foregroundTravel.y===0)||(foregroundTravel.x===artTravel.x&&foregroundTravel.y===artTravel.y))throw new Error('Scroll did not move the artwork and foreground on distinct parallax planes: '+JSON.stringify({artTravel,foregroundTravel}));
-            await page.evaluate(()=>{const sound=document.getElementById('sound').getBoundingClientRect().top+scrollY;const diary=document.getElementById('diary').getBoundingClientRect().top+scrollY;scrollTo({top:sound+(diary-sound)*.6-innerHeight*.22,behavior:'instant'});});
-            await page.waitForFunction(()=>{const images=[...document.querySelectorAll('#kist-world [data-world-art]')];const visible=images.map(image=>Number(getComputedStyle(image).opacity)).filter(opacity=>opacity>.05);return visible.length===2&&visible.every(opacity=>opacity<.95)&&Math.abs(visible.reduce((a,b)=>a+b,0)-1)<.03;},null,{timeout:6000});
+            for(const [progress,pair] of [[.32,[0,1]],[.68,[1,2]]]){
+              await scrollWorldScene(page,progress);
+              await page.waitForFunction(pair=>{const images=[...document.querySelectorAll('#kist-world [data-world-art]')],opacities=images.map(image=>Number(getComputedStyle(image).opacity)),visible=opacities.filter(opacity=>opacity>.05);return visible.length===2&&pair.every(index=>opacities[index]>.05&&opacities[index]<.95)&&Math.abs(visible.reduce((a,b)=>a+b,0)-1)<.03;},pair,{timeout:6000});
+            }
             const blending=await page.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>{const style=getComputedStyle(image),matrix=new DOMMatrixReadOnly(style.transform);return {opacity:Number(style.opacity),transform:style.transform,a:matrix.a,b:matrix.b,c:matrix.c,d:matrix.d,x:matrix.m41,y:matrix.m42,rendering:style.imageRendering};}));
             const foregroundPlane=await foreground.evaluate(image=>{const style=getComputedStyle(image),matrix=new DOMMatrixReadOnly(style.transform);return {a:matrix.a,b:matrix.b,c:matrix.c,d:matrix.d,x:matrix.m41,y:matrix.m42,rendering:style.imageRendering};});
             const offGrid=plane=>Math.abs(plane.a-1)>.000001||Math.abs(plane.d-1)>.000001||Math.abs(plane.b)>.000001||Math.abs(plane.c)>.000001||Math.abs(plane.x/2-Math.round(plane.x/2))>.000001||Math.abs(plane.y/2-Math.round(plane.y/2))>.000001||plane.rendering!=='pixelated';
             if([...blending,foregroundPlane].some(offGrid)||blending.every((image,i)=>image.transform===environments[0][i].transform))throw new Error('World crossfade lost its unscaled pixel grid or scroll parallax: '+JSON.stringify({blending,foregroundPlane}));
-            await page.locator('#world-map-toggle').click();
-            if(!await page.locator('#world-map').isVisible())throw new Error('World map did not open');
-            await page.locator('[data-world-route="1"]').click();
-            if(await page.locator('#world-map').isVisible())throw new Error('World route left the map open');
-            await page.waitForFunction(()=>{const el=document.querySelector('#sound');const inset=(parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)||0)+(parseFloat(getComputedStyle(el).scrollMarginTop)||0);return Math.abs(el.getBoundingClientRect().top-inset)<3;},null,{timeout:6000});
+            await page.evaluate(()=>document.querySelector('#home').scrollIntoView({block:'start',behavior:'instant'}));
+            await page.waitForFunction(()=>document.querySelector('#kist-world')?.dataset.worldVisible==='false',null,{timeout:4000});
+            const offscreenFrame=await world.getAttribute('data-world-frame');
+            await page.waitForTimeout(300);
+            if(await world.getAttribute('data-world-frame')!==offscreenFrame)throw new Error('The local scene kept rendering outside its section');
             await page.evaluate(()=>document.querySelector('#frequency-break').scrollIntoView({block:'center',behavior:'instant'}));
+            await page.waitForFunction(frame=>document.querySelector('#kist-world')?.dataset.worldVisible==='true'&&document.querySelector('#kist-world')?.dataset.worldFrame!==frame,offscreenFrame,{timeout:4000});
             const gateCharacter=page.locator('#frequency-break .gate-character');
             const gateSprite=page.locator('#frequency-break .gate-character [data-kist-sprite]:visible');
             await gateSprite.scrollIntoViewIfNeeded();
@@ -199,7 +206,10 @@ jobs:
             await page.waitForFunction(before=>scrollY<before,reverseScrollStart,{timeout:4000});
             await page.waitForFunction(before=>{const character=document.querySelector('#frequency-break .gate-character');return character?.dataset.facing==='left'&&Number(character.dataset.routeProgress)<before-.002;},reverseRouteStart,{timeout:4000});
             if(await gateCharacter.locator('[data-gate-pose]:visible').evaluate(el=>new DOMMatrixReadOnly(getComputedStyle(el).transform).a)!==-1)throw new Error('The character did not reverse its visible pose after real upward scroll');
-            await page.locator('#world-motion').click();
+            const scenePause=page.locator('#frequency-break #world-motion');
+            const pauseBounds=await scenePause.evaluate(button=>{const gate=button.closest('#frequency-break').getBoundingClientRect(),box=button.getBoundingClientRect();return {position:getComputedStyle(button).position,inside:box.left>=gate.left&&box.right<=gate.right+1&&box.top>=gate.top&&box.bottom<=gate.bottom+1};});
+            if(pauseBounds.position==='fixed'||!pauseBounds.inside)throw new Error('The scene pause control is not contained in the character section');
+            await scenePause.click();
             const pausedWorldFrame=await world.getAttribute('data-world-frame');
             const pausedSpriteFrame=await gateSprite.getAttribute('data-frame');
             const pausedRoute=await gateCharacter.getAttribute('data-route-progress');
@@ -210,7 +220,8 @@ jobs:
             await page.waitForTimeout(300);
             if(await page.evaluate(()=>scrollY)<=scrollBeforePause)throw new Error('The pause test did not deliver real scroll');
             if(await world.getAttribute('data-world-frame')!==pausedWorldFrame||await gateSprite.getAttribute('data-frame')!==pausedSpriteFrame||await gateCharacter.getAttribute('data-route-progress')!==pausedRoute||await page.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>image.style.cssText).join('|'))!==pausedArt||await foreground.getAttribute('style')!==pausedForeground)throw new Error('Pause did not freeze the artwork, foreground, world and character during scroll');
-            await page.locator('#world-motion').click();
+            if(!await scenePause.evaluate(button=>document.activeElement===button))throw new Error('The scene pause control lost keyboard focus during scroll');
+            await page.keyboard.press('Enter');
             await page.waitForFunction(frame=>document.querySelector('#kist-world')?.dataset.worldFrame!==frame,pausedWorldFrame,{timeout:4000});
             await page.waitForFunction(progress=>document.querySelector('#frequency-break .gate-character')?.dataset.routeProgress!==progress,pausedRoute,{timeout:4000});
             const resumedFrames=new Set();
@@ -221,13 +232,15 @@ jobs:
             if(!await page.locator('#media-dialog').isVisible())throw new Error('The verified Plug Radio set did not open');
             const videoSource=new URL(await page.locator('#media-dialog iframe').getAttribute('src'));
             if(videoSource.origin!=='https://www.youtube-nocookie.com'||videoSource.pathname!=='/embed/sP0j9EdBOxc')throw new Error('Wrong Plug Radio video source');
-            if(await page.locator('.world-dock').isVisible())throw new Error('The world controls remain visible over a media dialog');
+            await page.evaluate(()=>document.querySelector('#frequency-break').scrollIntoView({block:'center',behavior:'instant'}));
+            await page.waitForFunction(()=>document.querySelector('#kist-world')?.dataset.worldVisible==='true',null,{timeout:4000});
             const dialogWorldFrame=await world.getAttribute('data-world-frame');
             await page.waitForTimeout(250);
             if(await world.getAttribute('data-world-frame')!==dialogWorldFrame)throw new Error('The background kept rendering behind an open video dialog');
             await page.getByRole('button',{name:'Chiudi',exact:true}).click();
             await page.locator('#media-dialog iframe').waitFor({state:'detached',timeout:2000});
             if(await page.locator('#media-dialog iframe').count())throw new Error('Closing the video retained its provider iframe');
+            await page.evaluate(()=>document.querySelector('#frequency-break').scrollIntoView({block:'center',behavior:'instant'}));
             await page.waitForFunction(frame=>document.querySelector('#kist-world')?.dataset.worldFrame!==frame,dialogWorldFrame,{timeout:4000});
             await page.locator('.photo').first().click();
             if(!await page.locator('#media-dialog').isVisible())throw new Error('Photo viewer failed');
@@ -256,10 +269,14 @@ jobs:
           await calm.locator('#frequency-break .gate-character [data-kist-ready="true"]:visible').waitFor();
           const calmFrame=await calm.locator('#kist-world').getAttribute('data-world-frame');
           const calmArt=await calm.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>image.style.cssText).join('|'));
-          const calmForeground=await calm.locator('#kist-world [data-world-foreground]').getAttribute('style');
+          const calmForeground=await calm.locator('#frequency-break [data-world-foreground]').getAttribute('style');
+          const calmRoute=await calm.locator('#frequency-break .gate-character').getAttribute('data-route-progress'),calmScroll=await calm.evaluate(()=>scrollY);
+          await calm.mouse.move(350,400);await calm.mouse.wheel(0,70);
+          await calm.waitForFunction(before=>scrollY>before,calmScroll,{timeout:4000});
           await calm.waitForTimeout(500);
-          if(await calm.locator('#kist-world').getAttribute('data-world-frame')!==calmFrame||await calm.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>image.style.cssText).join('|'))!==calmArt||await calm.locator('#kist-world [data-world-foreground]').getAttribute('style')!==calmForeground)throw new Error('Reduced-motion world kept animating');
+          if(await calm.locator('#kist-world').getAttribute('data-world-frame')!==calmFrame||await calm.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>image.style.cssText).join('|'))!==calmArt||await calm.locator('#frequency-break [data-world-foreground]').getAttribute('style')!==calmForeground||await calm.locator('#frequency-break .gate-character').getAttribute('data-route-progress')!==calmRoute)throw new Error('Reduced-motion scene changed during real scroll');
           if(await calm.locator('#kist-world').getAttribute('data-world-paused')!=='true')throw new Error('Reduced-motion world was not marked static');
+          if(!await calm.locator('#frequency-break #world-motion').isDisabled())throw new Error('The scene pause control does not respect reduced motion');
           if(await calm.locator('#frequency-break .gate-character [data-kist-sprite]:visible').getAttribute('data-frame')!=='0')throw new Error('Reduced-motion sprite kept animating');
           if(await calm.locator('#kist-game,[data-game-open]').count())throw new Error('Reduced-motion page still exposes a separate game');
           await calm.close();
@@ -282,10 +299,22 @@ jobs:
             if(headerTrack.title!=='KIST / Metadati dal player'||headerTrack.source!=='/media/bipolar-cover.webp'||!headerTrack.loaded||!headerTrack.inHeader||!headerTrack.visible||headerTrack.worldAudio!=='playing')throw new Error('Live header metadata did not follow the track: '+JSON.stringify(headerTrack));
             if(await metadata.locator('#player-mount iframe').count()!==1)throw new Error('Header transport duplicated its SoundCloud iframe');
             await metadata.locator('#dock-open').click();
-            if(!await metadata.locator('#sound-dialog').isVisible()||await metadata.locator('.world-dock').isVisible())throw new Error('Header player did not open above the world controls');
+            if(!await metadata.locator('#sound-dialog').isVisible())throw new Error('Header player did not open');
             await metadata.getByRole('button',{name:'Chiudi il player',exact:true}).click();
             if(!await metadata.evaluate(()=>document.body.classList.contains('sound-active')&&window.metadataPlayCalls===1&&window.metadataPauseCalls===0))throw new Error('Opening the header player altered playback');
             await metadata.screenshot({animations:'disabled',path:'screenshots/'+name+'-header-track.png'});
+            await navigate(metadata,'Mondo KIST');
+            await metadata.evaluate(()=>document.querySelector('#frequency-break').scrollIntoView({block:'center',behavior:'instant'}));
+            await metadata.waitForFunction(()=>document.querySelector('#kist-world')?.dataset.worldVisible==='true'&&document.querySelector('#frequency-break .gate-character')?.dataset.pose==='groove',null,{timeout:4000});
+            const audioSprite=metadata.locator('#frequency-break .gate-character [data-gate-pose="groove"] [data-kist-sprite]');
+            const audioFrame=await audioSprite.getAttribute('data-frame');
+            await metadata.waitForFunction(frame=>document.querySelector('#frequency-break .gate-character [data-gate-pose="groove"] [data-kist-sprite]')?.dataset.frame!==frame,audioFrame,{timeout:4000});
+            await metadata.locator('#frequency-break #world-motion').click();
+            const frozenAudioFrame=await audioSprite.getAttribute('data-frame');
+            await metadata.waitForTimeout(250);
+            if(await audioSprite.getAttribute('data-frame')!==frozenAudioFrame||!await metadata.evaluate(()=>document.body.classList.contains('sound-active')&&window.metadataPlayCalls===1&&window.metadataPauseCalls===0&&document.querySelector('#kist-world')?.dataset.worldAudio==='playing')||await metadata.locator('#player-mount iframe').count()!==1)throw new Error('Pausing the local scene changed SoundCloud playback or failed to freeze its character');
+            await metadata.locator('#frequency-break #world-motion').click();
+            await metadata.waitForFunction(frame=>document.querySelector('#frequency-break .gate-character [data-gate-pose="groove"] [data-kist-sprite]')?.dataset.frame!==frame,frozenAudioFrame,{timeout:4000});
             await metadata.close();
           }
           // Deterministic widget contract test: entry must PLAY, never toggle.
