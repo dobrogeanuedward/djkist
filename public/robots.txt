@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://djkist.vercel.app/sitemap.xml
+Sitemap: https://www.djkist.it/sitemap.xml

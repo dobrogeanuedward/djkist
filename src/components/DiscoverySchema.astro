@@ -1,0 +1,33 @@
+---
+import { mixes } from '../data/artist';
+const siteUrl='https://www.djkist.it/';
+const artistId=siteUrl+'#kist';
+// The existing page graph owns Person's identity, bio and verified profile URLs.
+// Reusing its @id extends that entity without creating another artist or publisher.
+const discovery={
+ '@context':'https://schema.org',
+ '@graph':[
+  {'@type':'Person','@id':artistId,knowsAbout:['Breakbeat','UK garage','Funky','Jungle','Drum and bass','Acid techno'],alumniOf:{'@type':'EducationalOrganization',name:'Link Academy'}},
+  ...mixes.map(mix=>({
+   '@type':'AudioObject','@id':mix.url+'#audio',name:mix.title,url:mix.url,
+   description:'DJ set di KIST — '+mix.label+'.',genre:mix.label,
+   image:new URL(mix.artwork,siteUrl).href,creator:{'@id':artistId},
+   isPartOf:{'@type':'WebPage','@id':siteUrl+'#webpage'},
+   potentialAction:{'@type':'ListenAction',target:mix.url},
+  })),
+  {
+   '@type':'VideoObject','@id':siteUrl+'#plug-radio-session',
+   name:'KIST — Plug Radio',description:'Sessione di KIST per Plug Radio del 26 settembre 2026.',
+   url:'https://www.youtube.com/watch?v=sP0j9EdBOxc',
+   embedUrl:'https://www.youtube-nocookie.com/embed/sP0j9EdBOxc',
+   thumbnailUrl:'https://i.ytimg.com/vi/sP0j9EdBOxc/hqdefault.jpg',
+   // YouTube's public playerMicroformatRenderer uploadDate, verified 20 October 2026.
+   uploadDate:'2026-09-26T23:02:32-07:00',
+   duration:'PT53M12S',about:{'@id':artistId},
+   publisher:{'@type':'Organization',name:'Plug Radio',url:'https://www.youtube.com/@plugradio'},
+   isPartOf:{'@type':'WebPage','@id':siteUrl+'#webpage'},
+  },
+ ],
+};
+---
+<script type="application/ld+json" set:html={JSON.stringify(discovery).replace(/</g,'\\u003c')}/>
