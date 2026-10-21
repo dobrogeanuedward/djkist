@@ -106,7 +106,7 @@ jobs:
               await page.waitForFunction(()=>{const image=document.querySelector('#hero-sequence-photo'),hero=document.querySelector('#home');return hero.classList.contains('is-photo')&&image.complete&&new URL(image.currentSrc||image.src).pathname==='/media/kist-fifteen-frames-clean-v2.webp'&&Number(getComputedStyle(image).opacity)>.95;},null,{timeout:6000});
             }
             const navLinks=await page.locator('#site-navigation a').evaluateAll(links=>links.map(el=>el.getAttribute('href')));
-            for(const href of ['#sound','#frequency-break','#diary','#places','#about','#contact'])if(navLinks.filter(value=>value===href).length!==1)throw new Error('Header is missing a unique section: '+href);
+            for(const href of ['#sound','#sessions','#frequency-break','#diary','#places','#about','#contact'])if(navLinks.filter(value=>value===href).length!==1)throw new Error('Header is missing a unique section: '+href);
             const menu=page.locator('#header-nav-toggle');
             if(await menu.isVisible()){
               await menu.click();
@@ -115,6 +115,22 @@ jobs:
               if(await menu.getAttribute('aria-expanded')!=='false'||!await menu.evaluate(el=>document.activeElement===el))throw new Error('Mobile menu Escape did not restore focus');
             }
             const checks=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth>innerWidth+1,canvas:!!document.querySelector('#prism'),brand:document.querySelector('h1')?.textContent?.trim()||!!document.querySelector('h1 img')}));
+            await navigate(page,'Sessioni live');
+            if(await page.locator('#sessions').count()!==1||await page.getByRole('heading',{name:'Sessioni live.',exact:true}).count()!==1)throw new Error('Live sessions were not consolidated');
+            const livePanels=page.locator('[data-live-session-panel]:visible');
+            if(await livePanels.count()!==1||await page.locator('[data-live-sessions]').getAttribute('data-live-session')!=='plug-radio')throw new Error('The library should open one session');
+            const poster=await page.locator('[data-youtube="sP0j9EdBOxc"]>img').evaluate(async image=>{await image.decode();return {width:image.naturalWidth,height:image.naturalHeight,rendering:getComputedStyle(image).imageRendering};});
+            if(poster.width<1280||poster.height<720||poster.rendering==='pixelated')throw new Error('The video preview lost its sharp source');
+            await page.getByRole('button',{name:'Fifteen Frames',exact:true}).click();
+            if(await livePanels.count()!==1||!await page.getByRole('button',{name:'Guarda la sessione Fifteen Frames',exact:true}).isVisible())throw new Error('Fifteen Frames could not be selected');
+            await page.getByRole('button',{name:'Guarda la sessione Fifteen Frames',exact:true}).click();
+            await page.locator('[data-live-session-panel="fifteen-frames"] iframe').waitFor();
+            await page.getByRole('button',{name:'Plug Radio',exact:true}).click();
+            if(await page.locator('[data-live-session-panel="fifteen-frames"] iframe').count())throw new Error('A hidden session kept its video alive');
+            await page.getByRole('button',{name:'Plug Radio',exact:true}).press('ArrowRight');
+            if(!await page.getByRole('button',{name:'Guarda la sessione Fifteen Frames',exact:true}).isVisible())throw new Error('The library keyboard selection or poster restore failed');
+            await page.getByRole('button',{name:'Fifteen Frames',exact:true}).press('Home');
+            await page.screenshot({animations:'disabled',path:'screenshots/'+name+'-live-library.png'});
             await page.getByRole('button',{name:/Future/}).click();
             if(!await page.locator('#future-events').isVisible())throw new Error('Event tab failed');
             // Keep this check valid after the event moves into the archive.
@@ -130,6 +146,16 @@ jobs:
             if(await future.getByRole('button',{name:'Mostra Market · KIST DJ set',exact:true}).locator('img').getAttribute('src')!=='/media/cantina-letteraria-market-2026-10-25.jpg')throw new Error('Wrong market poster');
             await navigate(page,'Notti');
             await page.waitForTimeout(800);
+            const sky=page.locator('[data-night-sky]');
+            await sky.locator('[data-night-sky-canvas]').waitFor({state:'visible'});
+            await page.waitForFunction(()=>document.querySelector('[data-night-sky]')?.dataset.skyReady==='true');
+            await sky.locator('[data-night-sky-toggle]').click();
+            const stoppedSky=await sky.getAttribute('data-sky-frame');
+            await page.waitForTimeout(180);
+            if(await sky.getAttribute('data-sky-paused')!=='true'||await sky.getAttribute('data-sky-frame')!==stoppedSky)throw new Error('The sky pause failed');
+            await sky.locator('[data-night-sky-toggle]').click();
+            await page.waitForFunction(frame=>document.querySelector('[data-night-sky]')?.dataset.skyFrame!==frame,stoppedSky);
+            if(await page.locator('.site-header').getAttribute('class').then(value=>!value.includes('is-scrolled')))throw new Error('The header glass did not follow scroll');
             await page.screenshot({animations:'disabled',path:'screenshots/'+name+'-october-market.png'});
             await future.getByRole('button',{name:'Apri locandina Market · KIST DJ set',exact:true}).click();
             if(!await page.locator('#media-dialog').isVisible())throw new Error('Poster zoom failed');
@@ -191,9 +217,11 @@ jobs:
             await gateSprite.scrollIntoViewIfNeeded();
             await page.locator('#frequency-break .gate-character [data-kist-ready="true"]:visible').waitFor();
             await page.waitForTimeout(400);
+            await page.waitForFunction(()=>document.querySelector('#frequency-break .gate-character')?.dataset.pose==='groove');
+            const idleRoute=await gateCharacter.getAttribute('data-route-progress');
             const stillFrame=await gateSprite.getAttribute('data-frame');
-            await page.waitForTimeout(250);
-            if(await gateSprite.getAttribute('data-frame')!==stillFrame)throw new Error('KIST kept walking without scroll or music');
+            await page.waitForFunction(frame=>document.querySelector('#frequency-break [data-gate-pose="groove"] [data-kist-sprite]')?.dataset.frame!==frame,stillFrame,{timeout:4000});
+            if(await gateCharacter.getAttribute('data-pose')!=='groove'||await gateCharacter.getAttribute('data-route-progress')!==idleRoute)throw new Error('KIST should dance in place when scroll stops');
             const gateBox=await gateCharacter.boundingBox();
             await page.mouse.move(width-40,Math.min(height-100,Math.max(100,gateBox.y+20)));
             const routeBefore=Number(await gateCharacter.getAttribute('data-route-progress'));
@@ -280,6 +308,11 @@ jobs:
           if(!await calm.locator('#frequency-break #world-motion').isDisabled())throw new Error('The scene pause control does not respect reduced motion');
           if(await calm.locator('#frequency-break .gate-character [data-kist-sprite]:visible').getAttribute('data-frame')!=='0')throw new Error('Reduced-motion sprite kept animating');
           if(await calm.locator('#kist-game,[data-game-open]').count())throw new Error('Reduced-motion page still exposes a separate game');
+          await navigate(calm,'Notti');
+          await calm.waitForFunction(()=>document.querySelector('[data-night-sky]')?.dataset.skyReady==='true');
+          const calmSkyFrame=await calm.locator('[data-night-sky]').getAttribute('data-sky-frame');
+          await calm.waitForTimeout(180);
+          if(await calm.locator('[data-night-sky]').getAttribute('data-sky-frame')!==calmSkyFrame||await calm.locator('[data-night-sky-toggle]').isVisible())throw new Error('Reduced-motion sky kept animating');
           await calm.close();
           // Provider metadata must reach the single header transport on wide and small screens.
           for(const [name,width,height] of [['desktop',1440,1000],['small-mobile',320,740]]){

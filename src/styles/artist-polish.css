@@ -1,0 +1,12 @@
+/* A small, shared palette; photographs and reading text keep their natural colour. */
+.sound-section .section-heading .prismatic-title,.diary .night-heading .prismatic-title{color:#d8cdff;background:linear-gradient(110deg,#dceaff 4%,#8fe7f3 30%,#b99aff 55%,#d9efa3 76%,#dceaff 96%);background-size:240% 100%;background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:kist-title-spectrum 18s ease-in-out infinite alternate;animation-play-state:paused}
+.sound-section .section-heading .prismatic-title.motion-visible,.diary .night-heading .prismatic-title.motion-visible{animation-play-state:running}
+.hero .hero-listen>span{background-image:linear-gradient(110deg,#e7f4ff,#8fe7f3,#b99aff,#d9efa3,#e7f4ff);animation-duration:20s;animation-play-state:paused}
+.hero .hero-listen:before{animation-duration:16s;animation-play-state:paused}
+.hero .hero-listen.motion-visible>span,.hero .hero-listen.motion-visible:before{animation-play-state:running}
+.collab-content .collab-booking-note{max-width:36ch;margin:14px 0 0;font-size:12px;line-height:1.65;color:#c8c1d5}
+@keyframes kist-title-spectrum{to{background-position:100% 50%}}
+.diary{position:relative;isolation:isolate}
+.diary>.night-heading,.diary>.night-tabs,.diary>#past-events,.diary>#future-events{position:relative;z-index:1}
+@media(prefers-reduced-motion:reduce){.prismatic-title{animation:none!important}}
+@media(forced-colors:active){.sound-section .section-heading .prismatic-title,.diary .night-heading .prismatic-title,.hero .hero-listen>span{background:none;color:CanvasText;-webkit-text-fill-color:CanvasText;filter:none;animation:none}}

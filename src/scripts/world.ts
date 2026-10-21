@@ -17,7 +17,7 @@ if(gate&&root&&canvas&&context){
  const smooth=(n:number)=>{const x=clamp(n);return x*x*(3-2*x)};
  let width=0,height=0,raf=0,last=0,lastPaint=0,elapsed=0,frames=0;
  let progress=.5,targetProgress=.5,energy=0,playing=false,position=0,positionAt=0;
- let pointerX=0,pointerY=0,paused=false,inView=false,initialized=false,lastScrollAt=0,lastScrollY=scrollY;
+ let pointerX=0,pointerY=0,paused=false,inView=false,initialized=false,lastScrollAt=-Infinity,lastScrollY=scrollY;
  let gateTop=0,gateHeight=1,gateWidth=1,lastPose='',lastPosePause:boolean|undefined;
  try{paused=localStorage.getItem('kist:world-paused:v1')==='true'}catch{}
  const blocked=()=>document.hidden||!inView||document.querySelector('dialog[open]')!==null;
@@ -25,9 +25,9 @@ if(gate&&root&&canvas&&context){
  const artOpacity=[-1,-1,-1],artTransform=['','',''];
  art.forEach(image=>{image.decode().then(()=>{image.dataset.loaded='true';root!.dataset.worldArtReady=String(art.filter(item=>item.dataset.loaded==='true').length)}).catch(()=>{image.dataset.failed='true'})});
  function syncCharacter(now:number){
-  const walking=!blocked()&&!staticWorld()&&now-lastScrollAt<190;
-  const pose=playing&&!walking?'groove':'run';
-  const frozen=staticWorld()||blocked()||(!walking&&!playing);
+  const frozen=staticWorld()||blocked();
+  const walking=!frozen&&now-lastScrollAt<190;
+  const pose=frozen&&lastPose?lastPose:walking?'run':'groove';
   if(pose!==lastPose){poses.forEach(element=>element.hidden=element.dataset.gatePose!==pose);character.dataset.pose=pose;lastPose=pose;lastPosePause=undefined}
   if(frozen!==lastPosePause){poses.forEach(element=>element.querySelector<HTMLElement>('[data-kist-sprite]')?.dispatchEvent(new CustomEvent('kist:pause',{detail:{paused:frozen||element.hidden}})));lastPosePause=frozen}
  }

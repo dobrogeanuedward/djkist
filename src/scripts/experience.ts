@@ -22,7 +22,7 @@ if(loader&&!reduced){
  }
  requestAnimationFrame(wave);
 }
-document.querySelector('.session-watch')?.addEventListener('click',()=>{const mount=document.querySelector('.session-media')!;const frame=document.createElement('iframe');frame.src='https://www.instagram.com/reel/DbbEcZJt6uv/embed/';frame.title='KIST — Fifteen Frames';frame.allow='autoplay; encrypted-media; fullscreen';frame.style.cssText='width:100%;height:600px;border:0';mount.replaceChildren(frame)});
+document.querySelector('.session-watch')?.addEventListener('click',()=>{widget?.pause();const mount=document.querySelector('.session-media')!;const frame=document.createElement('iframe');frame.src='https://www.instagram.com/reel/DbbEcZJt6uv/embed/';frame.title='KIST — Fifteen Frames';frame.allow='autoplay; encrypted-media; fullscreen';frame.style.cssText='width:100%;height:600px;border:0';mount.replaceChildren(frame)});
 if(reduced) document.querySelectorAll('video').forEach(v=>v.pause());
 const observer = new IntersectionObserver(entries => entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.remove('waiting');observer.unobserve(entry.target)}}),{threshold:.08});
 if(!reduced) document.querySelectorAll('.section-heading,.about-copy,.event,.mix').forEach(el=>{el.classList.add('reveal','waiting');observer.observe(el)});
@@ -185,6 +185,7 @@ const navLinks=Array.from(navigation.querySelectorAll<HTMLAnchorElement>('a'));
 let navigationFrame=0;
 function markNavigation(){
  navigationFrame=0;
+ siteHeader.classList.toggle('is-scrolled',scrollY>24);
  const threshold=siteHeader.offsetHeight+innerHeight*.15;
  let current:HTMLAnchorElement|undefined;
  for(const link of navLinks){const section=document.querySelector<HTMLElement>(link.hash);if(section&&section.getBoundingClientRect().top<=threshold)current=link;}

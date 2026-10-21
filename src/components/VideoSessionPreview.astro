@@ -1,0 +1,41 @@
+---
+type Film={title:string;youtubeId:string;label:string;poster:string;duration:string;pageUrl:string};
+const {film}=Astro.props as {film:Film};
+---
+<figure class="video-session">
+ <button class="video-session-open" data-youtube={film.youtubeId} aria-label={'Guarda '+film.title} aria-describedby={'video-description-'+film.youtubeId}>
+  <img src={film.poster} width="1280" height="720" alt={film.title+' — anteprima del DJ set'} loading="lazy" decoding="async"/>
+  <span class="video-session-badge" aria-hidden="true"><span class="ui-icon icon-play"></span> VIDEO SESSION <b>{film.duration}</b></span>
+  <span class="video-session-play" aria-hidden="true"><span class="video-session-play-icon"><svg viewBox="0 0 24 24"><path d="m9 5 11 7-11 7Z"/></svg></span><span>Guarda il DJ set</span></span>
+ </button>
+ <figcaption class="video-session-caption">
+  <div><span class="video-session-edition">{film.label}</span><h3>{film.title}</h3><p id={'video-description-'+film.youtubeId}>Sessione completa · {film.duration} · Premi play per guardarla.</p></div>
+  <a href={film.pageUrl}>Esplora la sessione <span aria-hidden="true">↗</span></a>
+ </figcaption>
+</figure>
+<style>
+ .video-session{width:min(1120px,100%);margin:0 auto}
+ .video-session-open{position:relative;display:block;width:100%;padding:0;overflow:hidden;aspect-ratio:16/9;border:1px solid #a08bd64d;border-radius:18px;background:#0c0d14;color:#fff;isolation:isolate;text-align:center;box-shadow:0 20px 60px #0004;transition:border-color .25s,box-shadow .25s}
+ .video-session-open>img{display:block;width:100%;height:100%;object-fit:cover;image-rendering:auto;filter:brightness(.84) saturate(.94);transition:filter .3s}
+ .video-session-open:after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,#05051048,transparent 32%,#05051040)}
+ .video-session-badge{position:absolute;z-index:1;top:20px;left:20px;display:flex;align-items:center;gap:8px;min-height:32px;padding:7px 12px;border:1px solid #ffffff35;border-radius:30px;background:#0b0b17b8;backdrop-filter:blur(8px);font-size:9px;letter-spacing:.13em}
+ .video-session-badge b{font-size:11px;font-weight:400;letter-spacing:.04em;margin-left:8px;color:#ddd7ef;font-variant-numeric:tabular-nums}
+ .video-session-badge .ui-icon{width:10px;height:10px;font-size:10px;color:#c9ff52}
+ .video-session-play{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;font-size:14px;font-weight:500;text-shadow:0 2px 14px #000}
+ .video-session-play-icon{display:grid;place-items:center;width:80px;height:80px;border:1px solid #e3deffb3;border-radius:50%;background:#101323bd;box-shadow:0 0 0 8px #ffffff0b,0 8px 35px #0004;backdrop-filter:blur(10px);transition:background .25s,border-color .25s,transform .25s}
+ .video-session-play-icon svg{width:30px;height:30px;margin-left:4px;fill:#c9ff52}
+ .video-session-open:hover,.video-session-open:focus-visible{border-color:#85e9ff;box-shadow:0 18px 65px #7157ba24}
+ .video-session-open:hover>img,.video-session-open:focus-visible>img{filter:brightness(.96) saturate(1)}
+ .video-session-open:hover .video-session-play-icon,.video-session-open:focus-visible .video-session-play-icon{background:#221a40e6;border-color:#9cefff;transform:scale(1.06)}
+ .video-session-open:focus-visible{outline:2px solid #c9ff52;outline-offset:5px}
+ .video-session-caption{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-top:25px}
+ .video-session-edition{font-size:9px;letter-spacing:.14em;color:#b8abd0}
+ .video-session-caption h3{margin:10px 0 8px;font-family:'Space Grotesk',sans-serif;font-size:clamp(28px,3.1vw,43px);font-weight:400;line-height:1.1;letter-spacing:-.045em}
+ .video-session-caption p{margin:0;color:#a99fb9;font-size:12px;line-height:1.6}
+ .video-session-caption>a{display:flex;align-items:center;justify-content:space-between;gap:22px;flex-shrink:0;min-height:46px;padding:10px 18px;border:1px solid #a68ed44d;border-radius:30px;font-size:12px;color:#ded6ec;transition:border-color .2s,color .2s}
+ .video-session-caption>a:hover{border-color:#83eaff;color:#fff}
+ @media(max-width:700px){.video-session-open{border-radius:12px}.video-session-badge{top:12px;left:12px;padding:5px 9px;min-height:27px;font-size:7px;gap:6px}.video-session-badge b{font-size:10px;margin-left:4px}.video-session-play{gap:11px;font-size:12px}.video-session-play-icon{width:58px;height:58px;box-shadow:0 0 0 6px #ffffff0b,0 8px 30px #0004}.video-session-play-icon svg{width:23px;height:23px}.video-session-caption{display:block;padding-top:20px}.video-session-caption h3{font-size:29px}.video-session-caption p{font-size:11px}.video-session-caption>a{width:max-content;margin-top:18px;min-height:44px}}
+ @media(max-width:380px){.video-session-play-icon{width:48px;height:48px;box-shadow:0 0 0 4px #ffffff0b,0 8px 25px #0004}.video-session-play{gap:7px;font-size:11px}.video-session-badge{top:10px;left:10px;min-height:24px;padding:4px 8px;font-size:6.5px}.video-session-badge b{font-size:9px}}
+ @media(prefers-reduced-motion:reduce){.video-session-open,.video-session-open>img,.video-session-play-icon{transition:none}.video-session-open:hover .video-session-play-icon{transform:none}}
+ @media(forced-colors:active){.video-session-play-icon{border:1px solid ButtonText;background:Canvas;box-shadow:none}.video-session-play-icon svg{fill:ButtonText}.video-session-badge{border:1px solid CanvasText;background:Canvas;color:CanvasText}}
+</style>
