@@ -33,6 +33,16 @@ jobs:
             if(!await link.isVisible())await page.locator('#header-nav-toggle').click();
             await link.click();
           }
+          async function settleWorldPixels(page){
+            let previous='',stableFor=0;
+            for(let attempt=0;attempt<60;attempt++){
+              const current=await page.evaluate(()=>JSON.stringify({progress:document.querySelector('#kist-world')?.dataset.worldProgress,transforms:[...document.querySelectorAll('#kist-world [data-world-art],#kist-world [data-world-foreground]')].map(image=>getComputedStyle(image).transform)}));
+              stableFor=current===previous?stableFor+100:0;
+              if(stableFor>=300)return;
+              previous=current;await page.waitForTimeout(100);
+            }
+            throw new Error('The world did not settle at a stationary scroll position');
+          }
           for(const [name,width,height] of [['desktop',1440,1000],['portrait-desktop',801,1100],['mobile',390,844],['small-mobile',320,740]]){
             const page=await browser.newPage({viewport:{width,height}});
             const errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -44,6 +54,10 @@ jobs:
               return {logoWidth:logo.width,characterWidth:character.width,overlap:logo.bottom-character.top,logoHeight:logo.height};
             });
             if(opening.characterWidth>opening.logoWidth*.4||opening.overlap<0||opening.overlap>opening.logoHeight*.35)throw new Error('Opening character obscures the logo');
+            const heroSequence=JSON.parse(await page.locator('#hero-video').getAttribute('data-hero-sequence'));
+            if(heroSequence.length!==4||heroSequence.map(moment=>moment.type).join(',')!=='photo,video,photo,video'||heroSequence.some(moment=>!Number.isFinite(moment.duration)||moment.duration<=0||moment.duration>5000||![moment.desktop,moment.mobile].every(source=>typeof source==='string'&&source.startsWith('/media/'))))throw new Error('The four local hero moments are not configured correctly');
+            const initialHero=await page.locator('#hero-sequence-photo').evaluate(async image=>{await image.decode();const hero=image.closest('.hero');return {source:new URL(image.currentSrc||image.src).pathname,loaded:image.complete&&image.naturalWidth>0,index:hero.dataset.heroIndex,photo:hero.classList.contains('is-photo'),opacity:Number(getComputedStyle(image).opacity)};});
+            if(initialHero.source!=='/media/kist-fifteen-frames-clean-v2.webp'||!initialHero.loaded||initialHero.index!=='0'||!initialHero.photo||initialHero.opacity<.99)throw new Error('The first hero view no longer uses the original Fifteen Frames photo: '+JSON.stringify(initialHero));
             await page.screenshot({animations:'disabled',path:'screenshots/'+name+'-opening.png'});
             await page.locator('#sound-dialog').waitFor({state:'visible',timeout:7000});
             if(!await page.locator('#sound-dialog').isVisible())throw new Error('Listening invitation failed');
@@ -62,13 +76,30 @@ jobs:
             if(!heroMedia.muted||!heroMedia.defaultMuted||!heroMedia.loop||!heroMedia.inline||!heroMedia.source.startsWith('/media/hero/')||heroMedia.source!==heroMedia.expected||heroMedia.audioTracks>0||heroMedia.hasAudio===true||heroMedia.audioBytes>0)throw new Error('Hero video source/audio contract failed: '+JSON.stringify(heroMedia));
             const videoStart=await heroVideo.evaluate(video=>video.currentTime);
             await page.waitForFunction(time=>{const video=document.querySelector('#hero-video');return !video.paused&&Math.abs(video.currentTime-time)>.05;},videoStart,{timeout:6000});
+            await page.waitForFunction(()=>document.querySelector('#home')?.dataset.heroIndex==='1',null,{timeout:6000});
+            await page.waitForFunction(()=>{const hero=document.querySelector('#home'),video=document.querySelector('#hero-video');return !hero.classList.contains('is-photo')&&video.dataset.heroIndex==='1'&&video.dataset.heroVideoIndex==='1'&&!video.paused&&video.readyState>=2;},null,{timeout:6000});
             await page.locator('#slides-toggle').click();
-            await page.waitForFunction(()=>document.querySelector('#hero-video')?.paused);
-            const videoPauseTime=await heroVideo.evaluate(video=>video.currentTime);
-            await page.waitForTimeout(250);
-            if(await heroVideo.evaluate(video=>video.currentTime)!==videoPauseTime)throw new Error('Hero pause did not stop video playback');
+            await page.waitForFunction(()=>document.querySelector('#hero-video')?.paused&&document.querySelector('#home')?.dataset.heroPaused==='true');
+            const pausedHero=await heroVideo.evaluate(video=>({time:video.currentTime,index:video.dataset.heroIndex,heroIndex:document.querySelector('#home').dataset.heroIndex}));
+            if(await page.locator('#slides-toggle').getAttribute('aria-pressed')!=='true')throw new Error('The hero pause control does not expose its state');
+            // Exceed the whole current moment: a paused video must not conceal a running sequence timer.
+            await page.waitForTimeout(heroSequence[Number(pausedHero.index)].duration+250);
+            if(await heroVideo.evaluate(video=>video.currentTime)!==pausedHero.time||await heroVideo.getAttribute('data-hero-index')!==pausedHero.index||await page.locator('#home').getAttribute('data-hero-index')!==pausedHero.heroIndex)throw new Error('Hero pause did not freeze both video playback and the sequence');
             await page.locator('#slides-toggle').click();
-            await page.waitForFunction(time=>{const video=document.querySelector('#hero-video');return !video.paused&&Math.abs(video.currentTime-time)>.05;},videoPauseTime,{timeout:6000});
+            await page.waitForFunction(time=>{const video=document.querySelector('#hero-video');return !video.paused&&Math.abs(video.currentTime-time)>.05;},pausedHero.time,{timeout:6000});
+            await page.waitForFunction(()=>document.querySelector('#home')?.dataset.heroIndex==='2',null,{timeout:6000});
+            const expectedMural=width<=700?heroSequence[2].mobile:heroSequence[2].desktop;
+            await page.waitForFunction(source=>{const image=document.querySelector('#hero-sequence-photo'),hero=document.querySelector('#home');return hero.dataset.heroIndex==='2'&&hero.classList.contains('is-photo')&&image.complete&&image.naturalWidth>0&&new URL(image.currentSrc||image.src).pathname===source&&Number(getComputedStyle(image).opacity)>.95;},expectedMural,{timeout:6000});
+            await page.waitForFunction(()=>document.querySelector('#home')?.dataset.heroIndex==='3',null,{timeout:6000});
+            const expectedPurple=width<=700?heroSequence[3].mobile:heroSequence[3].desktop;
+            await page.waitForFunction(source=>{const hero=document.querySelector('#home'),video=document.querySelector('#hero-video');return hero.dataset.heroIndex==='3'&&!hero.classList.contains('is-photo')&&video.dataset.heroVideoIndex==='3'&&video.readyState>=2&&!video.paused&&new URL(video.currentSrc).pathname===source;},expectedPurple,{timeout:6000});
+            const purpleMedia=await heroVideo.evaluate(video=>({muted:video.muted,defaultMuted:video.defaultMuted,inline:video.playsInline,source:new URL(video.currentSrc).pathname,audioTracks:video.audioTracks?.length,hasAudio:video.mozHasAudio,audioBytes:video.webkitAudioDecodedByteCount,time:video.currentTime}));
+            if(!purpleMedia.muted||!purpleMedia.defaultMuted||!purpleMedia.inline||!purpleMedia.source.startsWith('/media/hero/')||purpleMedia.audioTracks>0||purpleMedia.hasAudio===true||purpleMedia.audioBytes>0)throw new Error('The responsive purple hero clip violates the silent video contract: '+JSON.stringify(purpleMedia));
+            await page.waitForFunction(time=>{const video=document.querySelector('#hero-video');return video.dataset.heroVideoIndex==='3'&&!video.paused&&Math.abs(video.currentTime-time)>.05;},purpleMedia.time,{timeout:6000});
+            if(name==='desktop'){
+              await page.waitForFunction(()=>document.querySelector('#home')?.dataset.heroIndex==='0',null,{timeout:6000});
+              await page.waitForFunction(()=>{const image=document.querySelector('#hero-sequence-photo'),hero=document.querySelector('#home');return hero.classList.contains('is-photo')&&image.complete&&new URL(image.currentSrc||image.src).pathname==='/media/kist-fifteen-frames-clean-v2.webp'&&Number(getComputedStyle(image).opacity)>.95;},null,{timeout:6000});
+            }
             const navLinks=await page.locator('#site-navigation a').evaluateAll(links=>links.map(el=>el.getAttribute('href')));
             for(const href of ['#sound','#frequency-break','#diary','#places','#about','#contact'])if(navLinks.filter(value=>value===href).length!==1)throw new Error('Header is missing a unique section: '+href);
             const menu=page.locator('#header-nav-toggle');
@@ -114,23 +145,33 @@ jobs:
             await page.locator('#kist-world[data-world-ready="true"][data-world-art-ready="3"]').waitFor();
             const art=await page.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>({src:new URL(image.currentSrc||image.src).pathname,origin:new URL(image.currentSrc||image.src).origin,complete:image.complete,width:image.naturalWidth})));
             if(art.length!==3||new Set(art.map(image=>image.src)).size!==3||art.some(image=>!image.complete||image.width<100||image.origin!=='http://127.0.0.1:4321'||!image.src.startsWith('/media/world/')))throw new Error('The three local world environments did not load: '+JSON.stringify(art));
+            const foreground=page.locator('#kist-world [data-world-foreground]');
+            const foregroundAsset=await foreground.evaluate(async image=>{await image.decode();const source=new URL(image.currentSrc||image.src);const canvas=document.createElement('canvas');canvas.width=Math.min(320,image.naturalWidth);canvas.height=Math.max(1,Math.round(image.naturalHeight*canvas.width/image.naturalWidth));const context=canvas.getContext('2d');context.drawImage(image,0,0,canvas.width,canvas.height);const pixels=context.getImageData(0,0,canvas.width,canvas.height).data;let minAlpha=255,maxAlpha=0;for(let i=3;i<pixels.length;i+=4){minAlpha=Math.min(minAlpha,pixels[i]);maxAlpha=Math.max(maxAlpha,pixels[i]);}return {source:source.pathname,origin:source.origin,complete:image.complete,width:image.naturalWidth,minAlpha,maxAlpha,rendering:getComputedStyle(image).imageRendering};});
+            if(foregroundAsset.source!=='/media/world/bologna-foreground-v1.webp'||foregroundAsset.origin!=='http://127.0.0.1:4321'||!foregroundAsset.complete||foregroundAsset.width<100||foregroundAsset.minAlpha!==0||foregroundAsset.maxAlpha===0||foregroundAsset.rendering!=='pixelated')throw new Error('The local foreground is not a transparent pixel plane: '+JSON.stringify(foregroundAsset));
             const worldSize=await page.locator('#kist-world-canvas').evaluate(el=>{const b=el.getBoundingClientRect();return {left:b.left,top:b.top,width:b.width,height:b.height,viewportWidth:document.documentElement.clientWidth,viewportHeight:innerHeight};});
             if(Math.abs(worldSize.left)>1||Math.abs(worldSize.top)>1||Math.abs(worldSize.width-worldSize.viewportWidth)>1||Math.abs(worldSize.height-worldSize.viewportHeight)>1)throw new Error('The continuous world does not fill the viewport');
-            const environments=[];
+            const environments=[],foregroundPositions=[];
             for(const [id,district] of [['home',0],['sound',1],['diary',2],['places',3],['about',4],['contact',5]]){
               await page.evaluate(id=>document.getElementById(id).scrollIntoView({block:'start',behavior:'instant'}),id);
               await page.waitForFunction(value=>document.querySelector('#kist-world')?.dataset.worldChapter===String(value),district,{timeout:6000});
               if(id==='home'||id==='contact'){
                 const expected=id==='home'?0:2;
                 await page.waitForFunction(value=>Math.abs(Number(document.querySelector('#kist-world')?.dataset.worldEnvironment)-value)<.03,expected,{timeout:6000});
-                environments.push(await page.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>({opacity:Number(getComputedStyle(image).opacity),transform:getComputedStyle(image).transform}))));
+                await settleWorldPixels(page);
+                environments.push(await page.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>{const style=getComputedStyle(image),matrix=new DOMMatrixReadOnly(style.transform);return {opacity:Number(style.opacity),transform:style.transform,x:matrix.m41,y:matrix.m42};})));
+                foregroundPositions.push(await foreground.evaluate(image=>{const matrix=new DOMMatrixReadOnly(getComputedStyle(image).transform);return {x:matrix.m41,y:matrix.m42};}));
               }
             }
             if(environments[0][0].opacity<.95||environments[1][2].opacity<.95)throw new Error('Scroll did not move from the portici to the rooftops');
+            const artTravel={x:environments[1][0].x-environments[0][0].x,y:environments[1][0].y-environments[0][0].y};
+            const foregroundTravel={x:foregroundPositions[1].x-foregroundPositions[0].x,y:foregroundPositions[1].y-foregroundPositions[0].y};
+            if((artTravel.x===0&&artTravel.y===0)||(foregroundTravel.x===0&&foregroundTravel.y===0)||(foregroundTravel.x===artTravel.x&&foregroundTravel.y===artTravel.y))throw new Error('Scroll did not move the artwork and foreground on distinct parallax planes: '+JSON.stringify({artTravel,foregroundTravel}));
             await page.evaluate(()=>{const sound=document.getElementById('sound').getBoundingClientRect().top+scrollY;const diary=document.getElementById('diary').getBoundingClientRect().top+scrollY;scrollTo({top:sound+(diary-sound)*.6-innerHeight*.22,behavior:'instant'});});
             await page.waitForFunction(()=>{const images=[...document.querySelectorAll('#kist-world [data-world-art]')];const visible=images.map(image=>Number(getComputedStyle(image).opacity)).filter(opacity=>opacity>.05);return visible.length===2&&visible.every(opacity=>opacity<.95)&&Math.abs(visible.reduce((a,b)=>a+b,0)-1)<.03;},null,{timeout:6000});
-            const blending=await page.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>({opacity:Number(getComputedStyle(image).opacity),transform:getComputedStyle(image).transform,scale:new DOMMatrixReadOnly(getComputedStyle(image).transform).a})));
-            if(blending.some(image=>image.scale<1.02)||blending.every((image,i)=>image.transform===environments[0][i].transform))throw new Error('World crossfade lost its scaled parallax composition');
+            const blending=await page.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>{const style=getComputedStyle(image),matrix=new DOMMatrixReadOnly(style.transform);return {opacity:Number(style.opacity),transform:style.transform,a:matrix.a,b:matrix.b,c:matrix.c,d:matrix.d,x:matrix.m41,y:matrix.m42,rendering:style.imageRendering};}));
+            const foregroundPlane=await foreground.evaluate(image=>{const style=getComputedStyle(image),matrix=new DOMMatrixReadOnly(style.transform);return {a:matrix.a,b:matrix.b,c:matrix.c,d:matrix.d,x:matrix.m41,y:matrix.m42,rendering:style.imageRendering};});
+            const offGrid=plane=>Math.abs(plane.a-1)>.000001||Math.abs(plane.d-1)>.000001||Math.abs(plane.b)>.000001||Math.abs(plane.c)>.000001||Math.abs(plane.x/2-Math.round(plane.x/2))>.000001||Math.abs(plane.y/2-Math.round(plane.y/2))>.000001||plane.rendering!=='pixelated';
+            if([...blending,foregroundPlane].some(offGrid)||blending.every((image,i)=>image.transform===environments[0][i].transform))throw new Error('World crossfade lost its unscaled pixel grid or scroll parallax: '+JSON.stringify({blending,foregroundPlane}));
             await page.locator('#world-map-toggle').click();
             if(!await page.locator('#world-map').isVisible())throw new Error('World map did not open');
             await page.locator('[data-world-route="1"]').click();
@@ -145,21 +186,30 @@ jobs:
             const stillFrame=await gateSprite.getAttribute('data-frame');
             await page.waitForTimeout(250);
             if(await gateSprite.getAttribute('data-frame')!==stillFrame)throw new Error('KIST kept walking without scroll or music');
+            const gateBox=await gateCharacter.boundingBox();
+            await page.mouse.move(width-40,Math.min(height-100,Math.max(100,gateBox.y+20)));
             const routeBefore=Number(await gateCharacter.getAttribute('data-route-progress'));
             const walkFrames=new Set([stillFrame]);
             for(let step=0;step<6;step++){await page.mouse.wheel(0,25);await page.waitForTimeout(70);walkFrames.add(await gateSprite.getAttribute('data-frame'));}
             await page.waitForFunction(before=>Number(document.querySelector('#frequency-break .gate-character')?.dataset.routeProgress)>before+.01,routeBefore,{timeout:4000});
             if(walkFrames.size<2)throw new Error('The integrated character did not animate in response to real scroll');
+            if(await gateCharacter.getAttribute('data-facing')!=='right'||await gateCharacter.locator('[data-gate-pose]:visible').evaluate(el=>new DOMMatrixReadOnly(getComputedStyle(el).transform).a)!==1)throw new Error('KIST did not face forward during downward scroll');
+            const reverseScrollStart=await page.evaluate(()=>scrollY),reverseRouteStart=Number(await gateCharacter.getAttribute('data-route-progress'));
+            await page.mouse.wheel(0,-100);
+            await page.waitForFunction(before=>scrollY<before,reverseScrollStart,{timeout:4000});
+            await page.waitForFunction(before=>{const character=document.querySelector('#frequency-break .gate-character');return character?.dataset.facing==='left'&&Number(character.dataset.routeProgress)<before-.002;},reverseRouteStart,{timeout:4000});
+            if(await gateCharacter.locator('[data-gate-pose]:visible').evaluate(el=>new DOMMatrixReadOnly(getComputedStyle(el).transform).a)!==-1)throw new Error('The character did not reverse its visible pose after real upward scroll');
             await page.locator('#world-motion').click();
             const pausedWorldFrame=await world.getAttribute('data-world-frame');
             const pausedSpriteFrame=await gateSprite.getAttribute('data-frame');
             const pausedRoute=await gateCharacter.getAttribute('data-route-progress');
             const pausedArt=await page.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>image.style.cssText).join('|'));
+            const pausedForeground=await foreground.getAttribute('style');
             const scrollBeforePause=await page.evaluate(()=>scrollY);
             await page.mouse.wheel(0,70);
             await page.waitForTimeout(300);
             if(await page.evaluate(()=>scrollY)<=scrollBeforePause)throw new Error('The pause test did not deliver real scroll');
-            if(await world.getAttribute('data-world-frame')!==pausedWorldFrame||await gateSprite.getAttribute('data-frame')!==pausedSpriteFrame||await gateCharacter.getAttribute('data-route-progress')!==pausedRoute||await page.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>image.style.cssText).join('|'))!==pausedArt)throw new Error('Pause did not freeze the artwork, world and character during scroll');
+            if(await world.getAttribute('data-world-frame')!==pausedWorldFrame||await gateSprite.getAttribute('data-frame')!==pausedSpriteFrame||await gateCharacter.getAttribute('data-route-progress')!==pausedRoute||await page.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>image.style.cssText).join('|'))!==pausedArt||await foreground.getAttribute('style')!==pausedForeground)throw new Error('Pause did not freeze the artwork, foreground, world and character during scroll');
             await page.locator('#world-motion').click();
             await page.waitForFunction(frame=>document.querySelector('#kist-world')?.dataset.worldFrame!==frame,pausedWorldFrame,{timeout:4000});
             await page.waitForFunction(progress=>document.querySelector('#frequency-break .gate-character')?.dataset.routeProgress!==progress,pausedRoute,{timeout:4000});
@@ -196,15 +246,18 @@ jobs:
           if(!calmPoster||!new URL(calmPoster,'http://127.0.0.1:4321').pathname.startsWith('/media/hero/'))throw new Error('Reduced motion has no local hero poster');
           await calm.waitForTimeout(350);
           const calmVideoTime=await calm.locator('#hero-video').evaluate(video=>{if(!video.paused||!video.muted)throw new Error('Reduced motion did not stop the muted hero video');return video.currentTime;});
-          await calm.waitForTimeout(350);
-          if(await calm.locator('#hero-video').evaluate(video=>video.currentTime)!==calmVideoTime)throw new Error('Reduced-motion hero kept playing');
+          const calmHero=await calm.locator('#hero-sequence-photo').evaluate(async image=>{await image.decode();const hero=image.closest('.hero');return {source:new URL(image.currentSrc||image.src).pathname,index:hero.dataset.heroIndex,photo:hero.classList.contains('is-photo'),opacity:Number(getComputedStyle(image).opacity)};});
+          if(calmHero.source!=='/media/kist-fifteen-frames-clean-v2.webp'||calmHero.index!=='0'||!calmHero.photo||calmHero.opacity<.99)throw new Error('Reduced motion did not retain the original static hero photo');
+          await calm.waitForTimeout(5250);
+          if(await calm.locator('#hero-video').evaluate(video=>video.currentTime)!==calmVideoTime||await calm.locator('#home').getAttribute('data-hero-index')!==calmHero.index||await calm.locator('#hero-video').getAttribute('data-hero-index')!==calmHero.index)throw new Error('Reduced-motion hero advanced its video or sequence');
           await calm.evaluate(()=>document.querySelector('#frequency-break').scrollIntoView({block:'center',behavior:'instant'}));
           await calm.locator('#kist-world[data-world-ready="true"][data-world-art-ready="3"]').waitFor();
           await calm.locator('#frequency-break .gate-character [data-kist-ready="true"]:visible').waitFor();
           const calmFrame=await calm.locator('#kist-world').getAttribute('data-world-frame');
           const calmArt=await calm.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>image.style.cssText).join('|'));
+          const calmForeground=await calm.locator('#kist-world [data-world-foreground]').getAttribute('style');
           await calm.waitForTimeout(500);
-          if(await calm.locator('#kist-world').getAttribute('data-world-frame')!==calmFrame||await calm.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>image.style.cssText).join('|'))!==calmArt)throw new Error('Reduced-motion world kept animating');
+          if(await calm.locator('#kist-world').getAttribute('data-world-frame')!==calmFrame||await calm.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>image.style.cssText).join('|'))!==calmArt||await calm.locator('#kist-world [data-world-foreground]').getAttribute('style')!==calmForeground)throw new Error('Reduced-motion world kept animating');
           if(await calm.locator('#kist-world').getAttribute('data-world-paused')!=='true')throw new Error('Reduced-motion world was not marked static');
           if(await calm.locator('#frequency-break .gate-character [data-kist-sprite]:visible').getAttribute('data-frame')!=='0')throw new Error('Reduced-motion sprite kept animating');
           if(await calm.locator('#kist-game,[data-game-open]').count())throw new Error('Reduced-motion page still exposes a separate game');

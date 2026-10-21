@@ -1,7 +1,7 @@
 export const artist = {
  name: 'KIST', instagram: 'https://www.instagram.com/thats_kist/',
  soundcloud: 'https://soundcloud.com/benedetta-pasquariello', hero: '/media/kist-fifteen-frames-clean-v2.webp', heroMobile: '/media/kist-fifteen-frames-clean-v2.webp', heroVideo: '/media/hero/kist-night-desktop-v1.mp4', heroVideoMobile: '/media/hero/kist-night-mobile-v1.mp4', heroVideoPoster: '/media/hero/kist-night-desktop-poster-v1.webp', heroVideoMobilePoster: '/media/hero/kist-night-mobile-poster-v1.webp', portrait: '/media/kist-fifteen-frames-clean-second.webp',
- bio: 'Dalle origini lucane a Bologna. Un percorso nella musica elettronica che passa dalla Link Academy e arriva alla console.',
+ bio: 'KIST è una DJ di origini lucane, cresciuta tra i suoni del sud Italia e approdata a Bologna. Si forma presso la Link Academy e muove i primi passi nella scena suonando al Link Club. Nei suoi set breakbeat, UK garage e funky incontrano jungle e drum and bass, con note di acid techno. Generi che si contaminano e costruiscono ponti tra culture e dance floor lontani. Ogni scelta musicale traduce la sua energia in una connessione immediata con chi ascolta.',
 };
 export const mixes = [
  {title:'Declinatio electronica',url:'https://soundcloud.com/benedetta-pasquariello/declinatio-electronica',label:'Electronic · Techno · House',artwork:'/media/declinatio-cover.webp',sleeve:'',palette:'#d99859',accent:'#53c5d7'},

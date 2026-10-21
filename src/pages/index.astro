@@ -10,6 +10,8 @@ import HostedBy from '../components/HostedBy.astro';
 import ContactSection from '../components/ContactSection.astro';
 import KistSprite from '../components/KistSprite.astro';
 import WorldGate from '../components/WorldGate.astro';
+import ArtistDiscovery from '../components/ArtistDiscovery.astro';
+import DiscoverySchema from '../components/DiscoverySchema.astro';
 import WorldExperience from '../components/WorldExperience.astro';
 import '../styles/places.css';
 import '../styles/sprites.css';
@@ -22,9 +24,9 @@ const future = events.filter(e => e.date >= today).sort((a,b)=>a.date.localeComp
 const past = events.filter(e => e.date < today).sort((a,b)=>b.date.localeCompare(a.date));
 const showFuture = future.length > 0;
 const featured = mixes[0];
-const siteUrl = 'https://djkist.vercel.app/';
+const siteUrl = 'https://www.djkist.it/';
 const pageTitle = 'DJ KIST a Bologna — DJ set, musica e booking';
-const pageDescription = 'KIST, DJ e selector a Bologna. Ascolta i set su SoundCloud, scopri le prossime serate e scrivile su Instagram per booking e collaborazioni.';
+const pageDescription = 'DJ KIST a Bologna: breakbeat, UK garage, jungle, drum and bass e acid techno. Ascolta i set, guarda le sessioni e proponi booking o collaborazioni.';
 const shareImage = new URL(artist.hero, siteUrl).href;
 const artistId = siteUrl + '#kist';
 const structuredData = {
@@ -70,6 +72,7 @@ const structuredData = {
 <meta name="twitter:image" content={shareImage}/>
 <meta name="twitter:image:alt" content="DJ KIST alla console durante Fifteen Frames"/>
 <script type="application/ld+json" set:html={JSON.stringify(structuredData).replace(/</g, '\\u003c')}/>
+<DiscoverySchema/>
 <link rel="icon" href="/favicon.svg"/>
 <link rel="preload" as="image" href="/media/world/bologna-portici-v1.webp" fetchpriority="low"/>
 <link rel="preload" as="image" href="/media/kist/kist-16bit-mix-poster.webp"/>
@@ -86,10 +89,15 @@ const structuredData = {
 <div class="header-actions"><div class="listen-social"><button id="header-music" class="header-music" aria-describedby="header-track-title" aria-label="Attiva la musica" aria-pressed="false"><img class="header-track-cover" data-track-cover src={featured?.artwork || artist.hero} width="42" height="42" alt=""/><span class="header-track-copy"><small>KIST / SOUNDCLOUD</small><strong id="header-track-title" data-track-title>{featured?.title || 'Personal frequency'}</strong></span><span class="header-listen-icon ui-icon icon-play" aria-hidden="true"></span></button></div><div class="header-transport-slot"></div></div>
 </header>
 <main id="main">
-<section class="hero" id="home">
+<section class:list={['hero',{'is-photo':!!artist.heroVideo}]} id="home" data-hero-index="0">
 <div class="hero-media"><canvas id="prism" data-prism aria-hidden="true"></canvas>
 {!artist.heroVideo && heroSlides.length > 0 && <div class="hero-slides">{heroSlides.map((slide,i)=><picture class={'hero-slide'+(i===0?' active':'')} style={'--position:'+ (slide.position||'center')+';--mobile-position:'+(slide.mobilePosition||slide.position||'center')}><source media="(max-width:700px)" srcset={slide.mobile||slide.src}/><img src={slide.src} alt={slide.alt} fetchpriority={i===0?'high':'auto'} loading={i===0?'eager':'lazy'}/></picture>)}</div>}{!artist.heroVideo && artist.hero && heroSlides.length===0 && <picture><source media="(max-width: 700px)" srcset={artist.heroMobile || artist.hero}/><img src={artist.hero} alt="KIST" fetchpriority="high"/></picture>}
-{artist.heroVideo && <video id="hero-video" class="hero-video" muted loop playsinline preload="metadata" poster={artist.heroVideoPoster} data-desktop={artist.heroVideo} data-mobile={artist.heroVideoMobile} data-desktop-poster={artist.heroVideoPoster} data-mobile-poster={artist.heroVideoMobilePoster} aria-hidden="true" tabindex="-1"></video>}
+{artist.heroVideo && <><video id="hero-video" class="hero-video" muted loop playsinline preload="metadata" poster={artist.heroVideoPoster} data-desktop={artist.heroVideo} data-mobile={artist.heroVideoMobile} data-desktop-poster={artist.heroVideoPoster} data-mobile-poster={artist.heroVideoMobilePoster} data-hero-index="0" data-hero-sequence={JSON.stringify([
+ {type:'photo',duration:4000,desktop:heroSlides[0]?.src||artist.hero,mobile:heroSlides[0]?.mobile||artist.heroMobile||artist.hero,desktopPosition:heroSlides[0]?.position||'center 58%',mobilePosition:heroSlides[0]?.mobilePosition||'48% 58%'},
+ {type:'video',duration:5000,desktop:artist.heroVideo,mobile:artist.heroVideoMobile,desktopPoster:artist.heroVideoPoster,mobilePoster:artist.heroVideoMobilePoster,desktopPosition:'50% 46%',mobilePosition:'25% center'},
+ {type:'photo',duration:3500,desktop:'/media/hero/kist-mural-portrait-desktop-v1.webp',mobile:'/media/hero/kist-mural-portrait-mobile-v1.webp',desktopPosition:'center',mobilePosition:'center'},
+ {type:'video',duration:5000,desktop:'/media/hero/kist-purple-desktop-v1.mp4',mobile:'/media/hero/kist-purple-mobile-v1.mp4',desktopPoster:'/media/hero/kist-purple-desktop-poster-v1.webp',mobilePoster:'/media/hero/kist-purple-mobile-poster-v1.webp',desktopPosition:'center',mobilePosition:'center'},
+ ])} aria-hidden="true" tabindex="-1"></video><img id="hero-sequence-photo" class="hero-sequence-photo" src={artist.hero} alt="" aria-hidden="true" decoding="async" loading="eager" fetchpriority="low"/></>}
 <div class="grain"></div>
 </div>
 <div class="hero-top"><span>DJ / SELECTOR</span><span>BOLOGNA · IT</span></div>
@@ -102,7 +110,7 @@ const structuredData = {
 <canvas id="sound-prism" data-prism aria-hidden="true"></canvas>
 </div>
 </div>
-<div class="hero-foot">{artist.heroVideo ? <div class="slideshow-controls"><button id="slides-toggle" data-video-toggle aria-label="Metti in pausa il video di sfondo" aria-pressed="false"><span class="ui-icon icon-pause" aria-hidden="true"></span></button><span class="video-caption">BOLOGNA / LIVE MOMENTS</span></div> : heroSlides.length>1 && <div class="slideshow-controls"><button id="slides-toggle" aria-label="Metti in pausa lo slideshow" aria-pressed="false"><span class="ui-icon icon-pause" aria-hidden="true"></span></button><span id="slide-count">01 / {String(heroSlides.length).padStart(2,'0')}</span></div>}<span>SCROLL TO FEEL MORE</span><span>PERSONAL FREQUENCY / 2026</span></div>
+<div class="hero-foot">{artist.heroVideo ? <div class="slideshow-controls"><button id="slides-toggle" data-video-toggle aria-label="Metti in pausa la sequenza visiva" aria-pressed="false"><span class="ui-icon icon-pause" aria-hidden="true"></span></button><span class="video-caption">BOLOGNA / LIVE MOMENTS <span id="hero-sequence-count" aria-hidden="true">01 / 04</span></span></div> : heroSlides.length>1 && <div class="slideshow-controls"><button id="slides-toggle" aria-label="Metti in pausa lo slideshow" aria-pressed="false"><span class="ui-icon icon-pause" aria-hidden="true"></span></button><span id="slide-count">01 / {String(heroSlides.length).padStart(2,'0')}</span></div>}<span>SCROLL TO FEEL MORE</span><span>PERSONAL FREQUENCY / 2026</span></div>
 </section>
 <div class="ticker" aria-hidden="true"><div>FEEL THE ROOM. FIND YOUR FREQUENCY. KIST. FEEL THE ROOM. FIND YOUR FREQUENCY. KIST.</div></div>
 <section class="sound-section section" id="sound">
@@ -118,7 +126,8 @@ const structuredData = {
 {photographs.length > 0 && <section class="photo-wall" aria-label="Diario fotografico">{photographs.map((photo,i)=><button class={'photo photo-'+i%3} data-photo={photo.src} data-caption={photo.caption} aria-label={'Ingrandisci: '+photo.alt}><img src={photo.src} alt={photo.alt} loading="lazy"/><span>{photo.caption}</span></button>)}</section>}
 
 <HostedBy/>
-<section class="about section" id="about"><div class="about-photo">{artist.portrait ? <img src={artist.portrait} alt="Ritratto di KIST" loading="lazy"/> : <div class="portrait-await"><span>BEHIND THE SOUND</span><img src="/media/kist-wordmark-imagegen.webp" alt="KIST"/></div>}</div><div class="about-copy"><span>04 / A LITTLE CLOSER</span><h2>La musica.<br/>E chi la sceglie.</h2><p>{artist.bio}</p><a href={artist.instagram} target="_blank" rel="noopener noreferrer">@thats_kist <span class="ui-icon icon-external" aria-hidden="true"></span></a></div></section>
+<section class="about section" id="about"><div class="about-photo">{artist.portrait ? <img src={artist.portrait} alt="Ritratto di KIST" loading="lazy"/> : <div class="portrait-await"><span>BEHIND THE SOUND</span><img src="/media/kist-wordmark-imagegen.webp" alt="KIST"/></div>}</div><div class="about-copy"><span>04 / A LITTLE CLOSER</span><h2>La musica.<br/>E chi la sceglie.</h2>{artist.bio.split('\n\n').map(paragraph=><p>{paragraph}</p>)}<a href={artist.instagram} target="_blank" rel="noopener noreferrer">@thats_kist <span class="ui-icon icon-external" aria-hidden="true"></span></a></div></section>
+<ArtistDiscovery/>
 <ContactSection/>
 </main>
 <footer><img src="/media/kist-wordmark-imagegen.webp" alt="KIST"/><span>PERSONAL FREQUENCY</span><a href={artist.soundcloud} target="_blank" rel="noopener noreferrer" aria-label="KIST su SoundCloud">SoundCloud</a><a href={artist.instagram} target="_blank" rel="noopener noreferrer" aria-label="KIST su Instagram">Instagram</a><a href="https://www.youtube.com/results?search_query=KIST+Fifteen+Frames+Bologna" target="_blank" rel="noopener noreferrer" aria-label="Cerca KIST e Fifteen Frames su YouTube">YouTube</a><a href="/media/FREQUENCY-BODY-LICENSE.txt">3D credits</a><span>Crafted by DOGO Studio · 2026</span></footer>
