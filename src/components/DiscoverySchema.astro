@@ -18,14 +18,15 @@ const discovery={
   {
    '@type':'VideoObject','@id':siteUrl+'#plug-radio-session',
    name:'KIST — Plug Radio',description:'Sessione di KIST per Plug Radio del 26 settembre 2026.',
-   url:'https://www.youtube.com/watch?v=sP0j9EdBOxc',
+   url:siteUrl+'sessioni/plug-radio/',sameAs:'https://www.youtube.com/watch?v=sP0j9EdBOxc',
    embedUrl:'https://www.youtube-nocookie.com/embed/sP0j9EdBOxc',
    thumbnailUrl:'https://i.ytimg.com/vi/sP0j9EdBOxc/hqdefault.jpg',
    // YouTube's public playerMicroformatRenderer uploadDate, verified 20 October 2026.
    uploadDate:'2026-09-26T23:02:32-07:00',
    duration:'PT53M12S',about:{'@id':artistId},
    publisher:{'@type':'Organization',name:'Plug Radio',url:'https://www.youtube.com/@plugradio'},
-   isPartOf:{'@type':'WebPage','@id':siteUrl+'#webpage'},
+   isPartOf:{'@type':'WebPage','@id':siteUrl+'sessioni/plug-radio/#webpage'},
+   mainEntityOfPage:{'@id':siteUrl+'sessioni/plug-radio/#webpage'},
   },
  ],
 };
