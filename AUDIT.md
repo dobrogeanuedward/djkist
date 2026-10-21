@@ -78,3 +78,10 @@ Build succeeds without the former large Three.js chunk: the unused festival entr
 The standalone Frequency Quest was withdrawn at the user's request. Its dialog, entry buttons and runtime are removed. KIST again runs in response to scrolling, directly within the page. Three original pixel-art Bologna environments and a transparent foreground provide layered 2.5D parallax; the rejected cinematic concept drafts are not shipped. The route remains navigable independently of the character, and motion can be paused without changing SoundCloud.
 
 The header now links all six sections and contains one persistent artwork/title transport. Desktop Notti tabs are larger and centered. The user's newly supplied silent footage replaces the hero slideshow with separate desktop/mobile crops and matching posters; the actual Plug Radio session is linked through a verified YouTube embed. See asset-manifest.md and design/world-art-prompts.md for sources and production prompts. Previous notes describing missing original video and the standalone platformer are superseded by this revision.
+
+
+## Local Bologna passage / 21 October 2026
+
+The final placement supersedes the continuous-city and six-stop-map descriptions above. Bologna pixel art now appears only inside `#frequency-break`, where KIST runs in response to scrolling and turns when scrolling back. The artwork, canvas and transparent foreground are absolutely positioned and clipped by that section; nothing from the city is fixed behind the rest of the page. Existing techno gradients remain in the other sections.
+
+The floating city map and reading-progress indicator are removed. Pause is a local control within the passage. Reduced motion produces a static composition; offscreen, hidden-tab and dialog states suspend the local animation. SoundCloud remains the independent owner of audio playback. The hero montage and Google Search verification tag are unchanged. Production build and scoped world TypeScript checks pass.
