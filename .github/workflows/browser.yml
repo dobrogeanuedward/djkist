@@ -284,6 +284,9 @@ jobs:
             const portraits=page.locator('#about .about-portraits img');
             if(await portraits.count()!==2)throw new Error('The biography must show both real portraits');
             await portraits.evaluateAll(async images=>{await Promise.all(images.map(image=>image.decode()));if(images.some(image=>!image.naturalWidth))throw new Error('A biography portrait failed to load');});
+            const portraitBox=await page.locator('#about .bio-portrait').boundingBox();
+            if(Math.abs(portraitBox.height/portraitBox.width-1.25)>.01)throw new Error('The new biography portrait lost its 4:5 crop');
+
             await page.locator('.photo').first().click();
             if(!await page.locator('#media-dialog').isVisible())throw new Error('Photo viewer failed');
             await page.getByRole('button',{name:'Chiudi',exact:true}).click();

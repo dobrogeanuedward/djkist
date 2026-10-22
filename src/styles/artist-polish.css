@@ -14,7 +14,7 @@
 /* Two real portraits, with the new mural photograph leading the biography. */
 .about-portraits{width:100%;max-width:480px;justify-self:center}
 .about-portraits .about-photo{max-width:none}
-.about-portraits .bio-portrait{aspect-ratio:4/5;object-fit:cover;object-position:50% 74%}
+.about-portraits .bio-portrait{height:auto;aspect-ratio:4/5;object-fit:cover;object-position:50% 74%}
 .about-photo-secondary{position:relative;z-index:2;display:block;width:58%;margin:-22% 0 0 auto;overflow:hidden;border:5px solid #000;border-radius:14px;box-shadow:0 10px 26px #0005}
 .about-photo-secondary img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;object-position:35% center}
 .photo-wall:has(>.photo:only-child){grid-template-columns:minmax(0,1fr)}
