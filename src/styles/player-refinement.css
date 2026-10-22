@@ -37,9 +37,21 @@
 .site-header .audio-controls .audio-controls-row{gap:14px}
 .site-header .audio-volume-row{max-width:320px}
 @media(min-width:1051px){
- .site-header:not(.is-scrolled) .listen-social>.audio-controls{display:none}
- .site-header:not(.is-scrolled) .audio-dock.in-header .audio-controls,.site-header:not(.is-scrolled) .audio-dock.in-header .audio-controls-row{display:contents}
- .site-header:not(.is-scrolled) .audio-dock.in-header .audio-controls :is([data-audio-prev],[data-audio-next],.audio-volume-row){display:none}
+ .site-header:not(.is-scrolled) .header-actions{max-width:380px}
+ .site-header:not(.is-scrolled) .listen-social{display:grid;gap:0;padding:4px;border:1px solid #d6c6ff40;border-radius:14px;background:#03071177}
+ .site-header:not(.is-scrolled) .header-music{grid-template-columns:28px minmax(0,1fr);min-height:36px;padding:0 4px;border:0;background:transparent;box-shadow:none}
+ .site-header:not(.is-scrolled) .header-listen-icon{display:none}
+ .site-header:not(.is-scrolled) .header-track-cover{width:28px;height:28px;border-radius:7px}
+ .site-header:not(.is-scrolled) .header-track-copy{gap:3px}
+ .site-header:not(.is-scrolled) .header-track-copy strong{font-size:12px}
+ .site-header:not(.is-scrolled) .audio-controls{display:grid;grid-template-columns:148px minmax(0,1fr);align-items:center;gap:8px}
+ .site-header:not(.is-scrolled) .audio-controls .audio-controls-row{gap:6px}
+ .site-header:not(.is-scrolled) .audio-volume-row{grid-template-columns:44px minmax(0,1fr) 26px;gap:4px;margin:0;font-size:9px}
+ .site-header:not(.is-scrolled) .audio-dock.in-header{grid-template-columns:minmax(0,1fr) 36px;gap:0;padding:4px}
+ .site-header:not(.is-scrolled) .audio-dock.in-header #dock-open{grid-column:1;grid-row:1;min-height:36px}
+ .site-header:not(.is-scrolled) .audio-dock.in-header #dock-close{grid-column:2;grid-row:1;width:36px;height:36px;min-width:36px;min-height:36px}
+ .site-header:not(.is-scrolled) .audio-dock.in-header .audio-controls{grid-column:1/-1;grid-row:2}
+ .site-header:not(.is-scrolled) .audio-dock.in-header #dock-toggle{order:0;width:44px;height:44px;min-width:44px;min-height:44px;border-radius:12px}
 }
 @media(max-width:1050px){
  .site-header:not(.is-scrolled){--header-logo-width:106px;min-height:84px;padding:6px 14px;grid-template-columns:minmax(0,1fr);grid-template-rows:auto;grid-template-areas:'logo';gap:0}

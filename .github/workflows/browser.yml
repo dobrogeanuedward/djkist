@@ -195,6 +195,11 @@ jobs:
             const navLinks=await page.locator('#site-navigation a').evaluateAll(links=>links.map(el=>el.getAttribute('href')));
             for(const href of ['#sound','#sessions','#frequency-break','#diary','#places','#about','#contact'])if(navLinks.filter(value=>value===href).length!==1)throw new Error('Header is missing a unique section: '+href);
             const menu=page.locator('#header-nav-toggle');
+            if(width>1050){
+              const headerControls=page.locator('.site-header [data-player-controls="header-idle"]');
+              if(!await headerControls.locator('[data-audio-prev]').isVisible()||!await headerControls.locator('[data-audio-next]').isVisible()||!await headerControls.locator('[data-audio-volume]').isVisible())throw new Error('The desktop header is missing its complete audio controls');
+            }
+
             if(width<=800){
               if(await page.locator('.site-header .header-actions').isVisible())throw new Error('The mobile header still shows a player outside its dropdown');
               if(await page.locator('.hero-listen').isVisible())throw new Error('The mobile hero still duplicates its main play control');
