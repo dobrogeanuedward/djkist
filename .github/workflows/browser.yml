@@ -19,7 +19,13 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm install --no-save playwright
-      - run: npx playwright install --with-deps chrome
+      - name: Prepare Chrome
+        run: |
+          if command -v google-chrome >/dev/null 2>&1; then
+            google-chrome --version
+          else
+            npx playwright install --with-deps chrome
+          fi
       - name: Verify viewports
         run: |
           python3 -m http.server 4321 --directory dist > /tmp/kist-server.log 2>&1 &
