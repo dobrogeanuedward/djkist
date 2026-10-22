@@ -10,7 +10,7 @@ const {film}=Astro.props as {film:Film};
  </button>
  <figcaption class="video-session-caption">
   <div><span class="video-session-edition">{film.label}</span><h3>{film.title}</h3><p id={'video-description-'+film.youtubeId}>Sessione completa · {film.duration} · Premi play per guardarla.</p></div>
-  <a href={film.pageUrl}>Esplora la sessione <span aria-hidden="true">↗</span></a>
+  <a href={film.pageUrl}>Esplora la sessione</a>
  </figcaption>
 </figure>
 <style>

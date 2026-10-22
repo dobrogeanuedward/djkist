@@ -113,9 +113,10 @@
 }
 .site-header .header-nav-toggle[aria-expanded=true] svg {transform:translateY(-50%) rotate(180deg)}
 .site-header:not(.navigation-disclosure) .header-nav-toggle svg {display:none}
+/* Keep the two 1px borders adjacent, with no gap below the header. */
 .site-header .header-panel {
  position:absolute;
- top:calc(100% + 10px);
+ top:calc(100% + 1px);
  left:50%;
  z-index:60;
  transform:translateX(-50%);
@@ -177,7 +178,7 @@
 .site-header .site-nav a {
  position:relative;
  display:grid;
- grid-template-columns:28px minmax(0,1fr) 22px;
+ grid-template-columns:28px minmax(0,1fr);
  align-items:center;
  min-height:56px;
  padding:10px 6px;
@@ -204,23 +205,10 @@
  font-weight:400;
  letter-spacing:.03em;
 }
-.site-header .site-nav a:after {
- content:'↗';
- position:static;
- width:auto;
- height:auto;
- border-radius:0;
- color:#bca4d4;
- font-family:'DM Sans',sans-serif;
- font-size:18px;
- line-height:1;
- background:none;
- transform:none;
-}
+.site-header .site-nav a:after {content:none;display:none}
 .site-header .site-nav a:hover {background:#b85cff12;color:#fff}
 .site-header .site-nav a[aria-current=location] {color:#d9ff8c;background:#c9ff5209}
-.site-header .site-nav a[aria-current=location]:before,
-.site-header .site-nav a[aria-current=location]:after {color:#c9ff52;transform:none}
+.site-header .site-nav a[aria-current=location]:before {color:#c9ff52;transform:none}
 .site-header .header-player-label {padding:1px 6px 0;color:#c2addb;font-size:9px;line-height:1.4;letter-spacing:.12em}
 .site-header .header-actions {display:block;width:100%;max-width:none;min-width:0;margin:0}
 .site-header .header-music,
@@ -307,7 +295,7 @@
  .site-header:not(.is-scrolled) .header-actions {width:100%;max-width:none}
  .site-header:not(.is-scrolled) .site-nav {
   position:absolute;
-  top:calc(100% + 8px);
+  top:calc(100% + 1px);
   left:50%;
   z-index:60;
   transform:translateX(-50%);
@@ -325,7 +313,7 @@
 @media(max-width:600px) {
  .site-header.is-scrolled {--header-logo-width:104px;width:240px;max-width:calc(100% - 32px);min-height:64px;padding:6px 12px;border-radius:24px}
  .site-header.is-scrolled .header-nav-toggle {min-height:48px}
- .site-header .header-panel {top:calc(100% + 8px);width:calc(100vw - 24px);max-height:calc(100dvh - 96px - env(safe-area-inset-top) - env(safe-area-inset-bottom));gap:12px;padding:14px}
+ .site-header .header-panel {top:calc(100% + 1px);width:calc(100vw - 24px);max-height:calc(100dvh - 96px - env(safe-area-inset-top) - env(safe-area-inset-bottom));gap:12px;padding:14px}
  .site-header.is-scrolled .header-panel {max-height:calc(100dvh - 88px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
  .site-header .header-home {padding-bottom:12px}
  .site-header .header-home img {width:56px}
