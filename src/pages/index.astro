@@ -14,6 +14,7 @@ import ArtistDiscovery from '../components/ArtistDiscovery.astro';
 import DiscoverySchema from '../components/DiscoverySchema.astro';
 import LiveSessionsLibrary from '../components/LiveSessionsLibrary.astro';
 import NightSky from '../components/NightSky.astro';
+import AudioControls from '../components/AudioControls.astro';
 import '../styles/places.css';
 import '../styles/sprites.css';
 import '../styles/opening.css';
@@ -23,6 +24,7 @@ import '../styles/hero-video.css';
 import '../styles/artist-polish.css';
 import '../styles/header-refinement.css';
 import '../styles/hero-center.css';
+import '../styles/player-refinement.css';
 const today = new Date().toLocaleDateString('en-CA', {timeZone:'Europe/Rome'});
 const future = events.filter(e => e.date >= today).sort((a,b)=>a.date.localeCompare(b.date));
 const past = events.filter(e => e.date < today).sort((a,b)=>b.date.localeCompare(a.date));
@@ -92,7 +94,7 @@ const structuredData = {
 <a class="brand header-home" href="#home" aria-label="KIST, inizio"><img src="/media/kist-wordmark-v2.svg" width="64" height="21" alt="KIST"/><span>Torna all’inizio</span></a>
 <nav id="site-navigation" class="site-nav" aria-label="Menu principale"><a href="#sound" aria-label="Sound">Sound</a><a href="#sessions" aria-label="Sessioni live">Sessioni</a><a href="#frequency-break" aria-label="Social">Social</a><a href="#diary" aria-label="Notti">Notti</a><a href="#places" aria-label="Luoghi">Luoghi</a><a href="#about" aria-label="Kist">Kist</a><a href="#contact" aria-label="Contatti">Contatti</a></nav>
 <div class="header-player-label">SOUNDCLOUD / PERSONAL FREQUENCY</div>
-<div class="header-actions"><div class="listen-social"><button id="header-music" class="header-music" aria-describedby="header-track-title" aria-label="Attiva la musica" aria-pressed="false"><img class="header-track-cover" data-track-cover src={featured?.artwork || artist.hero} width="42" height="42" alt=""/><span class="header-track-copy"><small>KIST / SOUNDCLOUD</small><strong id="header-track-title" data-track-title>{featured?.title || 'Personal frequency'}</strong></span><span class="header-listen-icon ui-icon icon-play" aria-hidden="true"></span></button></div><div class="header-transport-slot"></div></div>
+<div class="header-actions"><div class="listen-social"><button id="header-music" class="header-music" aria-describedby="header-track-title" aria-label="Attiva la musica" aria-pressed="false"><img class="header-track-cover" data-track-cover src={featured?.artwork || artist.hero} width="42" height="42" alt=""/><span class="header-track-copy"><small>KIST / SOUNDCLOUD</small><strong id="header-track-title" data-track-title>{featured?.title || 'Personal frequency'}</strong></span><span class="header-listen-icon ui-icon icon-play" aria-hidden="true"></span></button><AudioControls placement="header-idle"><button class="audio-transport-play" type="button" data-audio-play aria-label="Riproduci il set dal menu"><span class="ui-icon icon-play" aria-hidden="true"></span></button></AudioControls></div><div class="header-transport-slot"></div></div>
 </div>
 </header>
 <main id="main">
@@ -113,7 +115,7 @@ const structuredData = {
 <div class="sound-invitation" data-url={featured?.url || artist.soundcloud} data-mixes={JSON.stringify(mixes)}>
 <div class="mini-record" aria-hidden="true"><img src="/media/kist-fifteen-frames-clean-v2.webp" alt=""/></div>
 <div class="sound-caption"><span>THIS SPACE SOUNDS BETTER WITH MUSIC</span><span>01 / SOUND ON</span></div>
-<div class="sound-row"><div><strong>{featured?.title || 'La prossima selezione'}</strong><p id="audio-status" role="status">{featured || artist.soundcloud ? 'Entra con il suono.' : 'Il primo ascolto arriva presto.'}</p></div><button class="play" id="hero-play" aria-label="Riproduci il set di KIST" disabled={!featured && !artist.soundcloud}><span class="ui-icon icon-play" aria-hidden="true"></span><span class="mini-label">Riproduci</span></button><button id="quiet" class="quiet">Per ora, in silenzio</button></div>
+<div class="sound-row"><div class="hero-track-copy"><strong>{featured?.title || 'La prossima selezione'}</strong><p id="audio-status" role="status">{featured || artist.soundcloud ? 'Entra con il suono.' : 'Il primo ascolto arriva presto.'}</p></div><AudioControls placement="hero"><button class="play" id="hero-play" aria-label="Riproduci il set di KIST" disabled={!featured && !artist.soundcloud}><span class="ui-icon icon-play" aria-hidden="true"></span><span class="mini-label">Riproduci</span></button></AudioControls><button id="quiet" class="quiet">Per ora, in silenzio</button></div>
 <canvas id="sound-prism" data-prism aria-hidden="true"></canvas>
 </div>
 </div>
@@ -141,9 +143,10 @@ const structuredData = {
 <footer><img src="/media/kist-wordmark-v2.svg" alt="KIST"/><span>PERSONAL FREQUENCY</span><a href={artist.soundcloud} target="_blank" rel="noopener noreferrer" aria-label="KIST su SoundCloud">SoundCloud</a><a href={artist.instagram} target="_blank" rel="noopener noreferrer" aria-label="KIST su Instagram">Instagram</a><a href="https://www.youtube.com/results?search_query=KIST+Fifteen+Frames+Bologna" target="_blank" rel="noopener noreferrer" aria-label="Cerca KIST e Fifteen Frames su YouTube">YouTube</a><span>Crafted by DOGO Studio · 2026</span></footer>
 <dialog id="media-dialog"><button class="close-dialog" aria-label="Chiudi"><span class="ui-icon icon-close" aria-hidden="true"></span></button><div id="dialog-content"></div></dialog>
 <dialog id="sound-dialog" aria-labelledby="sound-dialog-title"><div class="player-stage"><canvas data-prism aria-hidden="true"></canvas><button id="player-dismiss" class="player-dismiss" aria-label="Chiudi il player"><span class="ui-icon icon-close" aria-hidden="true"></span></button><div class="player-intro"><img src="/kist-sigil.svg" alt=""/><span>KIST / SoundCloud</span></div><div class="player-scene"><div class="vinyl-scene" aria-hidden="true"><div class="vinyl-disc"><div class="vinyl-art"><img src="/media/kist-fifteen-frames-clean-v2.webp" alt=""/></div><i></i></div><div class="vinyl-needle"></div></div><div class="player-character" aria-hidden="true"><KistSprite mode="mix" size={144}/></div></div><div class="player-copy"><h2 id="sound-dialog-title">Apri il sito di DJ KIST<br/>ascoltando i suoi brani.</h2><p>{featured?.title || 'Personal frequency'}</p></div><div class="player-actions"><button id="popup-play" class="popup-play"><span class="ui-icon icon-play" aria-hidden="true"></span><span class="button-label">Daje</span></button><button id="popup-quiet">Continua senza musica</button></div><p id="popup-status" role="status" aria-live="polite"></p><div id="player-mount"></div><a class="player-source" href={featured?.url || artist.soundcloud} target="_blank" rel="noopener noreferrer">SoundCloud <span class="ui-icon icon-external" aria-hidden="true"></span></a></div></dialog>
-<div class="audio-dock" role="group" aria-label="Lettore SoundCloud" hidden><button id="dock-open" aria-label="Apri il player" aria-describedby="dock-title"><img id="dock-cover" class="header-track-cover" data-track-cover src={featured?.artwork || artist.hero} width="42" height="42" alt=""/><span class="header-track-copy"><small data-track-status>IN ASCOLTO</small><strong id="dock-title" data-track-title>{featured?.title || 'Personal frequency'}</strong></span></button><button id="dock-toggle" aria-label="Metti in pausa il set"><span class="ui-icon icon-pause" aria-hidden="true"></span><span class="transport-label">Pausa</span></button><button id="dock-close" aria-label="Chiudi il lettore"><span class="ui-icon icon-close" aria-hidden="true"></span></button></div>
+<div class="audio-dock" role="group" aria-label="Lettore SoundCloud" hidden><button id="dock-open" aria-label="Apri il player" aria-describedby="dock-title"><img id="dock-cover" class="header-track-cover" data-track-cover src={featured?.artwork || artist.hero} width="42" height="42" alt=""/><span class="header-track-copy"><small data-track-status>IN ASCOLTO</small><strong id="dock-title" data-track-title>{featured?.title || 'Personal frequency'}</strong></span></button><AudioControls placement="header-active"><button id="dock-toggle" aria-label="Metti in pausa il set"><span class="ui-icon icon-pause" aria-hidden="true"></span><span class="transport-label">Pausa</span></button></AudioControls><button id="dock-close" aria-label="Chiudi il lettore"><span class="ui-icon icon-close" aria-hidden="true"></span></button></div>
 <script src="../scripts/experience.ts"></script><script src="../scripts/prism.ts"></script>
 <script src="../scripts/section-motion.ts"></script>
 <script src="../scripts/world.ts"></script>
 <script src="../scripts/hero-video.ts"></script>
 </body></html>
+

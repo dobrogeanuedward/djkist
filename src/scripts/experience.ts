@@ -35,7 +35,7 @@ document.querySelectorAll<HTMLButtonElement>('[data-photo]').forEach(button=>but
 document.querySelectorAll<HTMLButtonElement>('[data-youtube]').forEach(button=>button.addEventListener('click',()=>{widget?.pause();const iframe=document.createElement('iframe');iframe.className='dialog-video';iframe.src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(button.dataset.youtube!)+'?autoplay=1';iframe.title=button.getAttribute('aria-label')||'KIST video';iframe.allow='autoplay; encrypted-media; fullscreen; picture-in-picture';iframe.allowFullscreen=true;content.replaceChildren(iframe);dialog.showModal()}));
 document.querySelectorAll<HTMLButtonElement>('[data-events]').forEach(button=>button.addEventListener('click',()=>{const past=button.dataset.events==='past';document.querySelectorAll('[data-events]').forEach(el=>el.setAttribute('aria-pressed',String(el===button)));document.getElementById('past-events')!.hidden=!past;document.getElementById('future-events')!.hidden=past}));
 type Sound={title?:string;artwork_url?:string;permalink_url?:string};
-type Widget = {play:()=>void;pause:()=>void;seekTo:(milliseconds:number)=>void;getDuration:(callback:(duration:number)=>void)=>void;getPosition:(callback:(position:number)=>void)=>void;getCurrentSound:(callback:(sound:Sound)=>void)=>void;bind:(event:string,callback:(data?:{currentPosition:number})=>void)=>void};
+type Widget = {play:()=>void;pause:()=>void;seekTo:(milliseconds:number)=>void;setVolume:(volume:number)=>void;getDuration:(callback:(duration:number)=>void)=>void;getPosition:(callback:(position:number)=>void)=>void;getCurrentSound:(callback:(sound:Sound)=>void)=>void;bind:(event:string,callback:(data?:{currentPosition:number})=>void)=>void};
 declare global {interface Window {SC?:{Widget: ((iframe:HTMLIFrameElement)=>Widget)&{Events:{READY:string;PLAY:string;PAUSE:string;ERROR:string;FINISH:string;PLAY_PROGRESS:string}}}}}
 let widget:Widget|undefined;
 let loadedUrl='';
@@ -57,11 +57,46 @@ const dock=document.querySelector<HTMLDivElement>('.audio-dock')!;
 const status=document.getElementById('audio-status')!;
 const toggle=document.getElementById('dock-toggle')!;
 const heroButton=document.getElementById('hero-play') as HTMLButtonElement;
+
+const volumeKey='kist:player-volume:v1';
+const volumeInputs=Array.from(document.querySelectorAll<HTMLInputElement>('[data-audio-volume]'));
+const volumeButtons=Array.from(document.querySelectorAll<HTMLButtonElement>('[data-audio-mute]'));
+const trackButtons=Array.from(document.querySelectorAll<HTMLButtonElement>('[data-audio-prev],[data-audio-next]'));
+let volume=80,lastAudibleVolume=80;
+try{const saved=localStorage.getItem(volumeKey);if(saved!==null&&Number.isFinite(Number(saved)))volume=Math.max(0,Math.min(100,Number(saved)))}catch{}
+if(volume>0)lastAudibleVolume=volume;
+function syncVolume(){
+ volumeInputs.forEach(input=>{input.value=String(volume);input.setAttribute('aria-valuetext',volume===0?'Audio disattivato':volume+'%');input.style.setProperty('--volume-progress',volume+'%')});
+ document.querySelectorAll<HTMLOutputElement>('[data-audio-volume-value]').forEach(output=>output.textContent=volume+'%');
+ volumeButtons.forEach(button=>{const muted=volume===0,label=muted?'Riattiva audio':'Disattiva audio';button.setAttribute('aria-pressed',String(muted));button.setAttribute('aria-label',label);button.title=label;button.querySelector<SVGElement>('[data-volume-audible]')!.toggleAttribute('hidden',muted);button.querySelector<SVGElement>('[data-volume-muted]')!.toggleAttribute('hidden',!muted)});
+}
+function setVolume(value:number){
+ volume=Math.round(Math.max(0,Math.min(100,value)));if(volume>0)lastAudibleVolume=volume;
+ widget?.setVolume(volume);syncVolume();try{localStorage.setItem(volumeKey,String(volume))}catch{}
+}
+volumeInputs.forEach(input=>input.addEventListener('input',()=>setVolume(Number(input.value))));
+volumeButtons.forEach(button=>button.addEventListener('click',()=>setVolume(volume===0?lastAudibleVolume:0)));
+syncVolume();
+function connectionState(busy:boolean){
+ heroButton.disabled=busy;popupPlay.disabled=busy;
+ trackButtons.forEach(button=>button.disabled=busy||choices.length<2);
+ document.querySelectorAll<HTMLButtonElement>('[data-audio-play]').forEach(button=>button.disabled=busy);
+ invitation.setAttribute('aria-busy',String(busy));
+}
+function changeTrack(direction:number){
+ if(connecting||choices.length<2)return;
+ const current=choices.findIndex(track=>track.url===(loadedUrl||invitation.dataset.url));
+ const next=choices[((current<0?0:current)+direction+choices.length)%choices.length];
+ entryInvitation=false;enterWithMusic=false;start(next.url);
+}
+trackButtons.forEach(button=>button.addEventListener('click',()=>changeTrack(button.hasAttribute('data-audio-prev')?-1:1)));
+document.querySelectorAll<HTMLButtonElement>('[data-audio-play]').forEach(button=>button.addEventListener('click',heroTransport));
+
 let apiPromise:Promise<void>|undefined;
 function api(){return apiPromise ||=new Promise<void>((resolve,reject)=>{if(window.SC){resolve();return}const script=document.createElement('script');let done=false;const timer=setTimeout(()=>fail(),12000);function fail(){if(done)return;done=true;clearTimeout(timer);apiPromise=undefined;script.remove();reject(new Error('SoundCloud non disponibile'))}script.src='https://w.soundcloud.com/player/api.js';script.onload=()=>{if(done)return;done=true;clearTimeout(timer);resolve()};script.onerror=fail;document.head.append(script)})}
 let connecting=false,readyTimer:ReturnType<typeof setTimeout>|undefined;
 function transport(active:boolean){playing=active;toggle.querySelector('.transport-label')!.textContent=active?'Pausa':'Riprendi';toggle.querySelector('.ui-icon')!.className='ui-icon '+(active?'icon-pause':'icon-play');toggle.setAttribute('aria-label',active?'Metti in pausa il set':'Riprendi il set');toggle.title=active?'Metti in pausa':'Riprendi il set';document.querySelector('[data-track-status]')!.textContent=active?'IN ASCOLTO':'IN PAUSA';window.dispatchEvent(new CustomEvent('kist:audio',{detail:{playing:active}}))}
-function retry(message:string){clearTimeout(readyTimer);connecting=false;heroButton.disabled=false;popupPlay.disabled=false;transport(false);widget=undefined;status.textContent=message;popupPlay.querySelector('.button-label')!.textContent='Riprova';popupPlay.setAttribute('aria-label','Riprova la connessione a SoundCloud')}
+function retry(message:string){clearTimeout(readyTimer);connecting=false;connectionState(false);transport(false);widget=undefined;status.textContent=message;popupPlay.querySelector('.button-label')!.textContent='Riprova';popupPlay.setAttribute('aria-label','Riprova la connessione a SoundCloud')}
 async function start(url:string){
  if(!url||connecting)return;
  if(widget&&loadedUrl===url){widget.play();return}
@@ -72,7 +107,7 @@ async function start(url:string){
  loadedUrl=url;position=resumePosition;
  const selected=choices.find(m=>m.url===url);
  if(selected)showTrack({title:selected.title,permalink_url:selected.url,artwork_url:selected.artwork});
- connecting=true;heroButton.disabled=true;popupPlay.disabled=true;status.textContent='Connessione a SoundCloud…';
+ connecting=true;connectionState(true);status.textContent='Connessione a SoundCloud…';
  try{
   await api();const frame=document.createElement('iframe');
   frame.title='SoundCloud — KIST';frame.allow='autoplay';
@@ -83,7 +118,7 @@ async function start(url:string){
   readyTimer=setTimeout(()=>retry('SoundCloud impiega troppo. Riprova o apri il set dal link qui sotto.'),15000);
   current.bind(events.READY,()=>{
    if(widget!==current)return;
-   clearTimeout(readyTimer);connecting=false;heroButton.disabled=false;popupPlay.disabled=false;dock.hidden=false;
+   clearTimeout(readyTimer);connecting=false;connectionState(false);current.setVolume(volume);dock.hidden=false;
    status.textContent='Premi play per entrare con il suono.';
    // Seek precedes play. A persisted position always wins over the initial random excerpt.
    current.getDuration(duration=>{
@@ -119,7 +154,7 @@ let playerOpener:HTMLElement|undefined;
 let entryInvitation=true;
 function openPlayer(){if(!soundDialog.open){playerOpener=document.activeElement instanceof HTMLElement?document.activeElement:undefined;soundDialog.showModal()}}
 function closePlayer(){entryInvitation=false;soundDialog.close()}
-soundDialog.addEventListener('close',()=>{const visibleOpener=playerOpener?.isConnected&&playerOpener!==document.body&&playerOpener.getClientRects().length>0;const target=visibleOpener?playerOpener:!dock.hidden?document.getElementById('dock-open'):document.getElementById('hero-listen');target?.focus({preventScroll:true})});
+soundDialog.addEventListener('close',()=>{const target=[playerOpener,document.getElementById('dock-open'),heroButton,document.getElementById('header-nav-toggle')].find(element=>element?.isConnected&&element!==document.body&&element.getClientRects().length>0);target?.focus({preventScroll:true})});
 function heroTransport(){if(widget&&!connecting){playing?widget.pause():widget.play()}else openPlayer()}
 heroButton?.addEventListener('click',heroTransport);
 document.getElementById('hero-listen')?.addEventListener('click',heroTransport);
@@ -165,13 +200,13 @@ const compactNavigation=matchMedia('(max-width:1050px)');
 let headerMode:'full'|'mobile'|'collapsed'=scrollY>8?'collapsed':compactNavigation.matches?'mobile':'full';
 function setNavigation(open:boolean,restoreFocus=false){
  const disclosure=headerMode!=='full',expanded=disclosure&&open;
- navigationPanel.hidden=headerMode==='collapsed'&&!expanded;
+ navigationPanel.hidden=disclosure&&!expanded;
  navigation.hidden=disclosure&&!expanded;
  navToggle.hidden=false;
  if(disclosure){
   navToggle.setAttribute('aria-expanded',String(expanded));
-  navToggle.setAttribute('aria-controls',headerMode==='collapsed'?'header-panel':'site-navigation');
-  navToggle.setAttribute('aria-label',expanded?'Chiudi menu e player':headerMode==='collapsed'?'Apri menu e player':'Apri menu');
+  navToggle.setAttribute('aria-controls','header-panel');
+  navToggle.setAttribute('aria-label',expanded?'Chiudi menu e player':'Apri menu e player');
  }else{
   navToggle.removeAttribute('aria-expanded');navToggle.removeAttribute('aria-controls');navToggle.setAttribute('aria-label','Torna all’inizio');
  }
@@ -242,4 +277,5 @@ document.querySelectorAll<HTMLElement>('.night-viewer').forEach(viewer=>{
  stage.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-x,dy=e.changedTouches[0].clientY-y;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.4)show(index+(dx<0?1:-1))},{passive:true});
  stage.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();show(index+(e.key==='ArrowRight'?1:-1));cards[index].focus()}});
 });
+
 

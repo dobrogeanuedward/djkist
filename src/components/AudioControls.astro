@@ -1,0 +1,18 @@
+---
+interface Props { placement: string; }
+const { placement } = Astro.props;
+const volumeId = `player-volume-${placement}`;
+---
+<div class="audio-controls" data-player-controls={placement} role="group" aria-label={placement === 'hero' ? 'Controlli del player hero' : 'Controlli del player nel menu'}>
+ <div class="audio-controls-row">
+  <button class="audio-transport-btn" type="button" data-audio-prev aria-label="Set precedente" title="Set precedente"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M18 6l-9 6 9 6Z"/></svg></button>
+  <slot/>
+  <button class="audio-transport-btn" type="button" data-audio-next aria-label="Set successivo" title="Set successivo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5v14M6 6l9 6-9 6Z"/></svg></button>
+ </div>
+ <div class="audio-volume-row">
+  <button class="audio-volume-toggle" type="button" data-audio-mute aria-label="Disattiva audio" aria-pressed="false" title="Disattiva audio"><svg data-volume-audible viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4ZM15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></svg><svg data-volume-muted viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M11 5 6 9H3v6h3l5 4ZM16 9l6 6M22 9l-6 6"/></svg></button>
+  <label class="audio-sr-only" for={volumeId}>Volume {placement === 'hero' ? 'player hero' : 'player menu'}</label>
+  <input id={volumeId} class="audio-volume" type="range" min="0" max="100" step="5" value="80" data-audio-volume aria-valuetext="80%" style="--volume-progress:80%"/>
+  <output for={volumeId} data-audio-volume-value aria-hidden="true">80%</output>
+ </div>
+</div>

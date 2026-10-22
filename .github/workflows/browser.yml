@@ -10,6 +10,7 @@ permissions:
 jobs:
   browser:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -79,7 +80,7 @@ jobs:
             await page.waitForFunction(frame=>document.querySelector('.player-character [data-kist-sprite]')?.dataset.frame!==frame,spriteFrame,{timeout:4000});
             await page.screenshot({animations:'disabled',path:'screenshots/'+name+'-player.png'});
             await page.getByRole('button',{name:'Chiudi il player'}).click();
-            await page.getByRole('button',{name:'Apri il player di KIST'}).click();
+            await page.locator('#hero-play').click();
             if(!await page.locator('#sound-dialog').isVisible())throw new Error('Player reopen failed');
             await page.getByRole('button',{name:'Continua senza musica'}).click();
             await page.evaluate(()=>document.getElementById('home').scrollIntoView({block:'start',behavior:'instant'}));
@@ -122,9 +123,18 @@ jobs:
             const navLinks=await page.locator('#site-navigation a').evaluateAll(links=>links.map(el=>el.getAttribute('href')));
             for(const href of ['#sound','#sessions','#frequency-break','#diary','#places','#about','#contact'])if(navLinks.filter(value=>value===href).length!==1)throw new Error('Header is missing a unique section: '+href);
             const menu=page.locator('#header-nav-toggle');
+            if(width<=800){
+              if(await page.locator('.site-header .header-actions').isVisible())throw new Error('The mobile header still shows a player outside its dropdown');
+              if(await page.locator('.hero-listen').isVisible())throw new Error('The mobile hero still duplicates its main play control');
+              const heroControls=page.locator('[data-player-controls="hero"]');
+              if(!await heroControls.locator('[data-audio-prev]').isVisible()||!await heroControls.locator('[data-audio-next]').isVisible()||!await heroControls.locator('[data-audio-volume]').isVisible())throw new Error('The mobile hero is missing audio controls');
+              const sectionSpacing=await page.locator('#sessions').evaluate(section=>({top:parseFloat(getComputedStyle(section).paddingTop),bottom:parseFloat(getComputedStyle(section).paddingBottom)}));
+              if(sectionSpacing.top<64||sectionSpacing.bottom<72)throw new Error('Mobile sessions lost their reading space');
+            }
+
             if(await menu.isVisible()&&await menu.getAttribute('aria-expanded')!==null){
               await menu.click();
-              if(!await page.locator('#site-navigation').isVisible())throw new Error('Mobile menu did not open');
+              if(!await page.locator('#site-navigation').isVisible()||!await page.locator('.site-header .header-actions').isVisible())throw new Error('Mobile dropdown did not expose navigation and player together');
               await page.keyboard.press('Escape');
               if(await menu.getAttribute('aria-expanded')!=='false'||!await menu.evaluate(el=>document.activeElement===el))throw new Error('Mobile menu Escape did not restore focus');
             }
@@ -265,25 +275,34 @@ jobs:
             if(await follow.getAttribute('href')!=='https://www.instagram.com/thats_kist/'||await follow.getAttribute('target')!=='_blank'||!await follow.locator('svg').isVisible())throw new Error('The scene follow link is missing its Instagram destination or logo');
             const followBounds=await follow.evaluate(link=>{const gate=link.closest('#frequency-break').getBoundingClientRect(),box=link.getBoundingClientRect();return {center:Math.abs((box.left+box.right-gate.left-gate.right)/2),inside:box.left>=gate.left&&box.right<=gate.right+1&&box.top>=gate.top&&box.bottom<=gate.bottom+1,height:box.height};});
             if(followBounds.center>1||!followBounds.inside||followBounds.height<44)throw new Error('The Instagram follow button is not centered below the scene');
+
+            await page.waitForFunction(()=>document.querySelector('#frequency-break .gate-character')?.dataset.pose==='groove',null,{timeout:1000});
+            const stoppedRoute=await gateCharacter.getAttribute('data-route-progress');
+            await page.waitForTimeout(160);
+            if(await gateCharacter.getAttribute('data-route-progress')!==stoppedRoute||await gateCharacter.getAttribute('data-pose')!=='groove')throw new Error('KIST kept running after the scrolling stopped');
             await page.screenshot({animations:'disabled',path:'screenshots/'+name+'-world.png'});
             await page.locator('[data-youtube="sP0j9EdBOxc"]').click();
             if(!await page.locator('#media-dialog').isVisible())throw new Error('The verified Plug Radio set did not open');
             const videoSource=new URL(await page.locator('#media-dialog iframe').getAttribute('src'));
             if(videoSource.origin!=='https://www.youtube-nocookie.com'||videoSource.pathname!=='/embed/sP0j9EdBOxc')throw new Error('Wrong Plug Radio video source');
-            await page.evaluate(()=>document.querySelector('#frequency-break').scrollIntoView({block:'center',behavior:'instant'}));
-            await page.waitForFunction(()=>document.querySelector('#kist-world')?.dataset.worldVisible==='true',null,{timeout:4000});
-            const dialogWorldFrame=await world.getAttribute('data-world-frame');
-            await page.waitForTimeout(250);
-            if(await world.getAttribute('data-world-frame')!==dialogWorldFrame)throw new Error('The background kept rendering behind an open video dialog');
             await page.getByRole('button',{name:'Chiudi',exact:true}).click();
             await page.locator('#media-dialog iframe').waitFor({state:'detached',timeout:2000});
             if(await page.locator('#media-dialog iframe').count())throw new Error('Closing the video retained its provider iframe');
-            await page.evaluate(()=>document.querySelector('#frequency-break').scrollIntoView({block:'center',behavior:'instant'}));
+            await scrollWorldScene(page,.5);
+            await openHeaderPlayer(page);
+            await page.locator('#header-music').click();
+            await page.locator('#sound-dialog').waitFor({state:'visible'});
+            const dialogWorldFrame=await world.getAttribute('data-world-frame');
+            await page.waitForTimeout(250);
+            if(await world.getAttribute('data-world-frame')!==dialogWorldFrame)throw new Error('The background kept rendering behind an open player dialog');
+            await page.locator('#player-dismiss').click();
+            await page.keyboard.press('Escape');
             await page.waitForFunction(frame=>document.querySelector('#kist-world')?.dataset.worldFrame!==frame,dialogWorldFrame,{timeout:4000});
             if(await page.locator('.photo-wall').getByText('Fifteen Frames',{exact:true}).count()||await page.locator('footer').getByText('3D credits',{exact:true}).count())throw new Error('Removed gallery photo or footer credits remain');
             const portraits=page.locator('#about .about-portraits img');
             if(await portraits.count()!==2)throw new Error('The biography must show both real portraits');
-            await portraits.evaluateAll(async images=>{await Promise.all(images.map(image=>image.decode()));if(images.some(image=>!image.naturalWidth))throw new Error('A biography portrait failed to load');});
+            await page.locator('#about .about-portraits').scrollIntoViewIfNeeded();
+            await page.waitForFunction(()=>[...document.querySelectorAll('#about .about-portraits img')].every(image=>image.complete&&image.naturalWidth>0),null,{timeout:10000});
             const portraitBox=await page.locator('#about .bio-portrait').boundingBox();
             if(Math.abs(portraitBox.height/portraitBox.width-1.25)>.01)throw new Error('The new biography portrait lost its 4:5 crop');
 
@@ -335,7 +354,7 @@ jobs:
             const metadata=await browser.newPage({viewport:{width,height}});
             await metadata.addInitScript(()=>{
               window.metadataPlayCalls=0;window.metadataPauseCalls=0;
-              function Widget(){const listeners={};return {bind:(event,fn)=>{listeners[event]=fn;if(event==='READY')setTimeout(fn,30)},play:()=>{window.metadataPlayCalls++;listeners.PLAY?.();listeners.PLAY_PROGRESS?.({currentPosition:12000})},pause:()=>{window.metadataPauseCalls++;listeners.PAUSE?.()},seekTo:()=>{},getDuration:fn=>fn(100000),getPosition:fn=>fn(12000),getCurrentSound:fn=>fn({title:'KIST / Metadati dal player',artwork_url:'/media/bipolar-cover.webp'})}};
+              function Widget(){const listeners={};return {bind:(event,fn)=>{listeners[event]=fn;if(event==='READY')setTimeout(fn,30)},play:()=>{window.metadataPlayCalls++;listeners.PLAY?.();listeners.PLAY_PROGRESS?.({currentPosition:12000})},pause:()=>{window.metadataPauseCalls++;listeners.PAUSE?.()},seekTo:()=>{},setVolume:value=>{window.metadataVolume=value},getDuration:fn=>fn(100000),getPosition:fn=>fn(12000),getCurrentSound:fn=>fn({title:'KIST / Metadati dal player',artwork_url:'/media/bipolar-cover.webp'})}};
               Widget.Events={READY:'READY',PLAY:'PLAY',PAUSE:'PAUSE',ERROR:'ERROR',FINISH:'FINISH',PLAY_PROGRESS:'PLAY_PROGRESS'};window.SC={Widget};
             });
             await metadata.goto('http://127.0.0.1:4321',{waitUntil:'domcontentloaded'});
@@ -368,7 +387,7 @@ jobs:
           const music=await browser.newPage({viewport:{width:390,height:844}});
           await music.addInitScript(()=>{
             window.testPlayCalls=0;window.testPauseCalls=0;
-            function Widget(){const listeners={};let position=0;return {bind:(event,fn)=>{listeners[event]=fn;if(event==='READY')setTimeout(fn,30)},play:()=>{window.testPlayCalls++;listeners.PLAY?.();listeners.PLAY_PROGRESS?.({currentPosition:position})},pause:()=>{window.testPauseCalls++;listeners.PAUSE?.()},seekTo:p=>{position=p;window.testSeekPosition=p},getDuration:fn=>fn(100000),getPosition:fn=>fn(position),getCurrentSound:fn=>fn({})}};
+            function Widget(){const listeners={};let position=0;return {bind:(event,fn)=>{listeners[event]=fn;if(event==='READY')setTimeout(fn,30)},play:()=>{window.testPlayCalls++;listeners.PLAY?.();listeners.PLAY_PROGRESS?.({currentPosition:position})},pause:()=>{window.testPauseCalls++;listeners.PAUSE?.()},seekTo:p=>{position=p;window.testSeekPosition=p},setVolume:value=>{window.testVolume=value},getDuration:fn=>fn(100000),getPosition:fn=>fn(position),getCurrentSound:fn=>fn({})}};
             Widget.Events={READY:'READY',PLAY:'PLAY',PAUSE:'PAUSE',ERROR:'ERROR',FINISH:'FINISH',PLAY_PROGRESS:'PLAY_PROGRESS'};window.SC={Widget};
           });
           await music.goto('http://127.0.0.1:4321');
@@ -399,6 +418,35 @@ jobs:
           await music.waitForFunction(()=>document.body.classList.contains('sound-active'));
           if(await music.evaluate(()=>window.testPauseCalls!==0))throw new Error('Daje paused a restored session');
           if(await music.evaluate(()=>window.testSeekPosition)!==savedPosition)throw new Error('Paused session seek was lost');
+
+          const heroTransport=music.locator('[data-player-controls="hero"]');
+          const heroVolume=heroTransport.locator('[data-audio-volume]');
+          await heroVolume.press('Home');
+          for(let step=0;step<7;step++)await heroVolume.press('ArrowRight');
+          await music.waitForFunction(()=>window.testVolume===35);
+          if(await heroVolume.inputValue()!=='35')throw new Error('Hero volume did not reach the SoundCloud widget');
+          await navigate(music,'Notti');await openHeaderPlayer(music);
+          const menuTransport=music.locator('[data-player-controls="header-active"]');
+          if(await menuTransport.locator('[data-audio-volume]').inputValue()!=='35')throw new Error('Header volume did not follow the hero');
+          await menuTransport.locator('[data-audio-mute]').click();
+          if(!await music.evaluate(()=>window.testVolume===0&&[...document.querySelectorAll('[data-audio-volume]')].every(input=>input.value==='0')))throw new Error('Mute did not synchronize both players');
+          await menuTransport.locator('[data-audio-mute]').click();
+          if(!await music.evaluate(()=>window.testVolume===35&&[...document.querySelectorAll('[data-audio-volume]')].every(input=>input.value==='35')))throw new Error('Unmute lost the previous volume');
+          await music.keyboard.press('Escape');
+          const catalog=await music.locator('.sound-invitation').evaluate(element=>JSON.parse(element.dataset.mixes));
+          const selectedUrl=await music.locator('.sound-invitation').getAttribute('data-url');
+          const selectedIndex=catalog.findIndex(track=>track.url===selectedUrl),nextTrack=catalog[(selectedIndex+1)%catalog.length];
+          await heroTransport.locator('[data-audio-next]').click();
+          await music.waitForFunction(title=>document.querySelector('.sound-row strong')?.textContent===title,nextTrack.title);
+          await music.waitForFunction(()=>document.body.classList.contains('sound-active'));
+          if(await music.locator('#player-mount iframe').count()!==1||!await music.evaluate(()=>window.testVolume===35))throw new Error('Changing set duplicated the player or reset volume');
+          await navigate(music,'Notti');await openHeaderPlayer(music);
+          await menuTransport.locator('[data-audio-prev]').click();
+          await music.waitForFunction(url=>document.querySelector('.sound-invitation')?.dataset.url===url,selectedUrl);
+          if(await music.locator('#player-mount iframe').count()!==1)throw new Error('Previous set duplicated the iframe');
+          await music.reload();
+          await music.waitForFunction(()=>document.body.classList.contains('sound-active')&&window.testVolume===35);
+          if(!await music.locator('[data-audio-volume]').evaluateAll(inputs=>inputs.every(input=>input.value==='35')))throw new Error('Reload lost synchronized volume');
           await music.close();
           await browser.close();
           JS
@@ -407,4 +455,5 @@ jobs:
         with:
           name: kist-responsive-previews
           path: screenshots
+
 

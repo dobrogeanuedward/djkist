@@ -7,6 +7,8 @@ const canvas=gate?.querySelector<HTMLCanvasElement>('#kist-world-canvas');
 const context=canvas?.getContext('2d',{alpha:true});
 if(gate&&root&&canvas&&context){
  const motion=matchMedia('(prefers-reduced-motion:reduce)');
+ const compactScene=matchMedia('(max-width:800px)');
+ let touchSettling=false;
  const art=Array.from(root.querySelectorAll<HTMLImageElement>('[data-world-art]'));
  const foreground=gate.querySelector<HTMLImageElement>('[data-world-foreground]')!;
  const character=gate.querySelector<HTMLElement>('.gate-character')!;
@@ -23,7 +25,7 @@ if(gate&&root&&canvas&&context){
  art.forEach(image=>{image.decode().then(()=>{image.dataset.loaded='true';root!.dataset.worldArtReady=String(art.filter(item=>item.dataset.loaded==='true').length)}).catch(()=>{image.dataset.failed='true'})});
  function syncCharacter(now:number){
   const frozen=staticWorld()||blocked();
-  const walking=!frozen&&now-lastScrollAt<190;
+  const walking=!frozen&&!touchSettling&&now-lastScrollAt<(compactScene.matches?75:120);
   const pose=frozen&&lastPose?lastPose:walking?'run':'groove';
   if(pose!==lastPose){poses.forEach(element=>element.hidden=element.dataset.gatePose!==pose);character.dataset.pose=pose;lastPose=pose;lastPosePause=undefined}
   if(frozen!==lastPosePause){poses.forEach(element=>element.querySelector<HTMLElement>('[data-kist-sprite]')?.dispatchEvent(new CustomEvent('kist:pause',{detail:{paused:frozen||element.hidden}})));lastPosePause=frozen}
@@ -70,11 +72,18 @@ if(gate&&root&&canvas&&context){
  }
  window.addEventListener('scroll',()=>{
   const delta=scrollY-lastScrollY;lastScrollY=scrollY;track();
-  if(Math.abs(delta)>.5&&!staticWorld()&&!blocked()){
+  if(Math.abs(delta)>(compactScene.matches?1.5:.5)&&!touchSettling&&!staticWorld()&&!blocked()){
    lastScrollAt=performance.now();character.style.setProperty('--gate-facing',delta>0?'1':'-1');character.dataset.facing=delta>0?'right':'left';syncCharacter(lastScrollAt);
   }
   resume();
  },{passive:true});
+ // End the running pose with the touch gesture instead of following its inertial tail.
+ window.addEventListener('touchstart',()=>{touchSettling=false},{passive:true});
+ function endTouch(){touchSettling=true;lastScrollAt=-Infinity;syncCharacter(performance.now())}
+ window.addEventListener('touchend',endTouch,{passive:true});
+ window.addEventListener('touchcancel',endTouch,{passive:true});
+ window.addEventListener('wheel',()=>{touchSettling=false},{passive:true});
+ window.addEventListener('scrollend',()=>{touchSettling=false;lastScrollAt=-Infinity;syncCharacter(performance.now())},{passive:true});
  window.addEventListener('resize',measure,{passive:true});
  gate.addEventListener('pointermove',event=>{if(event.pointerType!=='mouse'||staticWorld())return;const rect=gate.getBoundingClientRect();pointerX=(event.clientX-rect.left)/rect.width-.5;pointerY=(event.clientY-rect.top)/rect.height-.5},{passive:true});
  window.addEventListener('kist:audio',event=>{
@@ -91,3 +100,4 @@ if(gate&&root&&canvas&&context){
  new MutationObserver(()=>{lastPosePause=undefined;syncCharacter(performance.now())}).observe(character,{subtree:true,attributes:true,attributeFilter:['data-kist-bound']});
  syncMotionState();measure();
 }
+
