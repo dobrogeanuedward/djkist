@@ -10,3 +10,12 @@
 .diary>.night-heading,.diary>.night-tabs,.diary>#past-events,.diary>#future-events{position:relative;z-index:1}
 @media(prefers-reduced-motion:reduce){.prismatic-title{animation:none!important}}
 @media(forced-colors:active){.sound-section .section-heading .prismatic-title,.diary .night-heading .prismatic-title,.hero .hero-listen>span{background:none;color:CanvasText;-webkit-text-fill-color:CanvasText;filter:none;animation:none}}
+
+/* Two real portraits, with the new mural photograph leading the biography. */
+.about-portraits{width:100%;max-width:480px;justify-self:center}
+.about-portraits .about-photo{max-width:none}
+.about-portraits .bio-portrait{aspect-ratio:4/5;object-fit:cover;object-position:50% 74%}
+.about-photo-secondary{position:relative;z-index:2;display:block;width:58%;margin:-22% 0 0 auto;overflow:hidden;border:5px solid #000;border-radius:14px;box-shadow:0 10px 26px #0005}
+.about-photo-secondary img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;object-position:35% center}
+.photo-wall:has(>.photo:only-child){grid-template-columns:minmax(0,1fr)}
+.photo-wall>.photo:only-child{width:min(100%,800px);justify-self:center}

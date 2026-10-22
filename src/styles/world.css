@@ -17,13 +17,14 @@
 .gate-character>[data-gate-pose]{transform:scaleX(var(--gate-facing,1))}
 .gate-character .kist-sprite{width:100%}
 .gate-world-caption{position:absolute;bottom:25px;left:6%;font-size:7px;letter-spacing:.13em;color:#c7d0b6;text-shadow:1px 1px #080a10}
-.world-motion{position:absolute;right:6%;bottom:10px;z-index:5;display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 13px;border:1px solid #c9ff5255;border-radius:9px;background:#10121ce6;color:#e4e8d5;font-size:10px}
-.world-motion:hover{border-color:#c9ff52;background:#141728}
-.world-motion svg{width:16px;height:16px;fill:none;stroke:#c9ff52;stroke-width:1.6}
-.world-motion[aria-pressed=true] svg{transform:rotate(90deg)}
+.gate-follow{position:absolute;left:50%;bottom:10px;z-index:5;transform:translateX(-50%);display:inline-flex;align-items:center;justify-content:center;gap:10px;min-width:148px;min-height:44px;padding:10px 24px;border:1px solid #f7b0e97a;border-radius:12px;background:linear-gradient(110deg,#b8256d,#b41b8e 52%,#7637bb);box-shadow:0 4px 18px #0709115c,inset 0 1px #ffffff29;color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;line-height:1.2;text-shadow:none}
+.gate-follow:hover{filter:brightness(1.12)}
+.gate-follow:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.gate-follow svg{width:22px;height:22px;flex-shrink:0}
+@media(forced-colors:active){.gate-follow{background:ButtonFace;color:ButtonText;border-color:ButtonText;box-shadow:none}}
 /* Keep the existing session heading's editorial spacing without world-wide skin overrides. */
 .session-heading{max-width:960px;margin:0 auto 28px;padding-inline:6%}
 .session-heading>span{display:block;font-size:10px;letter-spacing:.2em;color:#c1cc9f}
 .session-heading h2{font-family:'Space Grotesk',sans-serif;font-size:clamp(34px,4vw,58px);letter-spacing:-.05em;line-height:1.05;font-weight:400;margin:14px 0}
-@media(max-width:800px){.world-gate{min-height:350px;padding-block:32px 218px}.world-backdrop{object-position:66% center}.gate-copy h2{font-size:clamp(25px,5.4vw,32px);margin-block:12px 8px}.gate-character{width:120px}.gate-coordinate{font-size:6px}.gate-world-caption{font-size:6px;letter-spacing:.06em;left:6%}.world-motion{right:6%;padding-inline:10px;font-size:9px}.session-heading{margin-bottom:20px}}
+@media(max-width:800px){.world-gate{min-height:350px;padding-block:32px 218px}.world-backdrop{object-position:66% center}.gate-copy h2{font-size:clamp(25px,5.4vw,32px);margin-block:12px 8px}.gate-character{width:120px}.gate-coordinate{font-size:6px}.gate-world-caption{font-size:6px;letter-spacing:.06em;left:6%}.gate-world-caption{display:none}.session-heading{margin-bottom:20px}}
 @media(prefers-reduced-motion:reduce){.world-backdrop,.world-foreground{transform:none!important}}

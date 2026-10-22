@@ -1,6 +1,6 @@
 export const artist = {
  name: 'KIST', instagram: 'https://www.instagram.com/thats_kist/',
- soundcloud: 'https://soundcloud.com/benedetta-pasquariello', hero: '/media/kist-fifteen-frames-clean-v2.webp', heroMobile: '/media/kist-fifteen-frames-clean-v2.webp', heroVideo: '/media/hero/kist-night-desktop-v1.mp4', heroVideoMobile: '/media/hero/kist-night-mobile-v1.mp4', heroVideoPoster: '/media/hero/kist-night-desktop-poster-v1.webp', heroVideoMobilePoster: '/media/hero/kist-night-mobile-poster-v1.webp', portrait: '/media/kist-fifteen-frames-clean-second.webp',
+ soundcloud: 'https://soundcloud.com/benedetta-pasquariello', hero: '/media/kist-fifteen-frames-clean-v2.webp', heroMobile: '/media/kist-fifteen-frames-clean-v2.webp', heroVideo: '/media/hero/kist-night-desktop-v1.mp4', heroVideoMobile: '/media/hero/kist-night-mobile-v1.mp4', heroVideoPoster: '/media/hero/kist-night-desktop-poster-v1.webp', heroVideoMobilePoster: '/media/hero/kist-night-mobile-poster-v1.webp', portrait: '/media/kist-portrait-mural-20261022.webp',
  bio: 'KIST è il nome d’arte di Benedetta Pasquariello, DJ di origini lucane, cresciuta tra i suoni del sud Italia e approdata a Bologna. Si forma presso la Link Academy e muove i primi passi nella scena suonando al Link Club. Nei suoi set breakbeat, UK garage e funky incontrano jungle e drum and bass, con note di acid techno. Generi che si contaminano e costruiscono ponti tra culture e dance floor lontani. Ogni scelta musicale traduce la sua energia in una connessione immediata con chi ascolta.',
 };
 export const mixes = [
@@ -9,7 +9,7 @@ export const mixes = [
  {title:'Bipolar',url:'https://soundcloud.com/benedetta-pasquariello/bipolar',label:'Techno',artwork:'/media/bipolar-cover.webp',sleeve:'/media/bipolar-vinyl.webp',palette:'#c66f37',accent:'#5487ee'},
 ];
 export const films: {title:string;youtubeId:string;label:string;poster:string;duration:string;pageUrl:string}[] = [{title:'KIST — Plug Radio',youtubeId:'sP0j9EdBOxc',label:'PLUG RADIO / 26.09.2026',poster:'/media/plug-radio-poster-v2.jpg',duration:'53:12',pageUrl:'/sessioni/plug-radio/'}];
-export const photographs: {src:string;alt:string;caption:string}[] = [{src:'/media/kist-fifteen-frames-clean-second.webp',alt:'KIST alla console, secondo fotogramma ritoccato',caption:'Fifteen Frames'},{src:'/media/kist-techno-console.jpg',alt:'Dettaglio della console nel reel di KIST',caption:'Dalla console'}];
+export const photographs: {src:string;alt:string;caption:string}[] = [{src:'/media/kist-techno-console.jpg',alt:'Dettaglio della console nel reel di KIST',caption:'Dalla console'}];
 export type ArtistEvent = {date:string;name:string;place:string;url?:string;cover?:string;time?:string;organizer:string;description?:string;showPoster?:boolean;urlLabel?:string};
 export const events: ArtistEvent[] = [{date:'2026-06-20',name:'Love (P)ride Parade',cover:'/media/love-pride-2026.jpg',place:'Medicina',time:'Dalle 14:30',organizer:'Love (P)ride',url:'https://www.facebook.com/100090713703534/posts/960403370326778/'}];
 

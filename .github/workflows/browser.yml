@@ -57,6 +57,8 @@ jobs:
           for(const [name,width,height] of [['desktop',1440,1000],['portrait-desktop',801,1100],['mobile',390,844],['small-mobile',320,740]]){
             const page=await browser.newPage({viewport:{width,height}});
             const errors=[];page.on('pageerror',e=>errors.push(e.message));
+            // The removed scene-pause preference must not freeze the animation after this update.
+            await page.addInitScript(()=>localStorage.setItem('kist:world-paused:v1','true'));
             await page.goto('http://127.0.0.1:4321',{waitUntil:'domcontentloaded'});
             await page.waitForTimeout(1350);
             const opening=await page.evaluate(()=>{
@@ -133,7 +135,11 @@ jobs:
             await navigate(page,'Sessioni live');
             await page.waitForFunction(height=>document.querySelector('.site-header')?.getBoundingClientRect().height<height-2,expandedHeader.height);
             if(!await page.locator('#header-nav-toggle').isVisible()||!await page.locator('#header-panel').evaluate(panel=>panel.hidden))throw new Error('Scrolled header did not become a dropdown');
-            await menu.click();await page.keyboard.press('Escape');
+            await menu.click();
+            await page.waitForFunction(()=>{const header=document.querySelector('.site-header'),panel=header.querySelector('#header-panel');return !panel.hidden&&Math.abs(panel.getBoundingClientRect().top-header.getBoundingClientRect().bottom)<.5;},null,{timeout:2000});
+            const headerBorders=await page.locator('.site-header').evaluate(header=>{const panel=header.querySelector('#header-panel');return {outer:getComputedStyle(header).borderBottomWidth,inner:getComputedStyle(panel).borderTopWidth,arrows:[...header.querySelectorAll('.site-nav a')].some(link=>/[\u2190-\u21ff]/u.test(getComputedStyle(link,'::after').content))};});
+            if(headerBorders.outer!=='1px'||headerBorders.inner!=='1px'||headerBorders.arrows)throw new Error('The joined header lost its double border or retained arrow glyphs');
+            await page.keyboard.press('Escape');
             if(await menu.getAttribute('aria-expanded')!=='false'||!await menu.evaluate(el=>document.activeElement===el))throw new Error('Collapsed menu Escape did not restore focus');
             if(await page.locator('#sessions').count()!==1||await page.getByRole('heading',{name:'Sessioni live.',exact:true}).count()!==1)throw new Error('Live sessions were not consolidated');
             const livePanels=page.locator('[data-live-session-panel]:visible');
@@ -254,27 +260,11 @@ jobs:
             await page.waitForFunction(before=>scrollY<before,reverseScrollStart,{timeout:4000});
             await page.waitForFunction(before=>{const character=document.querySelector('#frequency-break .gate-character');return character?.dataset.facing==='left'&&Number(character.dataset.routeProgress)<before-.002;},reverseRouteStart,{timeout:4000});
             if(await gateCharacter.locator('[data-gate-pose]:visible').evaluate(el=>new DOMMatrixReadOnly(getComputedStyle(el).transform).a)!==-1)throw new Error('The character did not reverse its visible pose after real upward scroll');
-            const scenePause=page.locator('#frequency-break #world-motion');
-            const pauseBounds=await scenePause.evaluate(button=>{const gate=button.closest('#frequency-break').getBoundingClientRect(),box=button.getBoundingClientRect();return {position:getComputedStyle(button).position,inside:box.left>=gate.left&&box.right<=gate.right+1&&box.top>=gate.top&&box.bottom<=gate.bottom+1};});
-            if(pauseBounds.position==='fixed'||!pauseBounds.inside)throw new Error('The scene pause control is not contained in the character section');
-            await scenePause.click();
-            const pausedWorldFrame=await world.getAttribute('data-world-frame');
-            const pausedSpriteFrame=await gateSprite.getAttribute('data-frame');
-            const pausedRoute=await gateCharacter.getAttribute('data-route-progress');
-            const pausedArt=await page.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>image.style.cssText).join('|'));
-            const pausedForeground=await foreground.getAttribute('style');
-            const scrollBeforePause=await page.evaluate(()=>scrollY);
-            await page.mouse.wheel(0,70);
-            await page.waitForTimeout(300);
-            if(await page.evaluate(()=>scrollY)<=scrollBeforePause)throw new Error('The pause test did not deliver real scroll');
-            if(await world.getAttribute('data-world-frame')!==pausedWorldFrame||await gateSprite.getAttribute('data-frame')!==pausedSpriteFrame||await gateCharacter.getAttribute('data-route-progress')!==pausedRoute||await page.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>image.style.cssText).join('|'))!==pausedArt||await foreground.getAttribute('style')!==pausedForeground)throw new Error('Pause did not freeze the artwork, foreground, world and character during scroll');
-            if(!await scenePause.evaluate(button=>document.activeElement===button))throw new Error('The scene pause control lost keyboard focus during scroll');
-            await page.keyboard.press('Enter');
-            await page.waitForFunction(frame=>document.querySelector('#kist-world')?.dataset.worldFrame!==frame,pausedWorldFrame,{timeout:4000});
-            await page.waitForFunction(progress=>document.querySelector('#frequency-break .gate-character')?.dataset.routeProgress!==progress,pausedRoute,{timeout:4000});
-            const resumedFrames=new Set();
-            for(let step=0;step<4;step++){await page.mouse.wheel(0,20);await page.waitForTimeout(70);resumedFrames.add(await gateSprite.getAttribute('data-frame'));}
-            if(resumedFrames.size<2)throw new Error('KIST did not respond to scroll after resuming the world');
+            const follow=page.locator('#frequency-break .gate-follow');
+            if(await page.locator('#world-motion,[data-world-motion-label]').count())throw new Error('The removed scene pause control is still present');
+            if(await follow.getAttribute('href')!=='https://www.instagram.com/thats_kist/'||await follow.getAttribute('target')!=='_blank'||!await follow.locator('svg').isVisible())throw new Error('The scene follow link is missing its Instagram destination or logo');
+            const followBounds=await follow.evaluate(link=>{const gate=link.closest('#frequency-break').getBoundingClientRect(),box=link.getBoundingClientRect();return {center:Math.abs((box.left+box.right-gate.left-gate.right)/2),inside:box.left>=gate.left&&box.right<=gate.right+1&&box.top>=gate.top&&box.bottom<=gate.bottom+1,height:box.height};});
+            if(followBounds.center>1||!followBounds.inside||followBounds.height<44)throw new Error('The Instagram follow button is not centered below the scene');
             await page.screenshot({animations:'disabled',path:'screenshots/'+name+'-world.png'});
             await page.locator('[data-youtube="sP0j9EdBOxc"]').click();
             if(!await page.locator('#media-dialog').isVisible())throw new Error('The verified Plug Radio set did not open');
@@ -290,6 +280,10 @@ jobs:
             if(await page.locator('#media-dialog iframe').count())throw new Error('Closing the video retained its provider iframe');
             await page.evaluate(()=>document.querySelector('#frequency-break').scrollIntoView({block:'center',behavior:'instant'}));
             await page.waitForFunction(frame=>document.querySelector('#kist-world')?.dataset.worldFrame!==frame,dialogWorldFrame,{timeout:4000});
+            if(await page.locator('.photo-wall').getByText('Fifteen Frames',{exact:true}).count()||await page.locator('footer').getByText('3D credits',{exact:true}).count())throw new Error('Removed gallery photo or footer credits remain');
+            const portraits=page.locator('#about .about-portraits img');
+            if(await portraits.count()!==2)throw new Error('The biography must show both real portraits');
+            await portraits.evaluateAll(async images=>{await Promise.all(images.map(image=>image.decode()));if(images.some(image=>!image.naturalWidth))throw new Error('A biography portrait failed to load');});
             await page.locator('.photo').first().click();
             if(!await page.locator('#media-dialog').isVisible())throw new Error('Photo viewer failed');
             await page.getByRole('button',{name:'Chiudi',exact:true}).click();
@@ -324,7 +318,7 @@ jobs:
           await calm.waitForTimeout(500);
           if(await calm.locator('#kist-world').getAttribute('data-world-frame')!==calmFrame||await calm.locator('#kist-world [data-world-art]').evaluateAll(images=>images.map(image=>image.style.cssText).join('|'))!==calmArt||await calm.locator('#frequency-break [data-world-foreground]').getAttribute('style')!==calmForeground||await calm.locator('#frequency-break .gate-character').getAttribute('data-route-progress')!==calmRoute)throw new Error('Reduced-motion scene changed during real scroll');
           if(await calm.locator('#kist-world').getAttribute('data-world-paused')!=='true')throw new Error('Reduced-motion world was not marked static');
-          if(!await calm.locator('#frequency-break #world-motion').isDisabled())throw new Error('The scene pause control does not respect reduced motion');
+          if(!await calm.locator('#frequency-break .gate-follow').isVisible()||await calm.locator('#world-motion').count())throw new Error('Reduced motion did not retain the Instagram follow link');
           if(await calm.locator('#frequency-break .gate-character [data-kist-sprite]:visible').getAttribute('data-frame')!=='0')throw new Error('Reduced-motion sprite kept animating');
           if(await calm.locator('#kist-game,[data-game-open]').count())throw new Error('Reduced-motion page still exposes a separate game');
           await navigate(calm,'Notti');
@@ -357,18 +351,13 @@ jobs:
             await metadata.getByRole('button',{name:'Chiudi il player',exact:true}).click();
             if(!await metadata.evaluate(()=>document.body.classList.contains('sound-active')&&window.metadataPlayCalls===1&&window.metadataPauseCalls===0))throw new Error('Opening the header player altered playback');
             await metadata.screenshot({animations:'disabled',path:'screenshots/'+name+'-header-track.png'});
-            await navigate(metadata,'Mondo KIST');
+            await navigate(metadata,'Social');
             await metadata.evaluate(()=>document.querySelector('#frequency-break').scrollIntoView({block:'center',behavior:'instant'}));
             await metadata.waitForFunction(()=>document.querySelector('#kist-world')?.dataset.worldVisible==='true'&&document.querySelector('#frequency-break .gate-character')?.dataset.pose==='groove',null,{timeout:4000});
             const audioSprite=metadata.locator('#frequency-break .gate-character [data-gate-pose="groove"] [data-kist-sprite]');
             const audioFrame=await audioSprite.getAttribute('data-frame');
             await metadata.waitForFunction(frame=>document.querySelector('#frequency-break .gate-character [data-gate-pose="groove"] [data-kist-sprite]')?.dataset.frame!==frame,audioFrame,{timeout:4000});
-            await metadata.locator('#frequency-break #world-motion').click();
-            const frozenAudioFrame=await audioSprite.getAttribute('data-frame');
-            await metadata.waitForTimeout(250);
-            if(await audioSprite.getAttribute('data-frame')!==frozenAudioFrame||!await metadata.evaluate(()=>document.body.classList.contains('sound-active')&&window.metadataPlayCalls===1&&window.metadataPauseCalls===0&&document.querySelector('#kist-world')?.dataset.worldAudio==='playing')||await metadata.locator('#player-mount iframe').count()!==1)throw new Error('Pausing the local scene changed SoundCloud playback or failed to freeze its character');
-            await metadata.locator('#frequency-break #world-motion').click();
-            await metadata.waitForFunction(frame=>document.querySelector('#frequency-break .gate-character [data-gate-pose="groove"] [data-kist-sprite]')?.dataset.frame!==frame,frozenAudioFrame,{timeout:4000});
+            if(!await metadata.locator('#frequency-break .gate-follow').isVisible()||!await metadata.evaluate(()=>document.body.classList.contains('sound-active')&&window.metadataPlayCalls===1&&window.metadataPauseCalls===0&&document.querySelector('#kist-world')?.dataset.worldAudio==='playing')||await metadata.locator('#player-mount iframe').count()!==1)throw new Error('The Instagram follow link changed SoundCloud playback');
             await metadata.close();
           }
           // Deterministic widget contract test: entry must PLAY, never toggle.

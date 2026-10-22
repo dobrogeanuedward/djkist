@@ -7,8 +7,6 @@ const canvas=gate?.querySelector<HTMLCanvasElement>('#kist-world-canvas');
 const context=canvas?.getContext('2d',{alpha:true});
 if(gate&&root&&canvas&&context){
  const motion=matchMedia('(prefers-reduced-motion:reduce)');
- const pause=gate.querySelector<HTMLButtonElement>('#world-motion')!;
- const pauseLabel=pause.querySelector<HTMLElement>('[data-world-motion-label]')!;
  const art=Array.from(root.querySelectorAll<HTMLImageElement>('[data-world-art]'));
  const foreground=gate.querySelector<HTMLImageElement>('[data-world-foreground]')!;
  const character=gate.querySelector<HTMLElement>('.gate-character')!;
@@ -17,11 +15,10 @@ if(gate&&root&&canvas&&context){
  const smooth=(n:number)=>{const x=clamp(n);return x*x*(3-2*x)};
  let width=0,height=0,raf=0,last=0,lastPaint=0,elapsed=0,frames=0;
  let progress=.5,targetProgress=.5,energy=0,playing=false,position=0,positionAt=0;
- let pointerX=0,pointerY=0,paused=false,inView=false,initialized=false,lastScrollAt=-Infinity,lastScrollY=scrollY;
+ let pointerX=0,pointerY=0,inView=false,initialized=false,lastScrollAt=-Infinity,lastScrollY=scrollY;
  let gateTop=0,gateHeight=1,gateWidth=1,lastPose='',lastPosePause:boolean|undefined;
- try{paused=localStorage.getItem('kist:world-paused:v1')==='true'}catch{}
  const blocked=()=>document.hidden||!inView||document.querySelector('dialog[open]')!==null;
- const staticWorld=()=>paused||motion.matches;
+ const staticWorld=()=>motion.matches;
  const artOpacity=[-1,-1,-1],artTransform=['','',''];
  art.forEach(image=>{image.decode().then(()=>{image.dataset.loaded='true';root!.dataset.worldArtReady=String(art.filter(item=>item.dataset.loaded==='true').length)}).catch(()=>{image.dataset.failed='true'})});
  function syncCharacter(now:number){
@@ -68,13 +65,9 @@ if(gate&&root&&canvas&&context){
  }
  function stop(){cancelAnimationFrame(raf);raf=0;last=0}
  function resume(){if(!raf&&!blocked()&&!staticWorld())raf=requestAnimationFrame(frame)}
- function controls(){
-  const frozen=staticWorld();root!.dataset.worldPaused=String(frozen);root!.dataset.worldAudio=playing?'playing':'quiet';
-  pause.setAttribute('aria-pressed',String(frozen));pause.disabled=motion.matches;
-  pause.setAttribute('aria-label',motion.matches?'Scena statica: movimento ridotto attivo':paused?'Riprendi la scena':'Metti in pausa la scena');
-  pauseLabel.textContent=motion.matches?'Scena statica':paused?'Riprendi scena':'Pausa scena';syncCharacter(performance.now());
+ function syncMotionState(){
+  root!.dataset.worldPaused=String(staticWorld());root!.dataset.worldAudio=playing?'playing':'quiet';syncCharacter(performance.now());
  }
- pause.addEventListener('click',()=>{paused=!paused;try{localStorage.setItem('kist:world-paused:v1',String(paused))}catch{}controls();if(paused)stop();else resume()});
  window.addEventListener('scroll',()=>{
   const delta=scrollY-lastScrollY;lastScrollY=scrollY;track();
   if(Math.abs(delta)>.5&&!staticWorld()&&!blocked()){
@@ -86,15 +79,15 @@ if(gate&&root&&canvas&&context){
  gate.addEventListener('pointermove',event=>{if(event.pointerType!=='mouse'||staticWorld())return;const rect=gate.getBoundingClientRect();pointerX=(event.clientX-rect.left)/rect.width-.5;pointerY=(event.clientY-rect.top)/rect.height-.5},{passive:true});
  window.addEventListener('kist:audio',event=>{
   const detail=(event as CustomEvent<{playing:boolean;position?:number}>).detail;
-  playing=detail.playing;if(Number.isFinite(detail.position)){position=detail.position!;positionAt=performance.now()}controls();resume();
+  playing=detail.playing;if(Number.isFinite(detail.position)){position=detail.position!;positionAt=performance.now()}syncMotionState();resume();
  });
  document.addEventListener('visibilitychange',()=>{if(document.hidden){stop();syncCharacter(performance.now())}else resume()});
- motion.addEventListener('change',()=>{stop();controls();if(motion.matches){progress=.5;paint()}else resume()});
+ motion.addEventListener('change',()=>{stop();syncMotionState();if(motion.matches){progress=.5;paint()}else resume()});
  const dialogObserver=new MutationObserver(()=>{if(blocked()){stop();syncCharacter(performance.now())}else resume()});
  document.querySelectorAll('dialog').forEach(dialog=>dialogObserver.observe(dialog,{attributes:true,attributeFilter:['open']}));
  new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;root!.dataset.worldVisible=String(inView);if(inView){bounds();resume()}else{stop();syncCharacter(performance.now())}},{threshold:0}).observe(gate);
  new ResizeObserver(measure).observe(gate);
  new ResizeObserver(()=>{bounds();if(!inView)stop();else resume()}).observe(document.querySelector('main')!);
  new MutationObserver(()=>{lastPosePause=undefined;syncCharacter(performance.now())}).observe(character,{subtree:true,attributes:true,attributeFilter:['data-kist-bound']});
- controls();measure();
+ syncMotionState();measure();
 }
