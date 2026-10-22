@@ -55,7 +55,73 @@ jobs:
             await page.waitForFunction(()=>document.querySelector('#kist-world')?.dataset.worldVisible==='true',null,{timeout:4000});
             await settleWorldPixels(page);
           }
-          for(const [name,width,height] of [['desktop',1440,1000],['portrait-desktop',801,1100],['mobile',390,844],['small-mobile',320,740]]){
+          // Deterministic widget contract test: entry must PLAY, never toggle.
+          // Real provider playback is separately checked in the visual audit.
+          const music=await browser.newPage({viewport:{width:390,height:844}});
+          await music.addInitScript(()=>{
+            window.testPlayCalls=0;window.testPauseCalls=0;
+            function Widget(){const listeners={};let position=0;return {bind:(event,fn)=>{listeners[event]=fn;if(event==='READY')setTimeout(fn,30)},play:()=>{window.testPlayCalls++;listeners.PLAY?.();listeners.PLAY_PROGRESS?.({currentPosition:position})},pause:()=>{window.testPauseCalls++;listeners.PAUSE?.()},seekTo:p=>{position=p;window.testSeekPosition=p},setVolume:value=>{window.testVolume=value},getDuration:fn=>fn(100000),getPosition:fn=>fn(position),getCurrentSound:fn=>fn({})}};
+            Widget.Events={READY:'READY',PLAY:'PLAY',PAUSE:'PAUSE',ERROR:'ERROR',FINISH:'FINISH',PLAY_PROGRESS:'PLAY_PROGRESS'};window.SC={Widget};
+          });
+          await music.goto('http://127.0.0.1:4321');
+          const first=await music.locator('.sound-row strong').innerText();
+          await music.getByRole('button',{name:'Daje',exact:true}).click();
+          await music.waitForFunction(()=>document.body.classList.contains('sound-active'));
+          if(await music.evaluate(()=>window.testPlayCalls!==1||window.testPauseCalls!==0))throw new Error('Entry toggled instead of playing');
+          await navigate(music,'Notti');
+          await openHeaderPlayer(music);
+          await music.locator('.audio-dock.in-header').waitFor({state:'visible'});
+          await music.getByRole('button',{name:'Metti in pausa il set',exact:true}).click();
+          await music.getByRole('button',{name:'Riprendi il set',exact:true}).click();
+          if(!await music.evaluate(()=>document.body.classList.contains('sound-active')))throw new Error('Resume failed');
+          const savedPosition=await music.evaluate(()=>window.testSeekPosition);
+          if(savedPosition<5000||savedPosition>70000)throw new Error('First-visit random excerpt failed');
+          await music.reload();
+          const second=await music.locator('.sound-row strong').innerText();
+          if(first!==second)throw new Error('Persisted track was lost');
+          await music.waitForFunction(()=>document.body.classList.contains('sound-active'));
+          if(await music.evaluate(()=>window.testPauseCalls!==0))throw new Error('Reload entry paused playback');
+          if(await music.evaluate(()=>window.testSeekPosition)!==savedPosition)throw new Error('Refresh lost playback position');
+          await navigate(music,'Notti');
+          await openHeaderPlayer(music);
+          await music.locator('.audio-dock.in-header').waitFor({state:'visible'});
+          await music.getByRole('button',{name:'Metti in pausa il set',exact:true}).click();
+          await music.reload();
+          await music.getByRole('button',{name:'Daje',exact:true}).click();
+          await music.waitForFunction(()=>document.body.classList.contains('sound-active'));
+          if(await music.evaluate(()=>window.testPauseCalls!==0))throw new Error('Daje paused a restored session');
+          if(await music.evaluate(()=>window.testSeekPosition)!==savedPosition)throw new Error('Paused session seek was lost');
+
+          const heroTransport=music.locator('[data-player-controls="hero"]');
+          const heroVolume=heroTransport.locator('[data-audio-volume]');
+          await heroVolume.press('Home');
+          for(let step=0;step<7;step++)await heroVolume.press('ArrowRight');
+          await music.waitForFunction(()=>window.testVolume===35);
+          if(await heroVolume.inputValue()!=='35')throw new Error('Hero volume did not reach the SoundCloud widget');
+          await navigate(music,'Notti');await openHeaderPlayer(music);
+          const menuTransport=music.locator('[data-player-controls="header-active"]');
+          if(await menuTransport.locator('[data-audio-volume]').inputValue()!=='35')throw new Error('Header volume did not follow the hero');
+          await menuTransport.locator('[data-audio-mute]').click();
+          if(!await music.evaluate(()=>window.testVolume===0&&[...document.querySelectorAll('[data-audio-volume]')].every(input=>input.value==='0')))throw new Error('Mute did not synchronize both players');
+          await menuTransport.locator('[data-audio-mute]').click();
+          if(!await music.evaluate(()=>window.testVolume===35&&[...document.querySelectorAll('[data-audio-volume]')].every(input=>input.value==='35')))throw new Error('Unmute lost the previous volume');
+          await music.keyboard.press('Escape');
+          const catalog=await music.locator('.sound-invitation').evaluate(element=>JSON.parse(element.dataset.mixes));
+          const selectedUrl=await music.locator('.sound-invitation').getAttribute('data-url');
+          const selectedIndex=catalog.findIndex(track=>track.url===selectedUrl),nextTrack=catalog[(selectedIndex+1)%catalog.length];
+          await heroTransport.locator('[data-audio-next]').click();
+          await music.waitForFunction(title=>document.querySelector('.sound-row strong')?.textContent===title,nextTrack.title);
+          await music.waitForFunction(()=>document.body.classList.contains('sound-active'));
+          if(await music.locator('#player-mount iframe').count()!==1||!await music.evaluate(()=>window.testVolume===35))throw new Error('Changing set duplicated the player or reset volume');
+          await navigate(music,'Notti');await openHeaderPlayer(music);
+          await menuTransport.locator('[data-audio-prev]').click();
+          await music.waitForFunction(url=>document.querySelector('.sound-invitation')?.dataset.url===url,selectedUrl);
+          if(await music.locator('#player-mount iframe').count()!==1)throw new Error('Previous set duplicated the iframe');
+          await music.reload();
+          await music.waitForFunction(()=>document.body.classList.contains('sound-active')&&window.testVolume===35);
+          if(!await music.locator('[data-audio-volume]').evaluateAll(inputs=>inputs.every(input=>input.value==='35')))throw new Error('Reload lost synchronized volume');
+          await music.close();
+          for(const [name,width,height] of [['small-mobile',320,740],['desktop',1440,1000],['portrait-desktop',801,1100],['mobile',390,844]]){
             const page=await browser.newPage({viewport:{width,height}});
             const errors=[];page.on('pageerror',e=>errors.push(e.message));
             // The removed scene-pause preference must not freeze the animation after this update.
@@ -204,7 +270,7 @@ jobs:
             await navigate(page,'Notti');
             await page.waitForTimeout(800);
             const night=await page.locator('#diary').boundingBox();
-            if(width<800&&night.height>height-90)throw new Error('Night archive exceeds mobile viewport');
+            if(width<800&&night.height>height-90)throw new Error('Night archive exceeds mobile viewport: '+JSON.stringify({sectionHeight:night.height,viewportHeight:height,width}));
             await page.screenshot({animations:'disabled',path:'screenshots/'+name+'-nights.png'});
             if(await page.locator('#kist-game,[data-game-open]').count())throw new Error('A separate game remains in the integrated world');
             const world=page.locator('#kist-world');
@@ -382,72 +448,7 @@ jobs:
             if(!await metadata.locator('#frequency-break .gate-follow').isVisible()||!await metadata.evaluate(()=>document.body.classList.contains('sound-active')&&window.metadataPlayCalls===1&&window.metadataPauseCalls===0&&document.querySelector('#kist-world')?.dataset.worldAudio==='playing')||await metadata.locator('#player-mount iframe').count()!==1)throw new Error('The Instagram follow link changed SoundCloud playback');
             await metadata.close();
           }
-          // Deterministic widget contract test: entry must PLAY, never toggle.
-          // Real provider playback is separately checked in the visual audit.
-          const music=await browser.newPage({viewport:{width:390,height:844}});
-          await music.addInitScript(()=>{
-            window.testPlayCalls=0;window.testPauseCalls=0;
-            function Widget(){const listeners={};let position=0;return {bind:(event,fn)=>{listeners[event]=fn;if(event==='READY')setTimeout(fn,30)},play:()=>{window.testPlayCalls++;listeners.PLAY?.();listeners.PLAY_PROGRESS?.({currentPosition:position})},pause:()=>{window.testPauseCalls++;listeners.PAUSE?.()},seekTo:p=>{position=p;window.testSeekPosition=p},setVolume:value=>{window.testVolume=value},getDuration:fn=>fn(100000),getPosition:fn=>fn(position),getCurrentSound:fn=>fn({})}};
-            Widget.Events={READY:'READY',PLAY:'PLAY',PAUSE:'PAUSE',ERROR:'ERROR',FINISH:'FINISH',PLAY_PROGRESS:'PLAY_PROGRESS'};window.SC={Widget};
-          });
-          await music.goto('http://127.0.0.1:4321');
-          const first=await music.locator('.sound-row strong').innerText();
-          await music.getByRole('button',{name:'Daje',exact:true}).click();
-          await music.waitForFunction(()=>document.body.classList.contains('sound-active'));
-          if(await music.evaluate(()=>window.testPlayCalls!==1||window.testPauseCalls!==0))throw new Error('Entry toggled instead of playing');
-          await navigate(music,'Notti');
-          await openHeaderPlayer(music);
-          await music.locator('.audio-dock.in-header').waitFor({state:'visible'});
-          await music.getByRole('button',{name:'Metti in pausa il set',exact:true}).click();
-          await music.getByRole('button',{name:'Riprendi il set',exact:true}).click();
-          if(!await music.evaluate(()=>document.body.classList.contains('sound-active')))throw new Error('Resume failed');
-          const savedPosition=await music.evaluate(()=>window.testSeekPosition);
-          if(savedPosition<5000||savedPosition>70000)throw new Error('First-visit random excerpt failed');
-          await music.reload();
-          const second=await music.locator('.sound-row strong').innerText();
-          if(first!==second)throw new Error('Persisted track was lost');
-          await music.waitForFunction(()=>document.body.classList.contains('sound-active'));
-          if(await music.evaluate(()=>window.testPauseCalls!==0))throw new Error('Reload entry paused playback');
-          if(await music.evaluate(()=>window.testSeekPosition)!==savedPosition)throw new Error('Refresh lost playback position');
-          await navigate(music,'Notti');
-          await openHeaderPlayer(music);
-          await music.locator('.audio-dock.in-header').waitFor({state:'visible'});
-          await music.getByRole('button',{name:'Metti in pausa il set',exact:true}).click();
-          await music.reload();
-          await music.getByRole('button',{name:'Daje',exact:true}).click();
-          await music.waitForFunction(()=>document.body.classList.contains('sound-active'));
-          if(await music.evaluate(()=>window.testPauseCalls!==0))throw new Error('Daje paused a restored session');
-          if(await music.evaluate(()=>window.testSeekPosition)!==savedPosition)throw new Error('Paused session seek was lost');
 
-          const heroTransport=music.locator('[data-player-controls="hero"]');
-          const heroVolume=heroTransport.locator('[data-audio-volume]');
-          await heroVolume.press('Home');
-          for(let step=0;step<7;step++)await heroVolume.press('ArrowRight');
-          await music.waitForFunction(()=>window.testVolume===35);
-          if(await heroVolume.inputValue()!=='35')throw new Error('Hero volume did not reach the SoundCloud widget');
-          await navigate(music,'Notti');await openHeaderPlayer(music);
-          const menuTransport=music.locator('[data-player-controls="header-active"]');
-          if(await menuTransport.locator('[data-audio-volume]').inputValue()!=='35')throw new Error('Header volume did not follow the hero');
-          await menuTransport.locator('[data-audio-mute]').click();
-          if(!await music.evaluate(()=>window.testVolume===0&&[...document.querySelectorAll('[data-audio-volume]')].every(input=>input.value==='0')))throw new Error('Mute did not synchronize both players');
-          await menuTransport.locator('[data-audio-mute]').click();
-          if(!await music.evaluate(()=>window.testVolume===35&&[...document.querySelectorAll('[data-audio-volume]')].every(input=>input.value==='35')))throw new Error('Unmute lost the previous volume');
-          await music.keyboard.press('Escape');
-          const catalog=await music.locator('.sound-invitation').evaluate(element=>JSON.parse(element.dataset.mixes));
-          const selectedUrl=await music.locator('.sound-invitation').getAttribute('data-url');
-          const selectedIndex=catalog.findIndex(track=>track.url===selectedUrl),nextTrack=catalog[(selectedIndex+1)%catalog.length];
-          await heroTransport.locator('[data-audio-next]').click();
-          await music.waitForFunction(title=>document.querySelector('.sound-row strong')?.textContent===title,nextTrack.title);
-          await music.waitForFunction(()=>document.body.classList.contains('sound-active'));
-          if(await music.locator('#player-mount iframe').count()!==1||!await music.evaluate(()=>window.testVolume===35))throw new Error('Changing set duplicated the player or reset volume');
-          await navigate(music,'Notti');await openHeaderPlayer(music);
-          await menuTransport.locator('[data-audio-prev]').click();
-          await music.waitForFunction(url=>document.querySelector('.sound-invitation')?.dataset.url===url,selectedUrl);
-          if(await music.locator('#player-mount iframe').count()!==1)throw new Error('Previous set duplicated the iframe');
-          await music.reload();
-          await music.waitForFunction(()=>document.body.classList.contains('sound-active')&&window.testVolume===35);
-          if(!await music.locator('[data-audio-volume]').evaluateAll(inputs=>inputs.every(input=>input.value==='35')))throw new Error('Reload lost synchronized volume');
-          await music.close();
           await browser.close();
           JS
       - uses: actions/upload-artifact@v4
