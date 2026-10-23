@@ -135,7 +135,7 @@ try{
   const entry=page.locator('#bside-entry'),room=page.locator('#bside-room'),start=page.locator('#bside-start');
   const tempo=page.locator('#bside-tempo'),filter=page.locator('#bside-filter');
   assert(!await room.isVisible(),'Secret room opens without discovery');
-  assert.equal(await entry.getAttribute('aria-label'),'Scopri il lato B');
+  assert.equal(await entry.getAttribute('aria-label'),'Scopri la stanza segreta');
   assert.equal(await page.evaluate(()=>window.bsideAudioTest.contexts.length),0,'Hidden room allocated an AudioContext');
   await entry.scrollIntoViewIfNeeded();await entry.focus();await page.keyboard.press('Enter');
   await room.waitFor({state:'visible'});

@@ -74,3 +74,6 @@
 @media(max-width:560px){#bside-room .bside-pad{min-height:68px}#bside-room .bside-pad strong{font-size:11px}#bside-xy{height:125px}.bside-vocal-control{font-size:10px}.bside-vocal-control select{font-size:10px;min-height:44px}.bside-vocal-control>span>small{font-size:7px}}
 @media(pointer:coarse){#bside-room .bside-sequence [data-bside-step],#bside-room .bside-sequence>button{height:44px;min-height:44px}#bside-room input[type=range]{min-height:36px}.bside-scenes>button{min-height:44px}.bside-styles>button{min-height:44px}}
 @media(prefers-reduced-motion:reduce){.bside-styles>button,.bside-xy-wave{transition:none!important}}
+#bside-room .bside-intro h2.bside-mix-title{font-size:clamp(58px,6.3vw,86px);line-height:.96;letter-spacing:-.06em}
+#bside-room .bside-intro h2.bside-mix-title br{display:block}
+@media(max-width:560px){#bside-room .bside-intro h2.bside-mix-title{font-size:clamp(39px,11.8vw,58px);line-height:1;letter-spacing:-.055em}}

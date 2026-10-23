@@ -163,6 +163,5 @@ if(room&&entry){
  room.addEventListener('keydown',event=>{const target=event.target as HTMLElement;if(target.matches('input,textarea,select,[contenteditable=true]')||event.ctrlKey||event.metaKey||event.altKey||event.repeat)return;const channel=CHANNELS.find(item=>item.key===event.key);if(channel){event.preventDefault();hit(channel.id)}});
  document.addEventListener('visibilitychange',()=>{if(document.hidden&&room.open){stop();message('Ti aspetto qui. Tocca play per ricominciare.')}});window.addEventListener('pagehide',stop);
  window.addEventListener('hashchange',()=>{if(isSide()){const next=readInitial();audio.loadSession(next.session,false);open();message(next.message)}else if(room.open)close()});
- try{if(localStorage.getItem(foundKey)==='1')entry.querySelector('.bside-door-copy')!.textContent='Il lato B ti aspetta.'}catch{}
  if(isSide())queueMicrotask(open);
 }
