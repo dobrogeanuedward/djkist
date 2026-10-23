@@ -7,8 +7,9 @@ const canvas=gate?.querySelector<HTMLCanvasElement>('#kist-world-canvas');
 const context=canvas?.getContext('2d',{alpha:true});
 if(gate&&root&&canvas&&context){
  const motion=matchMedia('(prefers-reduced-motion:reduce)');
- const compactScene=matchMedia('(max-width:800px)');
- let touchSettling=false;
+ // One scroll clock works with touch inertia, wheels, trackpads and keyboards.
+ // Keep a complete 90ms running frame visible without a long idle tail.
+ const runHold=140;
  const art=Array.from(root.querySelectorAll<HTMLImageElement>('[data-world-art]'));
  const foreground=gate.querySelector<HTMLImageElement>('[data-world-foreground]')!;
  const character=gate.querySelector<HTMLElement>('.gate-character')!;
@@ -17,16 +18,18 @@ if(gate&&root&&canvas&&context){
  const smooth=(n:number)=>{const x=clamp(n);return x*x*(3-2*x)};
  let width=0,height=0,raf=0,last=0,lastPaint=0,elapsed=0,frames=0;
  let progress=.5,targetProgress=.5,energy=0,playing=false,position=0,positionAt=0;
- let pointerX=0,pointerY=0,inView=false,initialized=false,lastScrollAt=-Infinity,lastScrollY=scrollY;
- let gateTop=0,gateHeight=1,gateWidth=1,lastPose='',lastPosePause:boolean|undefined;
+ const scrollPosition=()=>Math.max(0,Math.min(scrollY,Math.max(0,document.documentElement.scrollHeight-innerHeight)));
+ let pointerX=0,pointerY=0,inView=false,initialized=false,lastScrollAt=-Infinity,lastScrollSampleAt=-Infinity,lastScrollY=scrollPosition(),scrollDistance=0;
+ let gateTop=0,gateHeight=1,gateWidth=1,characterWidth=0,lastPose='',lastPosePause:boolean|undefined;
  const blocked=()=>document.hidden||!inView||document.querySelector('dialog[open]')!==null;
  const staticWorld=()=>motion.matches;
  const artOpacity=[-1,-1,-1],artTransform=['','',''];
  art.forEach(image=>{image.decode().then(()=>{image.dataset.loaded='true';root!.dataset.worldArtReady=String(art.filter(item=>item.dataset.loaded==='true').length)}).catch(()=>{image.dataset.failed='true'})});
  function syncCharacter(now:number){
   const frozen=staticWorld()||blocked();
-  const walking=!frozen&&!touchSettling&&now-lastScrollAt<(compactScene.matches?75:120);
-  const pose=frozen&&lastPose?lastPose:walking?'run':'groove';
+  if(frozen){lastScrollAt=-Infinity;lastScrollSampleAt=-Infinity;scrollDistance=0;lastScrollY=scrollPosition()}
+  const walking=!frozen&&now-lastScrollAt<runHold;
+  const pose=walking?'run':'groove';
   if(pose!==lastPose){poses.forEach(element=>element.hidden=element.dataset.gatePose!==pose);character.dataset.pose=pose;lastPose=pose;lastPosePause=undefined}
   if(frozen!==lastPosePause){poses.forEach(element=>element.querySelector<HTMLElement>('[data-kist-sprite]')?.dispatchEvent(new CustomEvent('kist:pause',{detail:{paused:frozen||element.hidden}})));lastPosePause=frozen}
  }
@@ -36,7 +39,8 @@ if(gate&&root&&canvas&&context){
   inView=rect.top<innerHeight&&rect.bottom>0;track();
  }
  function measure(){
-  bounds();height=180;width=Math.max(1,Math.round(gateWidth/gateHeight*height));canvas!.width=width;canvas!.height=height;
+  bounds();characterWidth=character.offsetWidth;height=180;width=Math.max(1,Math.round(gateWidth/gateHeight*height));
+  if(canvas!.width!==width)canvas!.width=width;if(canvas!.height!==height)canvas!.height=height;
   if(!initialized){progress=motion.matches?.5:targetProgress;initialized=true}
   paint();resume();
  }
@@ -54,7 +58,7 @@ if(gate&&root&&canvas&&context){
   });
   const nearRange=Math.min(14,gateWidth*.025),frontX=motion.matches?0:Math.round(((.5-progress)*nearRange*2-pointerX*nearRange*.3)/2)*2;
   foreground.style.transform=`translate3d(${frontX}px,0,0)`;
-  const x=clamp((progress-.12)/.76)*Math.max(0,gateWidth-character.offsetWidth-24)+12;
+  const x=clamp((progress-.12)/.76)*Math.max(0,gateWidth-characterWidth-24)+12;
   character.style.setProperty('--gate-x',`${Math.round(x/2)*2}px`);character.dataset.routeProgress=progress.toFixed(3);syncCharacter(performance.now());
   frames++;root!.dataset.worldFrame=String(frames);root!.dataset.worldReady='true';root!.dataset.worldProgress=chapter.toFixed(3);root!.dataset.worldEnvironment=environment.toFixed(3);root!.dataset.worldChapter=String(Math.min(5,Math.floor(chapter)));
  }
@@ -62,6 +66,7 @@ if(gate&&root&&canvas&&context){
   raf=0;if(blocked()||staticWorld()){last=0;syncCharacter(now);return}
   const dt=last?Math.min((now-last)/1000,.08):.016;last=now;elapsed+=dt;
   progress=targetProgress;energy+=((playing?1:0)-energy)*Math.min(1,dt*2);
+  syncCharacter(now);
   if(now-lastPaint>1000/24){paint();lastPaint=now}
   raf=requestAnimationFrame(frame);
  }
@@ -71,19 +76,18 @@ if(gate&&root&&canvas&&context){
   root!.dataset.worldPaused=String(staticWorld());root!.dataset.worldAudio=playing?'playing':'quiet';syncCharacter(performance.now());
  }
  window.addEventListener('scroll',()=>{
-  const delta=scrollY-lastScrollY;lastScrollY=scrollY;track();
-  if(Math.abs(delta)>(compactScene.matches?1.5:.5)&&!touchSettling&&!staticWorld()&&!blocked()){
-   lastScrollAt=performance.now();character.style.setProperty('--gate-facing',delta>0?'1':'-1');character.dataset.facing=delta>0?'right':'left';syncCharacter(lastScrollAt);
+  const nextY=scrollPosition(),delta=nextY-lastScrollY,now=performance.now();lastScrollY=nextY;track();
+  if(!staticWorld()&&!blocked()){
+   if(now-lastScrollSampleAt>runHold||delta*scrollDistance<0)scrollDistance=0;
+   lastScrollSampleAt=now;
+   scrollDistance+=delta;
+   // Accumulate fractional/one-pixel movement instead of dropping slow gestures.
+   if(Math.abs(scrollDistance)>=.5){
+    lastScrollAt=now;character.style.setProperty('--gate-facing',scrollDistance>0?'1':'-1');character.dataset.facing=scrollDistance>0?'right':'left';scrollDistance=0;syncCharacter(now);
+   }
   }
   resume();
  },{passive:true});
- // End the running pose with the touch gesture instead of following its inertial tail.
- window.addEventListener('touchstart',()=>{touchSettling=false},{passive:true});
- function endTouch(){touchSettling=true;lastScrollAt=-Infinity;syncCharacter(performance.now())}
- window.addEventListener('touchend',endTouch,{passive:true});
- window.addEventListener('touchcancel',endTouch,{passive:true});
- window.addEventListener('wheel',()=>{touchSettling=false},{passive:true});
- window.addEventListener('scrollend',()=>{touchSettling=false;lastScrollAt=-Infinity;syncCharacter(performance.now())},{passive:true});
  window.addEventListener('resize',measure,{passive:true});
  gate.addEventListener('pointermove',event=>{if(event.pointerType!=='mouse'||staticWorld())return;const rect=gate.getBoundingClientRect();pointerX=(event.clientX-rect.left)/rect.width-.5;pointerY=(event.clientY-rect.top)/rect.height-.5},{passive:true});
  window.addEventListener('kist:audio',event=>{

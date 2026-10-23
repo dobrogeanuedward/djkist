@@ -4,17 +4,18 @@ interface Props {
   size?: number;
   speed?: number;
   eager?: boolean;
+  preload?: boolean;
   opening?: boolean;
   label?: string;
   class?: string;
 }
-const {mode='mix',size=240,speed=1,eager=false,opening=false,label='KIST, personaggio animato in pixel art',class:className=''}=Astro.props;
+const {mode='mix',size=240,speed=1,eager=false,preload=false,opening=false,label='KIST, personaggio animato in pixel art',class:className=''}=Astro.props;
 const safeMode=['mix','wave','groove','run'].includes(mode)?mode:'mix';
 const safeSize=Math.max(48,Math.min(600,Number(size)||240));
 const safeSpeed=Math.max(.5,Math.min(3,Number(speed)||1));
 ---
 <div class:list={['kist-sprite',className]} role="img" aria-label={label}
-  data-kist-sprite data-frame="0" data-mode={safeMode} data-speed={safeSpeed} data-eager={eager?'true':undefined} data-opening={opening?'true':undefined}
+  data-kist-sprite data-frame="0" data-mode={safeMode} data-speed={safeSpeed} data-eager={eager?'true':undefined} data-preload={preload?'true':undefined} data-opening={opening?'true':undefined}
   style={`--kist-size:${safeSize}px;background-image:url('/media/kist/kist-16bit-${safeMode}-poster.webp')`}
 ></div>
 <style>
@@ -57,6 +58,11 @@ const safeSpeed=Math.max(.5,Math.min(3,Number(speed)||1));
         }).catch(()=>{loading=false;el.dataset.kistError='true';});
       }
       const observer=new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;if(inView){if(!loaded)load();else tick();}else stop();},{rootMargin:'80px'});
+      // Prepare alternate poses before the section arrives, including hidden ones.
+      // Visibility still controls playback, so preloading never starts an offscreen timer.
+      const preloadRoot=el.dataset.preload==='true'?el.closest('section'):null;
+      const preloadObserver:IntersectionObserver|null=preloadRoot?new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){load();preloadObserver?.disconnect();}},{rootMargin:'800px'}):null;
+      if(preloadRoot)preloadObserver?.observe(preloadRoot);
       function updateMotion(){if(motion.matches){stop();index=0;render();}else tick();}
       function updateVisibility(){document.hidden?stop():tick();}
       function updatePause(event:Event){paused=!!(event as CustomEvent<{paused:boolean}>).detail.paused;paused?stop():tick();}
@@ -65,7 +71,7 @@ const safeSpeed=Math.max(.5,Math.min(3,Number(speed)||1));
       motion.addEventListener('change',updateMotion);
       document.addEventListener('visibilitychange',updateVisibility);
       if(el.dataset.eager==='true')load();
-      const dispose=()=>{dead=true;stop();observer.disconnect();motion.removeEventListener('change',updateMotion);document.removeEventListener('visibilitychange',updateVisibility);el.removeEventListener('kist:pause',updatePause);controllers.delete(dispose);delete el.dataset.kistBound;};
+      const dispose=()=>{dead=true;stop();observer.disconnect();preloadObserver?.disconnect();motion.removeEventListener('change',updateMotion);document.removeEventListener('visibilitychange',updateVisibility);el.removeEventListener('kist:pause',updatePause);controllers.delete(dispose);delete el.dataset.kistBound;};
       controllers.add(dispose);
     });
   }
@@ -73,3 +79,4 @@ const safeSpeed=Math.max(.5,Math.min(3,Number(speed)||1));
   document.addEventListener('astro:page-load',initSprites);
   document.addEventListener('astro:before-swap',()=>{for(const dispose of [...controllers])dispose();});
 </script>
+

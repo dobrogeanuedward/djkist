@@ -1,0 +1,53 @@
+name: World motion across browsers
+on:
+  push:
+    paths:
+      - 'src/scripts/world*'
+      - 'src/components/KistSprite.astro'
+      - 'src/components/World*.astro'
+      - 'src/styles/world.css'
+      - 'tests/world-motion.mjs'
+      - '.github/workflows/world-motion.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  motion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm run build
+      - run: npm install --no-save playwright
+      - name: Prepare browser
+        env:
+          MOTION_BROWSER: ${{ matrix.browser }}
+        run: |
+          if [ "$MOTION_BROWSER" = chromium ]; then
+            if command -v google-chrome >/dev/null 2>&1; then
+              google-chrome --version
+            else
+              npx playwright install --with-deps chrome
+            fi
+          else
+            npx playwright install --with-deps "$MOTION_BROWSER"
+          fi
+      - name: Verify scroll, touch and lifecycle
+        env:
+          MOTION_BROWSER: ${{ matrix.browser }}
+        run: |
+          python3 -m http.server 4321 --directory dist > /tmp/kist-motion-server.log 2>&1 &
+          node tests/world-motion.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: world-motion-${{ matrix.browser }}
+          path: screenshots/motion
