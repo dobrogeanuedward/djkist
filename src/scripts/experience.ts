@@ -103,7 +103,8 @@ function closeVolume(){volumePanels.forEach(panel=>{if(panel.matches(':popover-o
 volumePanels.forEach(panel=>{
  const opener=volumeOpeners.find(button=>button.getAttribute('popovertarget')===panel.id)!;
  panel.addEventListener('beforetoggle',event=>{
-  if((event as ToggleEvent).newState!=='open')return;
+  const open=(event as ToggleEvent).newState==='open';opener.setAttribute('aria-expanded',String(open));
+  if(!open)return;
   const box=opener.getBoundingClientRect(),width=64,height=206;
   panel.style.left=Math.max(8,Math.min(innerWidth-width-8,box.left+box.width/2-width/2))+'px';
   panel.style.top=(box.top>height+12?box.top-height-8:Math.min(innerHeight-height-8,box.bottom+8))+'px';
