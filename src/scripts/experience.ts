@@ -102,17 +102,24 @@ volumeInputs.forEach(input=>input.disabled=deviceVolume);
 function closeVolume(){volumePanels.forEach(panel=>{if(panel.matches(':popover-open'))panel.hidePopover()})}
 volumePanels.forEach(panel=>{
  const opener=volumeOpeners.find(button=>button.getAttribute('popovertarget')===panel.id)!;
- panel.addEventListener('beforetoggle',event=>{
-  const open=(event as ToggleEvent).newState==='open';opener.setAttribute('aria-expanded',String(open));
-  if(!open)return;
+ function placeVolume(){
   const box=opener.getBoundingClientRect(),width=64,height=206;
   panel.style.left=Math.max(8,Math.min(innerWidth-width-8,box.left+box.width/2-width/2))+'px';
   panel.style.top=(box.top>height+12?box.top-height-8:Math.min(innerHeight-height-8,box.bottom+8))+'px';
+ }
+ panel.addEventListener('beforetoggle',event=>{
+  const open=(event as ToggleEvent).newState==='open';opener.setAttribute('aria-expanded',String(open));
+  if(!open)return;
+  placeVolume();
  });
  panel.addEventListener('toggle',()=>{const open=panel.matches(':popover-open');opener.setAttribute('aria-expanded',String(open));if(open&&!deviceVolume)panel.querySelector<HTMLInputElement>('[data-audio-volume]')?.focus({preventScroll:true})});
+ window.addEventListener('scroll',()=>{
+  if(!panel.matches(':popover-open'))return;
+  const box=opener.getBoundingClientRect();
+  if(!box.height||box.bottom<0||box.top>innerHeight)panel.hidePopover();else placeVolume();
+ },{passive:true});
 });
 window.addEventListener('resize',closeVolume,{passive:true});
-window.addEventListener('scroll',closeVolume,{passive:true});
 let volume=80,lastAudibleVolume=80;
 try{const saved=localStorage.getItem(volumeKey);if(saved!==null&&Number.isFinite(Number(saved)))volume=Math.max(0,Math.min(100,Number(saved)))}catch{}
 if(volume>0)lastAudibleVolume=volume;
@@ -159,6 +166,7 @@ async function start(url:string){
  const resumePosition=resumable?session!.position:0;
  const randomEntry=!restoreOnEntry&&!loadedUrl;
  if(widget){const previousWidget=widget;widget=undefined;previousWidget.pause()}
+ transport(false);
  loadedUrl=url;position=resumePosition;duration=0;
  const selected=choices.find(m=>m.url===url);
  if(selected)showTrack({title:selected.title,permalink_url:selected.url,artwork_url:selected.artwork});
