@@ -29,6 +29,7 @@ jobs:
       - run: npm run build
       - run: npm install --no-save playwright
       - name: Prepare browser
+        timeout-minutes: 4
         env:
           MOTION_BROWSER: ${{ matrix.browser }}
         run: |
@@ -39,6 +40,7 @@ jobs:
               npx playwright install --with-deps chrome
             fi
           else
+            printf '%s\n' 'Acquire::Retries "1";' 'Acquire::http::Timeout "20";' 'Acquire::https::Timeout "20";' | sudo tee /etc/apt/apt.conf.d/99-playwright-network-timeouts > /dev/null
             npx playwright install --with-deps "$MOTION_BROWSER"
           fi
       - name: Verify scroll, touch and lifecycle
