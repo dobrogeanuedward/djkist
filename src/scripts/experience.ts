@@ -71,6 +71,24 @@ function saveSession(force=false){if(!loadedUrl)return;const now=Date.now();if(!
 window.addEventListener('pagehide',()=>saveSession(true));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)saveSession(true)});
 let playing=false;
+let bsideActive=false,bsideResume=false,bsideWidget:typeof widget,bsideUrl='';
+window.addEventListener('kist:bside-open',()=>{
+ entryInvitation=false;enterWithMusic=false;closeVolume();
+ if(soundDialog.open)closePlayer();
+});
+window.addEventListener('kist:bside-audio',event=>{
+ const active=!!(event as CustomEvent<{active:boolean}>).detail.active;
+ if(active){
+  if(bsideActive)return;
+  bsideResume=playing;bsideWidget=widget;bsideUrl=loadedUrl;bsideActive=true;
+  widget?.pause();
+ }else{
+  bsideActive=false;
+  const resume=bsideResume&&widget&&widget===bsideWidget&&loadedUrl===bsideUrl&&!connecting;
+  bsideResume=false;bsideWidget=undefined;
+  if(resume)widget!.play();
+ }
+});
 const dock=document.querySelector<HTMLDivElement>('.audio-dock')!;
 const status=document.getElementById('audio-status')!;
 const toggle=document.getElementById('dock-toggle')!;
@@ -194,6 +212,7 @@ async function start(url:string){
   });
   current.bind(events.PLAY,()=>{
    if(widget!==current)return;
+   if(bsideActive){current.pause();return}
    transport(true);saveSession(true);status.textContent='In ascolto.';
    current.getCurrentSound(sound=>{if(widget===current)showTrack(sound)});
   });
@@ -239,7 +258,7 @@ new MutationObserver(()=>{document.getElementById('popup-status')!.textContent=s
 if(invitation.dataset.url){
  let invited=false;
  const entrance=document.querySelector<HTMLElement>('.entrance-refined');
- function invite(){if(invited)return;invited=true;if(entrance)entrance.hidden=true;if(!entryInvitation)return;openPlayer();if(session?.playing){enterWithMusic=true;start(invitation.dataset.url!)}}
+ function invite(){if(invited)return;invited=true;if(entrance)entrance.hidden=true;if(!entryInvitation||location.hash==='#b-side')return;openPlayer();if(session?.playing){enterWithMusic=true;start(invitation.dataset.url!)}}
  if(reduced)setTimeout(invite,200);
  else if(entrance){
   const onOpeningEnd=(event:AnimationEvent)=>{if(event.target!==entrance)return;entrance.removeEventListener('animationend',onOpeningEnd);invite();};

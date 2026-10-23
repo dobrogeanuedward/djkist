@@ -1,0 +1,51 @@
+name: B-side secret room
+on:
+  push:
+    paths:
+      - 'src/components/BSide.astro'
+      - 'src/scripts/bside*.ts'
+      - 'src/styles/bside.css'
+      - 'src/scripts/experience.ts'
+      - 'src/pages/index.astro'
+      - 'tests/bside-interactions.mjs'
+      - '.github/workflows/bside.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bside:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm run build
+      - run: npm install --no-save playwright
+      - name: Prepare browser
+        timeout-minutes: 6
+        env:
+          BSIDE_BROWSER: ${{ matrix.browser }}
+        run: |
+          if [ "$BSIDE_BROWSER" = chromium ]; then
+            google-chrome --version
+          else
+            npx playwright install --with-deps webkit
+          fi
+      - name: Verify secret room
+        env:
+          BSIDE_BROWSER: ${{ matrix.browser }}
+        run: |
+          python3 -m http.server 4321 --directory dist > /tmp/kist-bside-server.log 2>&1 &
+          node tests/bside-interactions.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bside-${{ matrix.browser }}
+          path: screenshots/bside
