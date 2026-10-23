@@ -124,6 +124,7 @@ jobs:
           await navigate(music,'Notti');await openHeaderPlayer(music);
           await menuTransport.locator('[data-audio-prev]').click();
           await music.waitForFunction(url=>document.querySelector('.sound-invitation')?.dataset.url===url,selectedUrl);
+          await music.waitForFunction(()=>document.body.classList.contains('sound-active')&&document.querySelector('.sound-invitation').getAttribute('aria-busy')==='false');
           if(await music.locator('#player-mount iframe').count()!==1)throw new Error('Previous set duplicated the iframe');
           await music.reload();
           await music.waitForFunction(()=>document.body.classList.contains('sound-active')&&window.testVolume===35);
