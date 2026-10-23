@@ -1,6 +1,6 @@
 /* The centered wordmark opens one panel: seven sections and one live transport. */
 .site-header {
- --header-logo-width:140px;
+ --header-logo-width:106px;
  --header-type:#f4f0ff;
  --header-muted:#c4b8d8;
  position:fixed;
@@ -8,17 +8,18 @@
  transform:translateX(-50%);
  z-index:40;
  display:grid;
- grid-template-columns:minmax(0,1fr) 140px minmax(0,1fr);
- grid-template-areas:'nav logo music';
+ grid-template-columns:minmax(0,1fr);
+ grid-template-rows:auto;
+ grid-template-areas:'logo';
  align-items:center;
  justify-content:center;
- gap:0 12px;
- width:100%;
+ gap:0;
+ width:min(440px,calc(100% - 20px));
  max-width:none;
- min-height:104px;
- padding:6px 24px;
+ min-height:84px;
+ padding:6px 14px;
  border:1px solid #b58bff55;
- border-radius:0 0 16px 16px;
+ border-radius:18px;
  background:radial-gradient(ellipse at 8% 0,#4e137e80,transparent 60%),linear-gradient(112deg,#1c0b33,#080d22 60%,#0a2935);
  box-shadow:0 0 2px #58edff66,0 0 20px #a45cff2e,0 14px 40px #02030b66;
  backdrop-filter:none;
@@ -41,6 +42,7 @@
  backdrop-filter:blur(22px) saturate(1.2);
  -webkit-backdrop-filter:blur(22px) saturate(1.2);
 }
+.site-header.is-scrolled.navigation-open {width:min(440px,calc(100% - 24px))}
 /* Only the fine edge receives the moving spectrum. */
 @supports (mask-composite:exclude) or (-webkit-mask-composite:xor) {
  .site-header:before {
@@ -72,7 +74,7 @@
  width:calc(var(--header-logo-width) + 76px);
  height:auto;
  min-width:0;
- min-height:72px;
+ min-height:64px;
  padding:0;
  border:0;
  border-radius:14px;
@@ -123,8 +125,8 @@
  display:grid;
  grid-template-columns:minmax(0,1fr);
  gap:14px;
- width:min(620px,calc(100vw - 32px));
- max-height:calc(100dvh - 132px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+ width:calc(100% + 2px);
+ max-height:calc(100dvh - 108px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
  overflow-y:auto;
  overscroll-behavior:contain;
  padding:16px 20px 20px;
@@ -136,10 +138,7 @@
  scrollbar-color:#bcaae36a transparent;
 }
 .site-header.is-scrolled .header-panel {max-height:calc(100dvh - 92px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
-.site-header:not(.is-scrolled) .header-panel {position:static;inset:auto;display:contents;transform:none}
-.site-header:not(.is-scrolled) .header-home,
-.site-header:not(.is-scrolled) .header-player-label {display:none}
-.site-header:not(.is-scrolled) .header-actions {grid-area:music;justify-self:end}
+.site-header:not(.is-scrolled) .header-home {display:none}
 .site-header .header-home {
  display:flex;
  align-items:center;
@@ -210,7 +209,7 @@
 .site-header .site-nav a[aria-current=location] {color:#d9ff8c;background:#c9ff5209}
 .site-header .site-nav a[aria-current=location]:before {color:#c9ff52;transform:none}
 .site-header .header-player-label {padding:1px 6px 0;color:#c2addb;font-size:9px;line-height:1.4;letter-spacing:.12em}
-.site-header .header-actions {display:block;width:100%;max-width:none;min-width:0;margin:0}
+.site-header .header-actions {grid-area:auto;justify-self:stretch;display:block;width:100%;max-width:none;min-width:0;margin:0}
 .site-header .header-music,
 .site-header .audio-dock.in-header {
  width:100%;
@@ -254,66 +253,10 @@
 .site-header [data-track-status]:before {content:'';flex:0 0 4px;width:4px;height:4px;border-radius:50%;background:#a898ba}
 .sound-active .site-header [data-track-status]:before {background:#c9ff52}
 .site-header :is(a,button):focus-visible {outline:2px solid #8ef1ff;outline-offset:3px}
-@media(min-width:1051px) {
- .site-header:not(.is-scrolled) .site-nav {
-  grid-area:nav;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:clamp(1px,.35vw,7px);
-  width:100%;
- }
- .site-header:not(.is-scrolled) .site-nav a {
-  display:flex;
-  min-height:44px;
-  padding:9px 4px;
-  border:0;
-  border-radius:8px;
-  color:#e5e1f0;
-  font-family:'DM Sans',sans-serif;
-  font-size:clamp(11px,.9vw,13px);
-  letter-spacing:0;
- }
- .site-header:not(.is-scrolled) .site-nav a:before,
- .site-header:not(.is-scrolled) .site-nav a:after {display:none}
- .site-header:not(.is-scrolled) .site-nav a[aria-current=location] {color:#d9ff8c}
- .site-header:not(.is-scrolled) .header-actions {max-width:300px}
-}
-@media(max-width:1050px) {
- .site-header:not(.is-scrolled) {
-  --header-logo-width:108px;
-  width:calc(100% - 20px);
-  min-height:126px;
-  padding:4px 8px;
-  grid-template-columns:44px minmax(0,1fr) 44px;
-  grid-template-rows:56px 56px;
-  grid-template-areas:'left logo right' 'music music music';
-  gap:4px 8px;
-  border-radius:18px;
- }
- .site-header:not(.is-scrolled) .header-nav-toggle {min-height:56px}
- .site-header:not(.is-scrolled) .header-actions {width:100%;max-width:none}
- .site-header:not(.is-scrolled) .site-nav {
-  position:absolute;
-  top:calc(100% + 1px);
-  left:50%;
-  z-index:60;
-  transform:translateX(-50%);
-  width:calc(100vw - 24px);
-  max-height:calc(100dvh - 148px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  overflow-y:auto;
-  overscroll-behavior:contain;
-  padding:14px;
-  border:1px solid #b58bff66;
-  border-radius:18px;
-  background:radial-gradient(ellipse at 100% 0,#541b733d,transparent 70%),#090b18;
-  box-shadow:0 1px 2px #58edff22,0 24px 50px #0009;
- }
-}
 @media(max-width:600px) {
  .site-header.is-scrolled {--header-logo-width:104px;width:240px;max-width:calc(100% - 32px);min-height:64px;padding:6px 12px;border-radius:24px}
  .site-header.is-scrolled .header-nav-toggle {min-height:48px}
- .site-header .header-panel {top:calc(100% + 1px);width:calc(100vw - 24px);max-height:calc(100dvh - 96px - env(safe-area-inset-top) - env(safe-area-inset-bottom));gap:12px;padding:14px}
+ .site-header .header-panel {top:calc(100% + 1px);width:calc(100% + 2px);max-height:calc(100dvh - 108px - env(safe-area-inset-top) - env(safe-area-inset-bottom));gap:12px;padding:14px}
  .site-header.is-scrolled .header-panel {max-height:calc(100dvh - 88px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
  .site-header .header-home {padding-bottom:12px}
  .site-header .header-home img {width:56px}
@@ -341,3 +284,4 @@
  .site-header .site-nav a,.site-header .header-track-copy strong {color:LinkText}
  .site-header .header-listen-icon,.site-header .audio-dock.in-header #dock-toggle {background:ButtonFace;color:ButtonText;border:1px solid ButtonText}
 }
+

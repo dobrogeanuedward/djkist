@@ -17,7 +17,8 @@ let lastTrace;
 
 async function compactHero(page,label){
  const geometry=await page.locator('#home .sound-invitation').evaluate(player=>{const box=player.getBoundingClientRect(),hero=player.closest('.hero').getBoundingClientRect(),play=player.querySelector('#hero-play').getBoundingClientRect();return {height:box.height,inside:box.left>=hero.left&&box.right<=hero.right&&box.bottom<=hero.bottom,bottomGap:hero.bottom-box.bottom,padding:parseFloat(getComputedStyle(player.closest('.hero')).paddingBottom),play:play.width};});
- assert(geometry.height<=112&&geometry.inside&&geometry.bottomGap<=geometry.padding+30&&geometry.play>=44,`${label}: hero player is oversized or misplaced: ${JSON.stringify(geometry)}`);
+ const desktop=page.viewportSize().width>1050;
+ assert((desktop?geometry.height>=130&&geometry.height<=160&&geometry.play>=56:geometry.height<=112&&geometry.play>=44)&&geometry.inside&&geometry.bottomGap<=geometry.padding+30,`${label}: hero player has the wrong scale or position: ${JSON.stringify(geometry)}`);
  assert.equal(await page.locator('#slides-toggle,[data-video-toggle],#hero-listen').count(),0,`${label}: duplicate hero control remains`);
 }
 

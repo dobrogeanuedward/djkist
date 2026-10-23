@@ -168,7 +168,8 @@ jobs:
             await page.waitForFunction(()=>{const hero=document.querySelector('#home'),video=document.querySelector('#hero-video');return !hero.classList.contains('is-photo')&&video.dataset.heroIndex==='1'&&video.dataset.heroVideoIndex==='1'&&!video.paused&&video.readyState>=2;},null,{timeout:6000});
             if(await page.locator('#slides-toggle,[data-video-toggle],#hero-listen').count())throw new Error('The removed hero controls are still present');
             const heroPlayer=await page.locator('#home .sound-invitation').evaluate(player=>{const hero=player.closest('.hero'),box=player.getBoundingClientRect(),scene=hero.getBoundingClientRect(),style=getComputedStyle(player),rim=getComputedStyle(player,'::before'),play=player.querySelector('#hero-play').getBoundingClientRect();return {height:box.height,width:box.width,inFooter:!!player.closest('.hero-foot'),bottomGap:scene.bottom-box.bottom,paddingBottom:parseFloat(getComputedStyle(hero).paddingBottom),inside:box.left>=scene.left&&box.right<=scene.right&&box.bottom<=scene.bottom,background:style.backgroundImage,rim:rim.backgroundImage,playWidth:play.width,playHeight:play.height};});
-            if(heroPlayer.height>112||!heroPlayer.inFooter||!heroPlayer.inside||heroPlayer.bottomGap>heroPlayer.paddingBottom+30||heroPlayer.playWidth<44||heroPlayer.playHeight<44||!heroPlayer.background.includes('rgba(')||!heroPlayer.rim.includes('linear-gradient'))throw new Error('Hero player is not compact, translucent and placed at the bottom: '+JSON.stringify(heroPlayer));
+            const playerScale=width>1050?heroPlayer.height>=130&&heroPlayer.height<=160&&heroPlayer.width>=600&&heroPlayer.playWidth>=56:heroPlayer.height<=112&&heroPlayer.playWidth>=44;
+            if(!playerScale||!heroPlayer.inFooter||!heroPlayer.inside||heroPlayer.bottomGap>heroPlayer.paddingBottom+30||heroPlayer.playHeight<44||!heroPlayer.background.includes('rgba(')||!heroPlayer.rim.includes('linear-gradient'))throw new Error('Hero player scale, translucency or placement is incorrect: '+JSON.stringify(heroPlayer));
             console.log(name+' hero-player '+JSON.stringify(heroPlayer));
             await page.screenshot({path:'screenshots/'+name+'-hero-detail.png'});
             await page.waitForFunction(()=>document.querySelector('#home')?.dataset.heroIndex==='2',null,{timeout:6000});
@@ -193,10 +194,8 @@ jobs:
             const navLinks=await page.locator('#site-navigation a').evaluateAll(links=>links.map(el=>el.getAttribute('href')));
             for(const href of ['#sound','#sessions','#frequency-break','#diary','#places','#about','#contact'])if(navLinks.filter(value=>value===href).length!==1)throw new Error('Header is missing a unique section: '+href);
             const menu=page.locator('#header-nav-toggle');
-            if(width>1050){
-              const headerControls=page.locator('.site-header [data-player-controls="header-idle"]');
-              if(!await headerControls.locator('[data-audio-prev]').isVisible()||!await headerControls.locator('[data-audio-next]').isVisible()||!await headerControls.locator('[data-volume-open]').isVisible()||!await headerControls.locator('[data-audio-seek]').isVisible())throw new Error('The desktop header is missing its complete audio controls');
-            }
+            if(expandedHeader.width>441||expandedHeader.height>86||await menu.getAttribute('aria-expanded')!=='false'||await page.locator('#site-navigation').isVisible()||await page.locator('.site-header .header-actions').isVisible())throw new Error('The unified header must be compact with its navigation and player inside a closed dropdown');
+            await page.screenshot({path:'screenshots/'+name+'-header-closed.png'});
 
             if(width<=800){
               if(await page.locator('.site-header .header-actions').isVisible())throw new Error('The mobile header still shows a player outside its dropdown');
@@ -210,6 +209,9 @@ jobs:
             if(await menu.isVisible()&&await menu.getAttribute('aria-expanded')!==null){
               await menu.click();
               if(!await page.locator('#site-navigation').isVisible()||!await page.locator('.site-header .header-actions').isVisible())throw new Error('Mobile dropdown did not expose navigation and player together');
+              const joined=await page.locator('.site-header').evaluate(header=>{const panel=header.querySelector('#header-panel'),a=header.getBoundingClientRect(),b=panel.getBoundingClientRect();return {gap:b.top-a.bottom,width:Math.abs(b.width-a.width),outer:getComputedStyle(header).borderBottomWidth,inner:getComputedStyle(panel).borderTopWidth};});
+              if(Math.abs(joined.gap)>.5||joined.width>2.1||joined.outer!=='1px'||joined.inner!=='1px')throw new Error('The unified dropdown lost its adjacent double borders: '+JSON.stringify(joined));
+              await page.screenshot({path:'screenshots/'+name+'-header-dropdown.png'});
               await page.keyboard.press('Escape');
               if(await menu.getAttribute('aria-expanded')!=='false'||!await menu.evaluate(el=>document.activeElement===el))throw new Error('Mobile menu Escape did not restore focus');
             }

@@ -36,6 +36,18 @@ try{
   });
   await page.goto(base,{waitUntil:'domcontentloaded'});
   await page.getByRole('button',{name:'Continua senza musica',exact:true}).click();
+  const menu=page.locator('#header-nav-toggle');
+  assert.equal(await menu.getAttribute('aria-expanded'),'false');
+  assert(!await page.locator('#site-navigation').isVisible(),'Navigation leaked outside the dropdown');
+  assert(!await page.locator('.site-header .header-actions').isVisible(),'Player leaked outside the dropdown');
+  const headerBox=await page.locator('.site-header').boundingBox();
+  assert(headerBox.width<=440&&headerBox.height<=86,'Header is not the unified compact component');
+  await menu.click();assert(await page.locator('#site-navigation').isVisible());
+  assert(await page.locator('.site-header [data-audio-play]').isVisible());
+  await page.screenshot({path:`screenshots/player/${engine}-${profile.name}-dropdown.png`});
+  await page.keyboard.press('Escape');
+  assert.equal(await menu.getAttribute('aria-expanded'),'false');
+  assert(await menu.evaluate(el=>document.activeElement===el));
   const title=page.locator('.track-title-link'),cover=page.locator('.sound-invitation>.mini-record');
   const details=page.locator('#track-dialog'),entry=page.locator('#sound-dialog'),play=page.locator('#hero-play');
   assert.equal(await page.locator('#player-mount iframe').count(),0,'Quiet entry loaded a widget');
@@ -129,7 +141,8 @@ try{
   const credit=page.getByRole('link',{name:'DOGO Studio',exact:true});
   assert.equal(await credit.getAttribute('href'),'https://www.dogostudio.it/');
   assert.equal(await credit.getAttribute('target'),'_blank');
-  const geometry=await page.locator('.sound-invitation').boundingBox();assert(geometry.height<=112);
+  const geometry=await page.locator('.sound-invitation').boundingBox();
+  assert(profile.width>1050?geometry.height>=130&&geometry.height<=160&&geometry.width>=600:geometry.height<=112,'Hero player has the wrong device scale');
   assert.deepEqual(errors,[]);
   console.log(JSON.stringify({engine,profile:profile.name,directPlay:true,seek:true,details:true,volume:profile.name==='iphone'?'hidden':'vertical + synchronized',retry:true,height:geometry.height}));
   await page.close();

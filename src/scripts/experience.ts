@@ -274,36 +274,26 @@ const navigation=document.getElementById('site-navigation')!;
 const navigationPanel=document.getElementById('header-panel')!;
 const navToggle=document.getElementById('header-nav-toggle') as HTMLButtonElement;
 const siteHeader=document.querySelector<HTMLElement>('.site-header')!;
-const compactNavigation=matchMedia('(max-width:1050px)');
-let headerMode:'full'|'mobile'|'collapsed'=scrollY>8?'collapsed':compactNavigation.matches?'mobile':'full';
+let headerScrolled=scrollY>8;
 function setNavigation(open:boolean,restoreFocus=false){
- const disclosure=headerMode!=='full',expanded=disclosure&&open;
- navigationPanel.hidden=disclosure&&!expanded;
- navigation.hidden=disclosure&&!expanded;
+ navigationPanel.hidden=!open;
+ navigation.hidden=!open;
  navToggle.hidden=false;
- if(disclosure){
-  navToggle.setAttribute('aria-expanded',String(expanded));
-  navToggle.setAttribute('aria-controls','header-panel');
-  navToggle.setAttribute('aria-label',expanded?'Chiudi menu e player':'Apri menu e player');
- }else{
-  navToggle.removeAttribute('aria-expanded');navToggle.removeAttribute('aria-controls');navToggle.setAttribute('aria-label','Torna all’inizio');
- }
- siteHeader.classList.toggle('navigation-disclosure',disclosure);
- siteHeader.classList.toggle('navigation-open',expanded);
+ navToggle.setAttribute('aria-expanded',String(open));
+ navToggle.setAttribute('aria-controls','header-panel');
+ navToggle.setAttribute('aria-label',open?'Chiudi menu e player':'Apri menu e player');
+ siteHeader.classList.toggle('navigation-open',open);
  if(restoreFocus)navToggle.focus({preventScroll:true});
 }
 function syncNavigationMode(){
  const scrolled=scrollY>8;siteHeader.classList.toggle('is-scrolled',scrolled);
- const mode=scrolled?'collapsed':compactNavigation.matches?'mobile':'full';
- if(mode===headerMode)return;
+ if(scrolled===headerScrolled)return;
  const restoreFocus=!document.querySelector('dialog[open]')&&(navigationPanel.contains(document.activeElement)||document.activeElement===navToggle);
- headerMode=mode;setNavigation(false,restoreFocus);
+ headerScrolled=scrolled;setNavigation(false,restoreFocus);
 }
 navToggle.addEventListener('click',()=>{
- if(headerMode==='full'){const home=document.getElementById('home');home?.scrollIntoView({behavior:reduced?'auto':'smooth'});if(home){if(!home.hasAttribute('tabindex'))home.setAttribute('tabindex','-1');home.focus({preventScroll:true})}return}
  const open=navToggle.getAttribute('aria-expanded')!=='true';setNavigation(open);if(open)navigation.querySelector<HTMLAnchorElement>('a')?.focus({preventScroll:true});
 });
-compactNavigation.addEventListener('change',markNavigation);
 navigationPanel.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach(link=>link.addEventListener('click',()=>{
  setNavigation(false);
  const target=document.querySelector<HTMLElement>(link.hash);
