@@ -21,6 +21,7 @@ if(gate&&root&&canvas&&context){
  const scrollPosition=()=>Math.max(0,Math.min(scrollY,Math.max(0,document.documentElement.scrollHeight-innerHeight)));
  let pointerX=0,pointerY=0,inView=false,initialized=false,lastScrollAt=-Infinity,lastScrollSampleAt=-Infinity,lastScrollY=scrollPosition(),scrollDistance=0;
  let gateTop=0,gateHeight=1,gateWidth=1,characterWidth=0,lastPose='',lastPosePause:boolean|undefined;
+ let idleTimer:ReturnType<typeof setTimeout>|undefined;
  let dialogOpen=document.querySelector('dialog[open]')!==null;
  const blocked=()=>document.hidden||!inView||dialogOpen;
  const staticWorld=()=>motion.matches;
@@ -28,7 +29,7 @@ if(gate&&root&&canvas&&context){
  art.forEach(image=>{image.decode().then(()=>{image.dataset.loaded='true';root!.dataset.worldArtReady=String(art.filter(item=>item.dataset.loaded==='true').length)}).catch(()=>{image.dataset.failed='true'})});
  function syncCharacter(now:number){
   const frozen=staticWorld()||blocked();
-  if(frozen){lastScrollAt=-Infinity;lastScrollSampleAt=-Infinity;scrollDistance=0;lastScrollY=scrollPosition()}
+  if(frozen){clearTimeout(idleTimer);idleTimer=undefined;lastScrollAt=-Infinity;lastScrollSampleAt=-Infinity;scrollDistance=0;lastScrollY=scrollPosition()}
   const walking=!frozen&&now-lastScrollAt<runHold;
   const pose=walking?'run':'groove';
   if(pose!==lastPose){poses.forEach(element=>element.hidden=element.dataset.gatePose!==pose);character.dataset.pose=pose;lastPose=pose;lastPosePause=undefined}
@@ -89,6 +90,8 @@ if(gate&&root&&canvas&&context){
    // Accumulate fractional/one-pixel movement instead of dropping slow gestures.
    if(Math.abs(scrollDistance)>=.5){
     lastScrollAt=now;character.style.setProperty('--gate-facing',scrollDistance>0?'1':'-1');character.dataset.facing=scrollDistance>0?'right':'left';scrollDistance=0;syncCharacter(now);
+    // Do not wait for the next canvas frame to stop on slower devices.
+    clearTimeout(idleTimer);idleTimer=setTimeout(()=>{idleTimer=undefined;syncCharacter(performance.now())},runHold+1);
    }
   }
   resume();
