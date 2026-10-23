@@ -235,7 +235,7 @@ async function start(url:string){
 const soundDialog=document.getElementById('sound-dialog') as HTMLDialogElement;
 const popupPlay=document.getElementById('popup-play') as HTMLButtonElement;
 let playerOpener:HTMLElement|undefined;
-let entryInvitation=location.hash!=='#b-side';
+let entryInvitation=!/^#b-side(?:=|$)/.test(location.hash);
 function openPlayer(){if(!soundDialog.open){playerOpener=document.activeElement instanceof HTMLElement?document.activeElement:undefined;soundDialog.showModal()}}
 function closePlayer(){entryInvitation=false;soundDialog.close()}
 soundDialog.addEventListener('close',()=>{const target=[playerOpener,document.getElementById('dock-open'),heroButton,document.getElementById('header-nav-toggle')].find(element=>element?.isConnected&&element!==document.body&&element.getClientRects().length>0);target?.focus({preventScroll:true})});
@@ -258,7 +258,7 @@ new MutationObserver(()=>{document.getElementById('popup-status')!.textContent=s
 if(invitation.dataset.url){
  let invited=false;
  const entrance=document.querySelector<HTMLElement>('.entrance-refined');
- function invite(){if(invited)return;invited=true;if(entrance)entrance.hidden=true;if(!entryInvitation||location.hash==='#b-side')return;openPlayer();if(session?.playing){enterWithMusic=true;start(invitation.dataset.url!)}}
+ function invite(){if(invited)return;invited=true;if(entrance)entrance.hidden=true;if(!entryInvitation||/^#b-side(?:=|$)/.test(location.hash))return;openPlayer();if(session?.playing){enterWithMusic=true;start(invitation.dataset.url!)}}
  if(reduced)setTimeout(invite,200);
  else if(entrance){
   const onOpeningEnd=(event:AnimationEvent)=>{if(event.target!==entrance)return;entrance.removeEventListener('animationend',onOpeningEnd);invite();};
