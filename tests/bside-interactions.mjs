@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {mkdir,readFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 import {chromium,webkit} from 'playwright';
 
 const engine=process.env.BSIDE_BROWSER||'chromium';
@@ -113,7 +114,15 @@ function inspectWav(bytes){
  const samples=data.length/2,rms=Math.sqrt(energy/samples);
  assert(rms>.001,'Export contains silence');
  assert(clipped/samples<.02,'Export persistently clips');
- return {seconds:data.length/(44100*4),rms,peak};
+ return {seconds:data.length/(44100*4),rms,peak,hash:createHash('sha256').update(data).digest('hex')};
+}
+
+async function exportWav(page){
+ const downloadPromise=page.waitForEvent('download',{timeout:60000});await page.locator('#bside-export').click();
+ const download=await downloadPromise;assert.match(download.suggestedFilename(),/\.wav$/i);
+ const file=await download.path();assert(file,'Rendered WAV is unavailable');
+ const result=inspectWav(await readFile(file));assert(result.seconds>10&&result.seconds<25,'Export duration does not match an eight-bar loop');
+ return result;
 }
 
 let sharedSession,sharedExpected;
@@ -166,9 +175,9 @@ try{
   await filter.press('End');assert.equal(await filter.inputValue(),'100');
   const lights=page.locator('#bside-lights'),wasLit=await lights.getAttribute('aria-pressed');
   await lights.click();assert.notEqual(await lights.getAttribute('aria-pressed'),wasLit);
-  const scoreBefore=await room.locator('[data-bside-step]').evaluateAll(steps=>steps.map(step=>step.getAttribute('aria-pressed')).join(','));
+  const scoreBefore=await room.locator('[data-bside-step]').evaluateAll(steps=>steps.map(step=>step.getAttribute('aria-pressed')+':'+step.style.getPropertyValue('--velocity')).join(','));
   await page.locator('#bside-shuffle').click();
-  assert.notEqual(await room.locator('[data-bside-step]').evaluateAll(steps=>steps.map(step=>step.getAttribute('aria-pressed')).join(',')),scoreBefore,'Variation kept the same score');
+  assert.notEqual(await room.locator('[data-bside-step]').evaluateAll(steps=>steps.map(step=>step.getAttribute('aria-pressed')+':'+step.style.getPropertyValue('--velocity')).join(',')),scoreBefore,'Variation kept the same score');
   await room.locator('[data-bside-style="garage"]').click();await start.click();
   await page.waitForFunction(()=>document.querySelector('#bside-room').dataset.playing==='true');
   await page.waitForFunction(()=>window.bsideAudioTest.started>3&&window.bsideAudioTest.contexts.some(context=>context.state==='running'));
@@ -218,11 +227,26 @@ try{
    if(engine==='chromium'){
     await page.context().grantPermissions(['clipboard-read','clipboard-write']);await page.locator('#bside-share').click();
     sharedSession=await page.evaluate(()=>navigator.clipboard.readText());sharedExpected=saved;assert.match(sharedSession,/#b-side=/,'Share did not include the musical session');
-    const downloadPromise=page.waitForEvent('download',{timeout:60000});await page.locator('#bside-export').click();
-    const download=await downloadPromise;assert.match(download.suggestedFilename(),/\.wav$/i);
-    const file=await download.path();assert(file,'Rendered WAV is unavailable');
-    const wav=inspectWav(await readFile(file));assert(wav.seconds>10&&wav.seconds<25,'Export duration does not match an eight-bar loop');
-    console.log(JSON.stringify({engine,exportWav:wav}));
+    console.log(JSON.stringify({engine,exportWav:await exportWav(page)}));
+    // Isolate the voice so other musical channels cannot hide a silent or broken vocal.
+    const originalMutes={};
+    const vocalButton=room.locator('[data-bside-channel="vocal"]');await expose(vocalButton);
+    for(const channel of channels){
+     const button=room.locator(`[data-bside-channel="${channel}"]`),active=await button.getAttribute('aria-pressed')==='true';
+     originalMutes[channel]=active;
+     if(active!==(channel==='vocal'))await button.click();
+    }
+    const vocalRenders=[];
+    for(const tone of ['air','club','robot']){
+     await page.locator('#bside-vocal').selectOption(tone);
+     const wav=await exportWav(page);
+     assert(wav.rms>.001,`${tone} vocal render is inaudible`);assert(wav.peak<=.9,`${tone} vocal render has an excessive peak`);
+     vocalRenders.push({tone,...wav});
+    }
+    assert.equal(new Set(vocalRenders.map(render=>render.hash)).size,3,'The three vocal characters render the same sound');
+    assert.equal(await page.evaluate(()=>window.bsideAudioTest.speechCalls),0,'Vocal rendering used speech synthesis');
+    for(const channel of channels){const button=room.locator(`[data-bside-channel="${channel}"]`);if((await button.getAttribute('aria-pressed')==='true')!==originalMutes[channel])await button.click()}
+    console.log(JSON.stringify({engine,isolatedVocalRenders:vocalRenders}));
    }
   }
   await page.locator('#bside-close').click();assert(!await room.isVisible());
