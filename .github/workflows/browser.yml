@@ -195,8 +195,7 @@ jobs:
             const navLinks=await page.locator('#site-navigation a').evaluateAll(links=>links.map(el=>el.getAttribute('href')));
             for(const href of ['#sound','#sessions','#frequency-break','#diary','#places','#about','#contact'])if(navLinks.filter(value=>value===href).length!==1)throw new Error('Header is missing a unique section: '+href);
             const menu=page.locator('#header-nav-toggle');
-            const headerScale=width>1050?Math.abs(expandedHeader.width-(width-48))<2:expandedHeader.width<=441;
-            if(!headerScale||expandedHeader.height>86||await menu.getAttribute('aria-expanded')!=='false'||await page.locator('#site-navigation').isVisible()||await page.locator('.site-header .header-actions').isVisible())throw new Error('The header must be wide only on desktop, with navigation and player inside a closed dropdown');
+            if(expandedHeader.width>441||expandedHeader.height>86||await menu.getAttribute('aria-expanded')!=='false'||await page.locator('#site-navigation').isVisible()||await page.locator('.site-header .header-actions').isVisible())throw new Error('The unified header must be compact with its navigation and player inside a closed dropdown');
             await page.screenshot({path:'screenshots/'+name+'-header-closed.png'});
 
             if(width<=800){

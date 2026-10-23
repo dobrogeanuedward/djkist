@@ -41,7 +41,7 @@ try{
   assert(!await page.locator('#site-navigation').isVisible(),'Navigation leaked outside the dropdown');
   assert(!await page.locator('.site-header .header-actions').isVisible(),'Player leaked outside the dropdown');
   const headerBox=await page.locator('.site-header').boundingBox();
-  assert((profile.width>1050?Math.abs(headerBox.width-(profile.width-48))<2:headerBox.width<=440)&&headerBox.height<=86,'Header must expand across desktop only');
+  assert(headerBox.width<=440&&headerBox.height<=86,'Header is not the unified compact component');
   await menu.click();assert(await page.locator('#site-navigation').isVisible());
   assert(await page.locator('.site-header [data-audio-play]').isVisible());
   await page.screenshot({path:`screenshots/player/${engine}-${profile.name}-dropdown.png`});
