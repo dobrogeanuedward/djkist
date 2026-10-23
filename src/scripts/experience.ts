@@ -235,7 +235,7 @@ async function start(url:string){
 const soundDialog=document.getElementById('sound-dialog') as HTMLDialogElement;
 const popupPlay=document.getElementById('popup-play') as HTMLButtonElement;
 let playerOpener:HTMLElement|undefined;
-let entryInvitation=true;
+let entryInvitation=location.hash!=='#b-side';
 function openPlayer(){if(!soundDialog.open){playerOpener=document.activeElement instanceof HTMLElement?document.activeElement:undefined;soundDialog.showModal()}}
 function closePlayer(){entryInvitation=false;soundDialog.close()}
 soundDialog.addEventListener('close',()=>{const target=[playerOpener,document.getElementById('dock-open'),heroButton,document.getElementById('header-nav-toggle')].find(element=>element?.isConnected&&element!==document.body&&element.getClientRects().length>0);target?.focus({preventScroll:true})});

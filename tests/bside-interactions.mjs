@@ -84,6 +84,7 @@ try{
   assert.equal(await page.evaluate(()=>window.bsideAudioTest.contexts.length),0,'Hidden room allocated an AudioContext');
   await entry.scrollIntoViewIfNeeded();await entry.focus();await page.keyboard.press('Enter');
   await room.waitFor({state:'visible'});
+  await room.evaluate(el=>Promise.all(el.getAnimations().map(animation=>animation.finished.catch(()=>{}))));
   assert.equal(await room.getAttribute('data-playing'),'false');
   assert.equal(await page.evaluate(()=>window.bsideAudioTest.contexts.length),0,'Opening room made sound without consent');
   assert(await room.evaluate(el=>el.contains(document.activeElement)),'Focus did not enter the modal');
@@ -91,6 +92,7 @@ try{
   await expectFits(page,profile);
   assert.equal(await room.locator('[data-bside-step]').count(),64,'Sequencer does not provide four sixteen-step channels');
   assert.equal(await room.locator('[data-bside-pad]').count(),4);
+  await room.locator('.bside-pattern>summary').click();
   const firstStep=room.locator('[data-bside-step][data-channel="kick"][data-step="0"]');
   const previous=await firstStep.getAttribute('aria-pressed');
   await firstStep.click();assert.equal(await firstStep.getAttribute('aria-pressed'),String(previous!=='true'));
@@ -119,6 +121,8 @@ try{
   // Reset a flattering tempo/filter position for screenshots, using native keyboard controls.
   await tempo.press('Home');for(let n=0;n<22;n++)await tempo.press('ArrowRight');
   await filter.press('Home');for(let n=0;n<65;n++)await filter.press('ArrowRight');
+  await room.locator('.bside-pattern>summary').click();
+  await room.evaluate(el=>{el.scrollTop=0});
   await page.locator('#bside-close').scrollIntoViewIfNeeded();
   await page.screenshot({path:`screenshots/bside/${engine}-${profile.name}.png`});
   await start.click();
