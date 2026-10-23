@@ -15,6 +15,7 @@ if(room&&entry){
  let playing=false,starting=false,claimedAudio=false,previousHash='',opener:HTMLElement|undefined;
  let shareTimer:ReturnType<typeof setTimeout>|undefined;
  const storageKey='kist:bside:found:v1';
+ try{if(localStorage.getItem(storageKey)==='1')entry.querySelector('.bside-door-copy')!.textContent='Il lato B ti aspetta.'}catch{}
  function message(copy:string){status.textContent=copy}
  function claimAudio(){
   if(claimedAudio)return;
