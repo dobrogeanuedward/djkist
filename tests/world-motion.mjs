@@ -15,6 +15,12 @@ await mkdir('screenshots/motion',{recursive:true});
 const results=[];
 let lastTrace;
 
+async function compactHero(page,label){
+ const geometry=await page.locator('#home .sound-invitation').evaluate(player=>{const box=player.getBoundingClientRect(),hero=player.closest('.hero').getBoundingClientRect(),play=player.querySelector('#hero-play').getBoundingClientRect();return {height:box.height,inside:box.left>=hero.left&&box.right<=hero.right&&box.bottom<=hero.bottom,bottomGap:hero.bottom-box.bottom,padding:parseFloat(getComputedStyle(player.closest('.hero')).paddingBottom),play:play.width};});
+ assert(geometry.height<=112&&geometry.inside&&geometry.bottomGap<=geometry.padding+30&&geometry.play>=44,`${label}: hero player is oversized or misplaced: ${JSON.stringify(geometry)}`);
+ assert.equal(await page.locator('#slides-toggle,[data-video-toggle],#hero-listen').count(),0,`${label}: duplicate hero control remains`);
+}
+
 async function centerScene(page){
  await page.evaluate(()=>document.querySelector('#frequency-break').scrollIntoView({block:'center',behavior:'instant'}));
  await page.waitForFunction(()=>document.querySelector('#kist-world')?.dataset.worldVisible==='true');
@@ -80,6 +86,7 @@ try{
   try{
    await page.goto(base,{waitUntil:'domcontentloaded'});
    await page.getByRole('button',{name:'Continua senza musica',exact:true}).click();
+   await compactHero(page,label);
    await centerScene(page);
    await page.waitForFunction(()=>[...document.querySelectorAll('.gate-character [data-kist-sprite]')].every(sprite=>sprite.dataset.kistReady==='true'));
    assert.equal(await page.locator('.gate-character [data-kist-sprite]').count(),2,`${label}: both poses must be prepared`);
@@ -140,6 +147,7 @@ try{
    verifyTrace(await traceScroll(page),`${label}/reentry`);
 
    await page.setViewportSize({width:profile.height,height:profile.width});
+   await compactHero(page,label+'/rotated');
    await centerScene(page);
    await page.waitForTimeout(180);
    const inside=await page.locator('.gate-character').evaluate(character=>{const box=character.getBoundingClientRect(),scene=character.closest('section').getBoundingClientRect();return box.left>=scene.left-1&&box.right<=scene.right+1&&box.top>=scene.top&&box.bottom<=scene.bottom;});

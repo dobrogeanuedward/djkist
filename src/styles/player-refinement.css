@@ -17,15 +17,33 @@
 .audio-volume::-moz-range-thumb{width:13px;height:13px;border:1px solid #f3ffed;border-radius:50%;background:#d6f5bd}
 .audio-controls :is(button,input):focus-visible{outline:2px solid #a2e6f1;outline-offset:3px}
 .audio-sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
-.hero .sound-invitation{grid-template-columns:52px minmax(0,1fr);gap:10px 14px!important;min-height:0;padding:14px 18px!important}
-.hero .sound-invitation>.mini-record{width:52px;height:52px;align-self:center}
-.hero .sound-invitation>.mini-record img{width:30px;height:30px;left:10px;top:10px}
+.hero{grid-template-rows:auto minmax(230px,1fr) auto;gap:22px}
+.hero .hero-title{align-self:center}
+.hero .hero-foot{align-self:end;gap:8px}
+.hero .hero-foot>.hero-moments{display:flex;justify-content:space-between;align-items:center;gap:12px;width:min(430px,100%);padding-inline:6px;font-size:7px;letter-spacing:.06em;color:#e1dbea}
+.hero .hero-moments .video-caption{font-size:7px;letter-spacing:.06em}
+.hero #hero-sequence-count{margin-left:6px;color:inherit}
+.hero .sound-invitation{grid-template-columns:34px minmax(0,1fr) 132px;gap:0 6px!important;width:min(430px,100%)!important;min-height:0;padding:6px!important;border:1px solid #b7a8e155;border-radius:18px;background:radial-gradient(ellipse at 0 0,#77e5ff1a,transparent 60%),radial-gradient(ellipse at 100% 100%,#ff87c71a,transparent 60%),linear-gradient(110deg,#080e193d,#23102e33)!important;box-shadow:0 8px 26px #0002,inset 0 1px #ffffff0c;backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2)}
+.hero .sound-invitation:before{inset:0;padding:1px;border-radius:inherit;background-image:linear-gradient(110deg,#77e5ffcc,#976cffcc 40%,#ff87c7aa 75%,#c9ff5288)!important;filter:none;clip-path:none;opacity:.9;z-index:0;-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.hero .sound-invitation:after{content:none}
+.hero .sound-invitation>.mini-record{grid-column:1;grid-row:1;width:34px;height:34px;align-self:center;box-shadow:0 0 12px #976cff33,inset 0 0 10px #77e5ff33;mask-image:radial-gradient(circle,transparent 0 2px,#000 3px)}
+.hero .sound-invitation>.mini-record img{width:20px;height:20px;left:6px;top:6px;border-width:1px}
 .hero .sound-invitation .sound-row{display:contents}
-.hero .sound-invitation .hero-track-copy{min-width:0;text-align:left}
-.hero .sound-invitation .sound-row strong{text-align:left;font-size:13px!important}
-.hero .sound-invitation .audio-controls{grid-column:1/-1}
-.hero .sound-invitation #hero-play{width:auto;min-width:108px;min-height:44px;padding:10px 14px;border:1px solid #c9eeb43b;background:#d3eebc0a}
-.hero .sound-invitation #hero-play:hover{background:#d3eebc15}
+.hero .sound-invitation .hero-track-copy{grid-column:2;grid-row:1;min-width:0;text-align:left}
+.hero .sound-invitation .sound-row strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;white-space:normal;max-height:34px;text-align:left;font-size:12px!important;line-height:1.35;color:#faf7ff;text-shadow:0 1px 6px #0005}
+.hero .sound-invitation .audio-controls{display:contents}
+.hero .sound-invitation .audio-controls-row{grid-column:3;grid-row:1;gap:0}
+.hero .sound-invitation #hero-play{width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border:1px solid #d2c2ff66;border-radius:50%;background:linear-gradient(135deg,#246273e6,#684ca2e6 60%,#a24b81e6);box-shadow:none}
+.hero .sound-invitation #hero-play .ui-icon{color:#fff}
+.hero .sound-invitation #hero-play .mini-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.hero .sound-invitation #hero-play:hover{filter:brightness(1.15);box-shadow:0 0 14px #976cff33;transform:none}
+.hero .sound-invitation .audio-volume-row{grid-column:1/-1;grid-row:2;grid-template-columns:44px minmax(0,1fr) 28px;gap:6px;width:100%;max-width:none;margin:0;padding-right:8px;color:#f1eafa}
+.hero .audio-volume-row output{color:#e1d7ed;font-size:9px}
+.hero .audio-volume::-webkit-slider-runnable-track{height:3px;background:linear-gradient(90deg,#77e5ff,#976cff 45%,#ff87c7 76%,#c9ff52) left/var(--volume-progress) 100% no-repeat,#ffffff30}
+.hero .audio-volume::-webkit-slider-thumb{background:#f4eaff;border-color:#fff;box-shadow:0 0 7px #976cff77}
+.hero .audio-volume::-moz-range-progress{background:linear-gradient(90deg,#77e5ff,#976cff 45%,#ff87c7 76%,#c9ff52)}
+.hero .audio-volume::-moz-range-thumb{background:#f4eaff;border-color:#fff}
+.hero .hero-media:after,.hero .hero-media:has(.hero-video):after{background:linear-gradient(180deg,#05071044,transparent 28%,#05071008 56%,#05071085)}
 .site-header:is(.is-scrolled,.navigation-open) .listen-social{display:grid;gap:6px;padding:8px;border:1px solid #d6c6ff40;border-radius:14px;background:#03071177}
 .site-header:is(.is-scrolled,.navigation-open) .header-music{grid-template-columns:42px minmax(0,1fr);padding:0;border:0;background:transparent;box-shadow:none}
 .site-header:is(.is-scrolled,.navigation-open) .header-listen-icon{display:none}
@@ -54,6 +72,10 @@
  .site-header:not(.is-scrolled) .audio-dock.in-header #dock-toggle{order:0;width:44px;height:44px;min-width:44px;min-height:44px;border-radius:12px}
 }
 @media(max-width:1050px){
+ .hero{grid-template-rows:minmax(150px,1fr) auto;gap:20px;min-height:100svh;padding:calc(104px + env(safe-area-inset-top)) 20px max(18px,env(safe-area-inset-bottom))}
+ .hero .hero-top{display:none}
+ .hero .hero-title{align-self:center;margin:0;padding:0}
+ .hero .hero-title h1{width:88%;max-width:480px}
  .site-header:not(.is-scrolled){--header-logo-width:106px;min-height:84px;padding:6px 14px;grid-template-columns:minmax(0,1fr);grid-template-rows:auto;grid-template-areas:'logo';gap:0}
  .site-header:not(.is-scrolled) .header-nav-toggle{min-height:64px}
  .site-header:not(.is-scrolled) .header-panel{position:absolute;inset:auto;top:calc(100% + 1px);left:50%;display:grid;transform:translateX(-50%);width:calc(100% + 2px);max-height:calc(100dvh - 108px - env(safe-area-inset-top) - env(safe-area-inset-bottom));padding:14px;gap:14px}
@@ -63,18 +85,6 @@
  .site-header.navigation-open .audio-controls{display:block}
 }
 @media(max-width:800px){
- .hero{grid-template-rows:minmax(150px,1fr) auto auto;gap:22px;min-height:100svh;padding:calc(104px + env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom))}
- .hero .hero-top{display:none}
- .hero .hero-title{align-self:center;margin:0;padding:0}
- .hero .hero-title h1{width:88%;max-width:480px}
- .hero .hero-bottom{display:block;width:min(368px,100%)}
- .hero .hero-listen{display:none}
- .hero .sound-invitation{width:100%!important;border-radius:18px;padding:12px 14px!important}
- .hero .hero-foot{gap:0}
- .hero .hero-foot>span{display:none}
- .hero .hero-foot>.slideshow-controls{gap:10px;min-height:44px}
- .hero .hero-foot .video-caption{font-size:7px;letter-spacing:.06em}
- .hero .hero-media:after,.hero .hero-media:has(.hero-video):after{background:linear-gradient(180deg,#05071055,transparent 30%,#05071035 58%,#050710b8)}
  .sound-section.section{padding-block:76px 88px}
  main>#sessions.live-sessions-library{padding-block:72px 88px}
  #sessions .live-library-layout{row-gap:30px}
@@ -88,11 +98,12 @@
 }
 @media(max-width:380px){
  .hero{padding-inline:18px;gap:18px}
- .hero .sound-invitation{grid-template-columns:44px minmax(0,1fr);gap:8px 10px!important;padding:10px 12px!important}
- .hero .sound-invitation>.mini-record{width:44px;height:44px}
- .hero .sound-invitation>.mini-record img{width:26px;height:26px;left:8px;top:8px}
- .audio-controls-row{gap:8px}
- .hero .sound-invitation #hero-play{min-width:96px;font-size:13px!important}
+ .hero .hero-moments{gap:8px!important;font-size:6px!important}
+ .hero .hero-moments .video-caption{font-size:6px}
+}
+@media(max-width:1050px) and (max-height:520px) and (orientation:landscape){
+ .hero{grid-template-rows:minmax(90px,1fr) auto;gap:12px;padding-top:calc(94px + env(safe-area-inset-top))}
+ .hero .hero-title h1{width:min(60vw,340px)}
 }
 @media(forced-colors:active){
  .audio-controls .audio-transport-play,.hero .sound-invitation #hero-play{background:ButtonFace;color:ButtonText;border:1px solid ButtonText}

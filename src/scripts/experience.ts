@@ -157,14 +157,13 @@ function closePlayer(){entryInvitation=false;soundDialog.close()}
 soundDialog.addEventListener('close',()=>{const target=[playerOpener,document.getElementById('dock-open'),heroButton,document.getElementById('header-nav-toggle')].find(element=>element?.isConnected&&element!==document.body&&element.getClientRects().length>0);target?.focus({preventScroll:true})});
 function heroTransport(){if(widget&&!connecting){playing?widget.pause():widget.play()}else openPlayer()}
 heroButton?.addEventListener('click',heroTransport);
-document.getElementById('hero-listen')?.addEventListener('click',heroTransport);
 document.getElementById('player-dismiss')?.addEventListener('click',closePlayer);
 document.getElementById('popup-quiet')?.addEventListener('click',()=>{widget?.pause();closePlayer()});
 soundDialog.addEventListener('click',e=>{if(e.target===soundDialog)closePlayer()});
 popupPlay.addEventListener('click',()=>{enterWithMusic=entryInvitation||!playing;if(entryInvitation){widget?widget.play():start(invitation.dataset.url||'');return}if(widget){playing?widget.pause():widget.play()}else start(invitation.dataset.url||'')});
 const musicHeader=document.getElementById('header-music') as HTMLButtonElement;
 musicHeader.addEventListener('click',openPlayer);
-window.addEventListener('kist:audio',e=>{const active=(e as CustomEvent<{playing:boolean}>).detail.playing;heroButton.querySelector('.mini-label')!.textContent=active?'Pausa':'Riproduci';heroButton.querySelector('.ui-icon')!.className='ui-icon '+(active?'icon-pause':'icon-play');heroButton.setAttribute('aria-label',active?'Metti in pausa il set di KIST':'Riproduci il set di KIST');const hero=document.getElementById('hero-listen')!;hero.querySelector('span')!.textContent=active?'Pausa':'Riproduci';hero.setAttribute('aria-label',active?'Metti in pausa la musica':'Apri il player di KIST')});
+window.addEventListener('kist:audio',e=>{const active=(e as CustomEvent<{playing:boolean}>).detail.playing;heroButton.querySelector('.mini-label')!.textContent=active?'Pausa':'Riproduci';heroButton.querySelector('.ui-icon')!.className='ui-icon '+(active?'icon-pause':'icon-play');heroButton.setAttribute('aria-label',active?'Metti in pausa il set di KIST':'Riproduci il set di KIST')});
 let enterWithMusic=false;
 window.addEventListener('kist:audio',e=>{const active=(e as CustomEvent<{playing:boolean}>).detail.playing;musicHeader.setAttribute('aria-pressed',String(active));musicHeader.setAttribute('aria-label',active?'Apri il player, musica in ascolto':'Attiva la musica');document.body.classList.toggle('sound-active',active);if(active&&enterWithMusic){enterWithMusic=false;closePlayer()}});
 document.getElementById('dock-open')?.addEventListener('click',openPlayer);
@@ -253,12 +252,11 @@ markNavigation();
 document.getElementById('quiet')?.addEventListener('click',()=>{widget?.pause();status.textContent='Continua a esplorare. Il suono può aspettare.';document.getElementById('sound')?.scrollIntoView({behavior:reduced?'auto':'smooth'})});
 
 const slides=Array.from(document.querySelectorAll<HTMLElement>('.hero-slide'));
-const slideToggle=document.getElementById('slides-toggle');
-let slideIndex=0,slidePaused=reduced,slideTimer:ReturnType<typeof setTimeout>|undefined;
+const slideMotion=matchMedia('(prefers-reduced-motion:reduce)');
+let slideIndex=0,slidePaused=slideMotion.matches,slideTimer:ReturnType<typeof setTimeout>|undefined;
 function scheduleSlide(){clearTimeout(slideTimer);if(slides.length<2||slidePaused||document.hidden)return;slideTimer=setTimeout(()=>{const next=(slideIndex+1)%slides.length;const image=slides[next].querySelector('img')!;image.loading='eager';image.decode().catch(()=>{}).then(()=>{slides[slideIndex].classList.remove('active');slideIndex=next;slides[slideIndex].classList.add('active');const count=document.getElementById('slide-count');if(count)count.textContent=String(slideIndex+1).padStart(2,'0')+' / '+String(slides.length).padStart(2,'0');scheduleSlide()})},6500)}
-if(slides.length>1)slideToggle?.addEventListener('click',()=>{slidePaused=!slidePaused;slideToggle.setAttribute('aria-pressed',String(slidePaused));slideToggle.setAttribute('aria-label',slidePaused?'Riprendi lo slideshow':'Metti in pausa lo slideshow');slideToggle.querySelector('.ui-icon')?.setAttribute('class','ui-icon '+(slidePaused?'icon-play':'icon-pause'));scheduleSlide()});
+slideMotion.addEventListener('change',()=>{slidePaused=slideMotion.matches;scheduleSlide()});
 document.addEventListener('visibilitychange',scheduleSlide);
-if(reduced&&slides.length>1&&slideToggle){slideToggle.setAttribute('aria-pressed','true');slideToggle.querySelector('.ui-icon')?.setAttribute('class','ui-icon icon-play');slideToggle.setAttribute('aria-label','Riprendi lo slideshow')}
 scheduleSlide();
 
 document.querySelectorAll<HTMLElement>('.night-viewer').forEach(viewer=>{

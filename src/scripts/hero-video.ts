@@ -1,25 +1,21 @@
 type HeroMoment={type:'video'|'photo';duration:number;desktop:string;mobile?:string;desktopPoster?:string;mobilePoster?:string;desktopPosition?:string;mobilePosition?:string};
 const video=document.querySelector<HTMLVideoElement>('#hero-video');
-const button=document.querySelector<HTMLButtonElement>('#slides-toggle[data-video-toggle]');
 const photo=document.querySelector<HTMLImageElement>('#hero-sequence-photo');
 const hero=video?.closest<HTMLElement>('.hero');
-if(video&&button&&photo&&hero){
+if(video&&photo&&hero){
  const mobile=matchMedia('(max-width:700px)');
  const motion=matchMedia('(prefers-reduced-motion:reduce)');
  let sequence:HeroMoment[]=[];
  try{sequence=JSON.parse(video.dataset.heroSequence||'[]')}catch{}
  if(!sequence.length)sequence=[{type:'video',duration:5000,desktop:video.dataset.desktop||'',mobile:video.dataset.mobile,desktopPoster:video.dataset.desktopPoster,mobilePoster:video.dataset.mobilePoster}];
  let index=0,remaining=sequence[0].duration,startedAt=0,timer:ReturnType<typeof setTimeout>|undefined;
- let clockRunning=false,userPaused=false,explicitMotion=false,inView=true,photoRequest=0;
+ let clockRunning=false,inView=true,photoRequest=0;
  const blocked=()=>document.hidden||!inView||!!document.querySelector('dialog[open]');
- const mayRun=()=>!blocked()&&!userPaused&&(!motion.matches||explicitMotion);
+ const mayRun=()=>!blocked()&&!motion.matches;
  const variant=()=>mobile.matches?'mobile':'desktop';
  const asset=(moment:HeroMoment)=>mobile.matches?(moment.mobile||moment.desktop):moment.desktop;
  function controls(){
   const paused=!mayRun();
-  button!.setAttribute('aria-pressed',String(paused));
-  button!.setAttribute('aria-label',paused?'Riprendi la sequenza visiva':'Metti in pausa la sequenza visiva');
-  button!.querySelector('.ui-icon')!.className='ui-icon '+(paused?'icon-play':'icon-pause');
   video!.dataset.videoState=video!.error?'poster':video!.paused?'paused':'playing';
   hero!.dataset.heroPaused=String(paused);
  }
@@ -52,7 +48,7 @@ if(video&&button&&photo&&hero){
   const poster=mobile.matches?(moment.mobilePoster||moment.desktopPoster):moment.desktopPoster;
   video!.style.objectPosition=(mobile.matches?moment.mobilePosition:moment.desktopPosition)||'center';
   video!.poster=poster||'';video!.muted=true;video!.defaultMuted=true;
-  video!.preload=motion.matches&&!explicitMotion?'none':'metadata';
+  video!.preload=motion.matches?'none':'metadata';
   if(video!.getAttribute('src')!==next){
    video!.pause();video!.dataset.videoReady='false';video!.src=next;video!.load();
   }else if(restart){try{video!.currentTime=0}catch{}}
@@ -78,10 +74,6 @@ if(video&&button&&photo&&hero){
  function preloadPhotos(){
   sequence.filter(moment=>moment.type==='photo').forEach(moment=>{const image=new Image();image.src=asset(moment);image.decode().catch(()=>{})});
  }
- button.addEventListener('click',()=>{
-  if(userPaused||(motion.matches&&!explicitMotion)){userPaused=false;explicitMotion=true}else userPaused=true;
-  sync();
- });
  video.addEventListener('playing',()=>{if(!mayRun()){video.pause();controls();return;}revealVideo();controls()});
  video.addEventListener('pause',controls);
  video.addEventListener('loadeddata',()=>{video.dataset.videoReady='true';sync()});
@@ -93,10 +85,9 @@ if(video&&button&&photo&&hero){
    const current=Number(video.dataset.heroVideoIndex);
    source(sequence[current]?.type==='video'?current:sequence.findIndex(moment=>moment.type==='video'));
   }else source(index);
-  if(!motion.matches||explicitMotion)preloadPhotos();sync();
+  if(!motion.matches)preloadPhotos();sync();
  });
  motion.addEventListener('change',()=>{
-  explicitMotion=false;
   if(motion.matches){
    stopClock();index=0;remaining=sequence[0].duration;photoRequest++;activate();
    video.pause();try{video.currentTime=0}catch{}
@@ -108,3 +99,4 @@ if(video&&button&&photo&&hero){
  document.querySelectorAll('dialog').forEach(dialog=>observer.observe(dialog,{attributes:true,attributeFilter:['open']}));
  source(sequence.findIndex(moment=>moment.type==='video'));activate();if(!motion.matches)preloadPhotos();
 }
+

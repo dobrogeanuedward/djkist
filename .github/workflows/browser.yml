@@ -164,15 +164,11 @@ jobs:
             await page.waitForFunction(time=>{const video=document.querySelector('#hero-video');return !video.paused&&Math.abs(video.currentTime-time)>.05;},videoStart,{timeout:6000});
             await page.waitForFunction(()=>document.querySelector('#home')?.dataset.heroIndex==='1',null,{timeout:6000});
             await page.waitForFunction(()=>{const hero=document.querySelector('#home'),video=document.querySelector('#hero-video');return !hero.classList.contains('is-photo')&&video.dataset.heroIndex==='1'&&video.dataset.heroVideoIndex==='1'&&!video.paused&&video.readyState>=2;},null,{timeout:6000});
-            await page.locator('#slides-toggle').click();
-            await page.waitForFunction(()=>document.querySelector('#hero-video')?.paused&&document.querySelector('#home')?.dataset.heroPaused==='true');
-            const pausedHero=await heroVideo.evaluate(video=>({time:video.currentTime,index:video.dataset.heroIndex,heroIndex:document.querySelector('#home').dataset.heroIndex}));
-            if(await page.locator('#slides-toggle').getAttribute('aria-pressed')!=='true')throw new Error('The hero pause control does not expose its state');
-            // Exceed the whole current moment: a paused video must not conceal a running sequence timer.
-            await page.waitForTimeout(heroSequence[Number(pausedHero.index)].duration+250);
-            if(await heroVideo.evaluate(video=>video.currentTime)!==pausedHero.time||await heroVideo.getAttribute('data-hero-index')!==pausedHero.index||await page.locator('#home').getAttribute('data-hero-index')!==pausedHero.heroIndex)throw new Error('Hero pause did not freeze both video playback and the sequence');
-            await page.locator('#slides-toggle').click();
-            await page.waitForFunction(time=>{const video=document.querySelector('#hero-video');return !video.paused&&Math.abs(video.currentTime-time)>.05;},pausedHero.time,{timeout:6000});
+            if(await page.locator('#slides-toggle,[data-video-toggle],#hero-listen').count())throw new Error('The removed hero controls are still present');
+            const heroPlayer=await page.locator('#home .sound-invitation').evaluate(player=>{const hero=player.closest('.hero'),box=player.getBoundingClientRect(),scene=hero.getBoundingClientRect(),style=getComputedStyle(player),rim=getComputedStyle(player,'::before'),play=player.querySelector('#hero-play').getBoundingClientRect();return {height:box.height,width:box.width,inFooter:!!player.closest('.hero-foot'),bottomGap:scene.bottom-box.bottom,paddingBottom:parseFloat(getComputedStyle(hero).paddingBottom),inside:box.left>=scene.left&&box.right<=scene.right&&box.bottom<=scene.bottom,background:style.backgroundImage,rim:rim.backgroundImage,playWidth:play.width,playHeight:play.height};});
+            if(heroPlayer.height>112||!heroPlayer.inFooter||!heroPlayer.inside||heroPlayer.bottomGap>heroPlayer.paddingBottom+30||heroPlayer.playWidth<44||heroPlayer.playHeight<44||!heroPlayer.background.includes('rgba(')||!heroPlayer.rim.includes('linear-gradient'))throw new Error('Hero player is not compact, translucent and placed at the bottom: '+JSON.stringify(heroPlayer));
+            console.log(name+' hero-player '+JSON.stringify(heroPlayer));
+            await page.screenshot({path:'screenshots/'+name+'-hero-detail.png'});
             await page.waitForFunction(()=>document.querySelector('#home')?.dataset.heroIndex==='2',null,{timeout:6000});
             const expectedMural=width<=700?heroSequence[2].mobile:heroSequence[2].desktop;
             await page.waitForFunction(source=>{const image=document.querySelector('#hero-sequence-photo'),hero=document.querySelector('#home');return hero.dataset.heroIndex==='2'&&hero.classList.contains('is-photo')&&image.complete&&image.naturalWidth>0&&new URL(image.currentSrc||image.src).pathname===source&&Number(getComputedStyle(image).opacity)>.95;},expectedMural,{timeout:6000});
@@ -190,7 +186,7 @@ jobs:
             await page.waitForFunction(()=>!document.querySelector('.site-header')?.classList.contains('is-scrolled'));
             await page.waitForTimeout(350);
             const expandedHeader=await page.locator('.site-header').evaluate(header=>{const box=header.getBoundingClientRect(),brand=header.querySelector('#header-nav-toggle img').getBoundingClientRect(),axis=document.documentElement.clientWidth/2;return {height:box.height,width:box.width,centered:Math.abs(brand.left+brand.width/2-axis)<2};});
-            const centeredHero=await page.locator('#home').evaluate(hero=>{const box=hero.getBoundingClientRect(),axis=box.left+box.width/2;return ['.hero-title h1','.hero-bottom'].every(selector=>{const item=hero.querySelector(selector).getBoundingClientRect();return Math.abs(item.left+item.width/2-axis)<2;});});
+            const centeredHero=await page.locator('#home').evaluate(hero=>{const box=hero.getBoundingClientRect(),axis=box.left+box.width/2;return ['.hero-title h1','.hero-foot .sound-invitation'].every(selector=>{const item=hero.querySelector(selector).getBoundingClientRect();return Math.abs(item.left+item.width/2-axis)<2;});});
             if(!expandedHeader.centered||!centeredHero)throw new Error('Header logo or hero content lost the central axis');
             const navLinks=await page.locator('#site-navigation a').evaluateAll(links=>links.map(el=>el.getAttribute('href')));
             for(const href of ['#sound','#sessions','#frequency-break','#diary','#places','#about','#contact'])if(navLinks.filter(value=>value===href).length!==1)throw new Error('Header is missing a unique section: '+href);

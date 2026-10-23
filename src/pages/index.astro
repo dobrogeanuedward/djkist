@@ -111,15 +111,14 @@ const structuredData = {
 </div>
 <div class="hero-top"><span>DJ / SELECTOR</span><span>BOLOGNA · IT</span></div>
 <div class="hero-title"><span class="small">You're in my space.</span><h1><img src="/media/kist-wordmark-v2.svg" alt="DJ KIST — Benedetta Pasquariello, DJ e selector a Bologna"/></h1></div>
-<div class="hero-bottom"><button class="hero-listen" id="hero-listen" aria-label="Apri il player di KIST"><span>Riproduci</span><i aria-hidden="true"></i></button>
+<div class="hero-foot">
 <div class="sound-invitation" data-url={featured?.url || artist.soundcloud} data-mixes={JSON.stringify(mixes)}>
 <div class="mini-record" aria-hidden="true"><img src="/media/kist-fifteen-frames-clean-v2.webp" alt=""/></div>
 <div class="sound-caption"><span>THIS SPACE SOUNDS BETTER WITH MUSIC</span><span>01 / SOUND ON</span></div>
 <div class="sound-row"><div class="hero-track-copy"><strong>{featured?.title || 'La prossima selezione'}</strong><p id="audio-status" role="status">{featured || artist.soundcloud ? 'Entra con il suono.' : 'Il primo ascolto arriva presto.'}</p></div><AudioControls placement="hero"><button class="play" id="hero-play" aria-label="Riproduci il set di KIST" disabled={!featured && !artist.soundcloud}><span class="ui-icon icon-play" aria-hidden="true"></span><span class="mini-label">Riproduci</span></button></AudioControls><button id="quiet" class="quiet">Per ora, in silenzio</button></div>
-<canvas id="sound-prism" data-prism aria-hidden="true"></canvas>
 </div>
+<div class="hero-moments" aria-hidden="true">{artist.heroVideo ? <span class="video-caption">BOLOGNA / LIVE MOMENTS <span id="hero-sequence-count">01 / 04</span></span> : heroSlides.length>1 && <span id="slide-count">01 / {String(heroSlides.length).padStart(2,'0')}</span>}<span>PERSONAL FREQUENCY / 2026</span></div>
 </div>
-<div class="hero-foot">{artist.heroVideo ? <div class="slideshow-controls"><button id="slides-toggle" data-video-toggle aria-label="Metti in pausa la sequenza visiva" aria-pressed="false"><span class="ui-icon icon-pause" aria-hidden="true"></span></button><span class="video-caption">BOLOGNA / LIVE MOMENTS <span id="hero-sequence-count" aria-hidden="true">01 / 04</span></span></div> : heroSlides.length>1 && <div class="slideshow-controls"><button id="slides-toggle" aria-label="Metti in pausa lo slideshow" aria-pressed="false"><span class="ui-icon icon-pause" aria-hidden="true"></span></button><span id="slide-count">01 / {String(heroSlides.length).padStart(2,'0')}</span></div>}<span>SCROLL TO FEEL MORE</span><span>PERSONAL FREQUENCY / 2026</span></div>
 </section>
 <div class="ticker" aria-hidden="true"><div>FEEL THE ROOM. FIND YOUR FREQUENCY. KIST. FEEL THE ROOM. FIND YOUR FREQUENCY. KIST.</div></div>
 <section class="sound-section section" id="sound">
