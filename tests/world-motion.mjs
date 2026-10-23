@@ -28,7 +28,9 @@ async function traceScroll(page,delta=1,interval=55,count=12){
  lastTrace=await page.evaluate(({delta,interval,count})=>new Promise(resolve=>{
   const character=document.querySelector('.gate-character');
   const sprite=character.querySelector('[data-gate-pose="run"] [data-kist-sprite]');
-  const start=performance.now(),startY=scrollY,route=Number(character.dataset.routeProgress),samples=[],poseChanges=[],frameChanges=[];
+  const start=performance.now(),startY=scrollY,route=Number(character.dataset.routeProgress),samples=[],poseChanges=[],frameChanges=[],movements=[];
+  let sampledY=scrollY;
+  const movementTimer=setInterval(()=>{if(scrollY!==sampledY){sampledY=scrollY;movements.push({time:performance.now()-start,y:sampledY});}},16);
   const observer=new MutationObserver(()=>poseChanges.push({time:performance.now()-start,pose:character.dataset.pose}));
   observer.observe(character,{attributes:true,attributeFilter:['data-pose']});
   const frames=new MutationObserver(()=>frameChanges.push({time:performance.now()-start,pose:character.dataset.pose,frame:sprite.dataset.frame}));
@@ -38,8 +40,8 @@ async function traceScroll(page,delta=1,interval=55,count=12){
   function sample(){
    const time=performance.now()-start;
    samples.push({time,pose:character.dataset.pose,frame:sprite.dataset.frame,y:scrollY});
-   if(time<endedAt+250)requestAnimationFrame(sample);
-   else{observer.disconnect();frames.disconnect();resolve({samples,poseChanges,frameChanges,endedAt,startY,endY:scrollY,route,endRoute:Number(character.dataset.routeProgress),facing:character.dataset.facing});}
+   if(time<Math.max(endedAt,movements.at(-1)?.time||0)+250&&time<5000)requestAnimationFrame(sample);
+   else{observer.disconnect();frames.disconnect();clearInterval(movementTimer);resolve({samples,poseChanges,frameChanges,movements,endedAt,startY,endY:scrollY,route,endRoute:Number(character.dataset.routeProgress),facing:character.dataset.facing});}
   }
   requestAnimationFrame(sample);
  }),{delta,interval,count});
@@ -56,8 +58,9 @@ function verifyTrace(trace,label,direction=1){
  assert(new Set(runFrames.map(s=>s.frame)).size>=3,`${label}: run sprite froze despite page movement`);
  // Measure the DOM transition, not the next sampled frame: Safari/Firefox may
  // composite less often on a busy device even while the stop timer fires on time.
- const stopped=trace.poseChanges.find(s=>s.time>trace.endedAt&&s.pose==='groove');
- assert(stopped&&stopped.time-trace.endedAt<220,`${label}: character kept running after scroll stopped`);
+ const lastMovement=trace.movements.at(-1)?.time||trace.endedAt;
+ const stopped=trace.poseChanges.find(s=>s.time>lastMovement&&s.pose==='groove');
+ assert(stopped&&stopped.time-lastMovement<220,`${label}: character kept running after scroll stopped`);
  assert.equal(trace.samples.at(-1).pose,'groove',`${label}: final pose must be idle`);
  assert.equal(trace.facing,direction>0?'right':'left',`${label}: wrong facing direction`);
 }
@@ -154,7 +157,7 @@ try{
    verifyTrace(await traceScroll(page,-1),`${label}/resume-after-reduced-motion`,-1);
    assert.deepEqual(errors,[],`${label}: JavaScript errors`);
 
-   results.push({profile:label,status:'passed',scrollCases:10,stopTimesMs:traces.map(trace=>Math.round(trace.poseChanges.find(s=>s.time>trace.endedAt&&s.pose==='groove').time-trace.endedAt))});
+   results.push({profile:label,status:'passed',scrollCases:10,stopTimesMs:traces.map(trace=>{const lastMovement=trace.movements.at(-1)?.time||trace.endedAt;return Math.round(trace.poseChanges.find(s=>s.time>lastMovement&&s.pose==='groove').time-lastMovement);})});
    await page.screenshot({path:`screenshots/motion/${engine}-${profile.name}.png`});
    console.log(JSON.stringify(results.at(-1)));
   }catch(error){

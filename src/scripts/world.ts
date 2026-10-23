@@ -90,16 +90,16 @@ if(gate&&root&&canvas&&context){
    // Accumulate fractional/one-pixel movement instead of dropping slow gestures.
    if(Math.abs(scrollDistance)>=.5){
     lastScrollAt=now;character.style.setProperty('--gate-facing',scrollDistance>0?'1':'-1');character.dataset.facing=scrollDistance>0?'right':'left';scrollDistance=0;syncCharacter(now);
-    // Do not wait for the next canvas frame to stop on slower devices.
-    clearTimeout(idleTimer);idleTimer=setTimeout(()=>{
-     idleTimer=undefined;
-     // Safari can coalesce scroll events while its compositor keeps moving.
-     // Consult the real page position before declaring the gesture finished.
-     if(scrollPosition()!==lastScrollY)onScroll();else syncCharacter(performance.now());
-    },runHold+1);
+    if(!idleTimer)idleTimer=setTimeout(pollScroll,32);
    }
   }
   resume();
+ }
+ // While moving, sample independently of rendering and coalesced scroll events.
+ // The clock stops as soon as the page stops, including Safari compositor scrolls.
+ function pollScroll(){
+  idleTimer=undefined;onScroll();const now=performance.now();syncCharacter(now);
+  if(!idleTimer&&!blocked()&&!staticWorld()&&now-lastScrollAt<runHold)idleTimer=setTimeout(pollScroll,32);
  }
  window.addEventListener('scroll',onScroll,{passive:true});
  window.addEventListener('resize',measure,{passive:true});
