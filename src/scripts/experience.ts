@@ -173,7 +173,7 @@ new MutationObserver(()=>{document.getElementById('popup-status')!.textContent=s
 if(invitation.dataset.url){
  let invited=false;
  const entrance=document.querySelector<HTMLElement>('.entrance-refined');
- function invite(){if(invited)return;invited=true;if(!entryInvitation)return;openPlayer();if(session?.playing){enterWithMusic=true;start(invitation.dataset.url!)}}
+ function invite(){if(invited)return;invited=true;if(entrance)entrance.hidden=true;if(!entryInvitation)return;openPlayer();if(session?.playing){enterWithMusic=true;start(invitation.dataset.url!)}}
  if(reduced)setTimeout(invite,200);
  else if(entrance){
   const onOpeningEnd=(event:AnimationEvent)=>{if(event.target!==entrance)return;entrance.removeEventListener('animationend',onOpeningEnd);invite();};

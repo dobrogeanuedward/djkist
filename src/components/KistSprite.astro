@@ -42,6 +42,7 @@ const safeSpeed=Math.max(.5,Math.min(3,Number(speed)||1));
       let index=0,timer:ReturnType<typeof setTimeout>|undefined,inView=false,loaded=false,loading=false,dead=false,paused=false;
       function render(){const frame=seq.frames[index];el.style.backgroundPosition=`${(frame%4)/3*100}% ${Math.floor(frame/4)*100}%`;el.dataset.frame=String(frame);}
       function stop(){clearTimeout(timer);timer=undefined;}
+      function visible(){const rect=el.getBoundingClientRect();return rect.width>0&&rect.height>0&&rect.bottom>-80&&rect.top<innerHeight+80&&rect.right>-80&&rect.left<innerWidth+80;}
       function tick(){
         stop();
         if(dead||!loaded||!inView||document.hidden||motion.matches||paused)return;
@@ -57,15 +58,15 @@ const safeSpeed=Math.max(.5,Math.min(3,Number(speed)||1));
           loaded=true;el.style.backgroundImage=`url("${im.src}")`;el.style.backgroundSize='400% 200%';el.dataset.kistReady='true';render();tick();
         }).catch(()=>{loading=false;el.dataset.kistError='true';});
       }
-      const observer=new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;if(inView){if(!loaded)load();else tick();}else stop();},{rootMargin:'80px'});
+      const observer=new IntersectionObserver(()=>{inView=visible();if(inView){if(!loaded)load();else tick();}else stop();},{rootMargin:'80px'});
       // Prepare alternate poses before the section arrives, including hidden ones.
       // Visibility still controls playback, so preloading never starts an offscreen timer.
       const preloadRoot=el.dataset.preload==='true'?el.closest('section'):null;
       const preloadObserver:IntersectionObserver|null=preloadRoot?new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){load();preloadObserver?.disconnect();}},{rootMargin:'800px'}):null;
       if(preloadRoot)preloadObserver?.observe(preloadRoot);
-      function updateMotion(){if(motion.matches){stop();index=0;render();}else tick();}
-      function updateVisibility(){document.hidden?stop():tick();}
-      function updatePause(event:Event){paused=!!(event as CustomEvent<{paused:boolean}>).detail.paused;paused?stop():tick();}
+      function updateMotion(){if(motion.matches){stop();index=0;render();}else{inView=visible();tick();}}
+      function updateVisibility(){if(document.hidden)stop();else{inView=visible();tick();}}
+      function updatePause(event:Event){paused=!!(event as CustomEvent<{paused:boolean}>).detail.paused;if(paused)stop();else{inView=visible();tick();}}
       el.addEventListener('kist:pause',updatePause);
       observer.observe(el);
       motion.addEventListener('change',updateMotion);

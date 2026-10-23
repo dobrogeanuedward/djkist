@@ -9,7 +9,7 @@ if(gate&&root&&canvas&&context){
  const motion=matchMedia('(prefers-reduced-motion:reduce)');
  // One scroll clock works with touch inertia, wheels, trackpads and keyboards.
  // Keep a complete 90ms running frame visible without a long idle tail.
- const runHold=140;
+ const runHold=120;
  const art=Array.from(root.querySelectorAll<HTMLImageElement>('[data-world-art]'));
  const foreground=gate.querySelector<HTMLImageElement>('[data-world-foreground]')!;
  const character=gate.querySelector<HTMLElement>('.gate-character')!;
@@ -21,7 +21,8 @@ if(gate&&root&&canvas&&context){
  const scrollPosition=()=>Math.max(0,Math.min(scrollY,Math.max(0,document.documentElement.scrollHeight-innerHeight)));
  let pointerX=0,pointerY=0,inView=false,initialized=false,lastScrollAt=-Infinity,lastScrollSampleAt=-Infinity,lastScrollY=scrollPosition(),scrollDistance=0;
  let gateTop=0,gateHeight=1,gateWidth=1,characterWidth=0,lastPose='',lastPosePause:boolean|undefined;
- const blocked=()=>document.hidden||!inView||document.querySelector('dialog[open]')!==null;
+ let dialogOpen=document.querySelector('dialog[open]')!==null;
+ const blocked=()=>document.hidden||!inView||dialogOpen;
  const staticWorld=()=>motion.matches;
  const artOpacity=[-1,-1,-1],artTransform=['','',''];
  art.forEach(image=>{image.decode().then(()=>{image.dataset.loaded='true';root!.dataset.worldArtReady=String(art.filter(item=>item.dataset.loaded==='true').length)}).catch(()=>{image.dataset.failed='true'})});
@@ -33,10 +34,14 @@ if(gate&&root&&canvas&&context){
   if(pose!==lastPose){poses.forEach(element=>element.hidden=element.dataset.gatePose!==pose);character.dataset.pose=pose;lastPose=pose;lastPosePause=undefined}
   if(frozen!==lastPosePause){poses.forEach(element=>element.querySelector<HTMLElement>('[data-kist-sprite]')?.dispatchEvent(new CustomEvent('kist:pause',{detail:{paused:frozen||element.hidden}})));lastPosePause=frozen}
  }
- function track(){targetProgress=clamp((innerHeight-gateTop+scrollY)/(innerHeight+gateHeight))}
+ function track(){
+  targetProgress=clamp((innerHeight-gateTop+scrollY)/(innerHeight+gateHeight));
+  inView=gateTop<scrollY+innerHeight&&gateTop+gateHeight>scrollY;
+  root!.dataset.worldVisible=String(inView);
+ }
  function bounds(){
   const rect=gate!.getBoundingClientRect();gateTop=rect.top+scrollY;gateHeight=Math.max(1,rect.height);gateWidth=Math.max(1,rect.width);
-  inView=rect.top<innerHeight&&rect.bottom>0;track();
+  track();
  }
  function measure(){
   bounds();characterWidth=character.offsetWidth;height=180;width=Math.max(1,Math.round(gateWidth/gateHeight*height));
@@ -96,9 +101,11 @@ if(gate&&root&&canvas&&context){
  });
  document.addEventListener('visibilitychange',()=>{if(document.hidden){stop();syncCharacter(performance.now())}else resume()});
  motion.addEventListener('change',()=>{stop();syncMotionState();if(motion.matches){progress=.5;paint()}else resume()});
- const dialogObserver=new MutationObserver(()=>{if(blocked()){stop();syncCharacter(performance.now())}else resume()});
+ const dialogObserver=new MutationObserver(()=>{dialogOpen=document.querySelector('dialog[open]')!==null;if(blocked()){stop();syncCharacter(performance.now())}else resume()});
  document.querySelectorAll('dialog').forEach(dialog=>dialogObserver.observe(dialog,{attributes:true,attributeFilter:['open']}));
- new IntersectionObserver(entries=>{inView=entries[0].isIntersecting;root!.dataset.worldVisible=String(inView);if(inView){bounds();resume()}else{stop();syncCharacter(performance.now())}},{threshold:0}).observe(gate);
+ // Observer entries can describe the previous layout during a rotation. Read the
+ // current bounds, shared with scroll/resize, rather than restoring stale visibility.
+ new IntersectionObserver(()=>{bounds();if(inView)resume();else{stop();syncCharacter(performance.now())}},{threshold:0}).observe(gate);
  new ResizeObserver(measure).observe(gate);
  new ResizeObserver(()=>{bounds();if(!inView)stop();else resume()}).observe(document.querySelector('main')!);
  new MutationObserver(()=>{lastPosePause=undefined;syncCharacter(performance.now())}).observe(character,{subtree:true,attributes:true,attributeFilter:['data-kist-bound']});

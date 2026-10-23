@@ -13,6 +13,7 @@ const profiles=engine==='webkit'?
  [{name:'android-small',width:320,height:740,touch:true,mobile:true},{name:'android',width:412,height:915,touch:true,mobile:true},{name:'tablet',width:820,height:1180,touch:true,mobile:true},{name:'hybrid',width:1280,height:800,touch:true},{name:'desktop',width:1440,height:1000}];
 await mkdir('screenshots/motion',{recursive:true});
 const results=[];
+let lastTrace;
 
 async function centerScene(page){
  await page.evaluate(()=>document.querySelector('#frequency-break').scrollIntoView({block:'center',behavior:'instant'}));
@@ -24,7 +25,7 @@ async function centerScene(page){
 // One-pixel scrolls expose the mobile threshold regression; 55ms intervals
 // expose timers that restart the run cycle before its first frame advances.
 async function traceScroll(page,delta=1,interval=55,count=12){
- return page.evaluate(({delta,interval,count})=>new Promise(resolve=>{
+ lastTrace=await page.evaluate(({delta,interval,count})=>new Promise(resolve=>{
   const character=document.querySelector('.gate-character');
   const sprite=character.querySelector('[data-gate-pose="run"] [data-kist-sprite]');
   const start=performance.now(),startY=scrollY,route=Number(character.dataset.routeProgress),samples=[];
@@ -38,6 +39,7 @@ async function traceScroll(page,delta=1,interval=55,count=12){
   }
   requestAnimationFrame(sample);
  }),{delta,interval,count});
+ return lastTrace;
 }
 
 function verifyTrace(trace,label,direction=1){
@@ -149,6 +151,8 @@ try{
    await page.screenshot({path:`screenshots/motion/${engine}-${profile.name}.png`});
    console.log(JSON.stringify(results.at(-1)));
   }catch(error){
+   const state=await page.evaluate(()=>({y:scrollY,width:innerWidth,height:innerHeight,hidden:document.hidden,world:{...document.querySelector('#kist-world')?.dataset},gate:document.querySelector('#frequency-break')?.getBoundingClientRect().toJSON(),character:document.querySelector('.gate-character')?.getBoundingClientRect().toJSON(),sprites:[...document.querySelectorAll('.gate-character [data-kist-sprite]')].map(sprite=>({data:{...sprite.dataset},rect:sprite.getBoundingClientRect().toJSON(),display:getComputedStyle(sprite).display})),dialogs:[...document.querySelectorAll('dialog[open]')].map(dialog=>dialog.id),entranceHidden:document.querySelector('.entrance')?.hidden})).catch(()=>null);
+   await writeFile(`screenshots/motion/${engine}-${profile.name}-failure.json`,JSON.stringify({error:String(error),state,trace:lastTrace},null,2));
    await page.screenshot({path:`screenshots/motion/${engine}-${profile.name}-failure.png`}).catch(()=>{});
    throw error;
   }finally{await context.close();}
