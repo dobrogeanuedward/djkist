@@ -326,7 +326,9 @@ jobs:
             await page.waitForFunction(frame=>document.querySelector('#kist-world')?.dataset.worldVisible==='true'&&document.querySelector('#kist-world')?.dataset.worldFrame!==frame,offscreenFrame,{timeout:4000});
             const gateCharacter=page.locator('#frequency-break .gate-character');
             const gateSprite=page.locator('#frequency-break .gate-character [data-kist-sprite]:visible');
-            await gateSprite.scrollIntoViewIfNeeded();
+            // The visible sprite changes from run to groove as scrolling ends.
+            // Wait for that transition instead of scrolling a transient sprite node.
+            await page.waitForFunction(()=>document.querySelector('#frequency-break .gate-character')?.dataset.pose==='groove');
             await page.locator('#frequency-break .gate-character [data-kist-ready="true"]:visible').waitFor();
             await page.waitForTimeout(400);
             await page.waitForFunction(()=>document.querySelector('#frequency-break .gate-character')?.dataset.pose==='groove');

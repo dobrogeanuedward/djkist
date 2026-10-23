@@ -8,6 +8,7 @@ on:
       - 'src/styles/world.css'
       - 'tests/world-motion.mjs'
       - '.github/workflows/world-motion.yml'
+      - '.github/workflows/browser.yml'
   workflow_dispatch:
 permissions:
   contents: read
