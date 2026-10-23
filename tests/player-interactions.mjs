@@ -59,9 +59,13 @@ try{
   await page.keyboard.press('Escape');assert(!await details.isVisible());
   assert(await cover.evaluate(el=>document.activeElement===el),'Escape lost cover focus');
   await play.click();
-  await page.waitForFunction(()=>document.querySelector('.sound-invitation').getAttribute('aria-busy')==='true');
-  assert(await play.isDisabled());assert(!await entry.isVisible());
+  // WebKit may finish the short fixture connection before click() returns.
+  // Check the loading contract if still pending, then require the final ready state.
+  if(await play.isDisabled())assert.equal(await page.locator('.sound-invitation').getAttribute('aria-busy'),'true');
+  assert(!await entry.isVisible());
   await page.waitForFunction(()=>document.body.classList.contains('sound-active'));
+  assert(!await play.isDisabled());
+  assert.equal(await page.locator('.sound-invitation').getAttribute('aria-busy'),'false');
   assert.equal(await page.evaluate(()=>window.playerTest.play),1,'Direct first play requires a second tap');
   assert.equal(await page.locator('#player-mount iframe').count(),1);
   await title.click();
