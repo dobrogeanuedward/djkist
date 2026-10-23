@@ -1,0 +1,50 @@
+name: Player interactions
+on:
+  push:
+    paths:
+      - 'src/scripts/experience.ts'
+      - 'src/pages/index.astro'
+      - 'src/components/AudioControls.astro'
+      - 'src/styles/player-refinement.css'
+      - 'tests/player-interactions.mjs'
+      - '.github/workflows/player.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  player:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm run build
+      - run: npm install --no-save playwright
+      - name: Prepare browser
+        timeout-minutes: 4
+        env:
+          PLAYER_BROWSER: ${{ matrix.browser }}
+        run: |
+          if [ "$PLAYER_BROWSER" = chromium ]; then
+            google-chrome --version
+          else
+            npx playwright install --with-deps webkit
+          fi
+      - name: Verify player interactions
+        env:
+          PLAYER_BROWSER: ${{ matrix.browser }}
+        run: |
+          python3 -m http.server 4321 --directory dist > /tmp/kist-player-server.log 2>&1 &
+          node tests/player-interactions.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: player-interactions-${{ matrix.browser }}
+          path: screenshots/player

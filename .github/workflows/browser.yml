@@ -100,13 +100,15 @@ jobs:
 
           const heroTransport=music.locator('[data-player-controls="hero"]');
           const heroVolume=heroTransport.locator('[data-audio-volume]');
+          await heroTransport.locator('[data-volume-open]').click();
           await heroVolume.press('Home');
-          for(let step=0;step<7;step++)await heroVolume.press('ArrowRight');
+          for(let step=0;step<7;step++)await heroVolume.press('ArrowUp');
           await music.waitForFunction(()=>window.testVolume===35);
           if(await heroVolume.inputValue()!=='35')throw new Error('Hero volume did not reach the SoundCloud widget');
           await navigate(music,'Notti');await openHeaderPlayer(music);
           const menuTransport=music.locator('[data-player-controls="header-active"]');
           if(await menuTransport.locator('[data-audio-volume]').inputValue()!=='35')throw new Error('Header volume did not follow the hero');
+          await menuTransport.locator('[data-volume-open]').click();
           await menuTransport.locator('[data-audio-mute]').click();
           if(!await music.evaluate(()=>window.testVolume===0&&[...document.querySelectorAll('[data-audio-volume]')].every(input=>input.value==='0')))throw new Error('Mute did not synchronize both players');
           await menuTransport.locator('[data-audio-mute]').click();
@@ -152,9 +154,9 @@ jobs:
             await page.waitForFunction(frame=>document.querySelector('.player-character [data-kist-sprite]')?.dataset.frame!==frame,spriteFrame,{timeout:4000});
             await page.screenshot({animations:'disabled',path:'screenshots/'+name+'-player.png'});
             await page.getByRole('button',{name:'Chiudi il player'}).click();
-            await page.locator('#hero-play').click();
-            if(!await page.locator('#sound-dialog').isVisible())throw new Error('Player reopen failed');
-            await page.getByRole('button',{name:'Continua senza musica'}).click();
+            await page.locator('.track-title-link').click();
+            if(!await page.locator('#track-dialog').isVisible()||await page.locator('#sound-dialog').isVisible())throw new Error('Track details did not open separately from the entry invitation');
+            await page.getByRole('button',{name:'Chiudi i dettagli del set',exact:true}).click();
             await page.evaluate(()=>document.getElementById('home').scrollIntoView({block:'start',behavior:'instant'}));
             await page.waitForFunction(()=>{const video=document.querySelector('#hero-video');return video&&video.readyState>=2&&!!video.currentSrc;},null,{timeout:10000});
             const heroVideo=page.locator('#hero-video');
@@ -193,14 +195,14 @@ jobs:
             const menu=page.locator('#header-nav-toggle');
             if(width>1050){
               const headerControls=page.locator('.site-header [data-player-controls="header-idle"]');
-              if(!await headerControls.locator('[data-audio-prev]').isVisible()||!await headerControls.locator('[data-audio-next]').isVisible()||!await headerControls.locator('[data-audio-volume]').isVisible())throw new Error('The desktop header is missing its complete audio controls');
+              if(!await headerControls.locator('[data-audio-prev]').isVisible()||!await headerControls.locator('[data-audio-next]').isVisible()||!await headerControls.locator('[data-volume-open]').isVisible()||!await headerControls.locator('[data-audio-seek]').isVisible())throw new Error('The desktop header is missing its complete audio controls');
             }
 
             if(width<=800){
               if(await page.locator('.site-header .header-actions').isVisible())throw new Error('The mobile header still shows a player outside its dropdown');
               if(await page.locator('.hero-listen').isVisible())throw new Error('The mobile hero still duplicates its main play control');
               const heroControls=page.locator('[data-player-controls="hero"]');
-              if(!await heroControls.locator('[data-audio-prev]').isVisible()||!await heroControls.locator('[data-audio-next]').isVisible()||!await heroControls.locator('[data-audio-volume]').isVisible())throw new Error('The mobile hero is missing audio controls');
+              if(!await heroControls.locator('[data-audio-prev]').isVisible()||!await heroControls.locator('[data-audio-next]').isVisible()||!await heroControls.locator('[data-volume-open]').isVisible()||!await heroControls.locator('[data-audio-seek]').isVisible())throw new Error('The mobile hero is missing audio controls');
               const sectionSpacing=await page.locator('#sessions').evaluate(section=>({top:parseFloat(getComputedStyle(section).paddingTop),bottom:parseFloat(getComputedStyle(section).paddingBottom)}));
               if(sectionSpacing.top<64||sectionSpacing.bottom<72)throw new Error('Mobile sessions lost their reading space');
             }
@@ -366,11 +368,11 @@ jobs:
             await scrollWorldScene(page,.5);
             await openHeaderPlayer(page);
             await page.locator('#header-music').click();
-            await page.locator('#sound-dialog').waitFor({state:'visible'});
+            await page.locator('#track-dialog').waitFor({state:'visible'});
             const dialogWorldFrame=await world.getAttribute('data-world-frame');
             await page.waitForTimeout(250);
             if(await world.getAttribute('data-world-frame')!==dialogWorldFrame)throw new Error('The background kept rendering behind an open player dialog');
-            await page.locator('#player-dismiss').click();
+            await page.locator('.track-detail-close').click();
             await page.keyboard.press('Escape');
             await page.waitForFunction(frame=>document.querySelector('#kist-world')?.dataset.worldFrame!==frame,dialogWorldFrame,{timeout:4000});
             if(await page.locator('.photo-wall').getByText('Fifteen Frames',{exact:true}).count()||await page.locator('footer').getByText('3D credits',{exact:true}).count())throw new Error('Removed gallery photo or footer credits remain');
@@ -444,8 +446,9 @@ jobs:
             if(headerTrack.title!=='KIST / Metadati dal player'||headerTrack.source!=='/media/bipolar-cover.webp'||!headerTrack.loaded||!headerTrack.inHeader||!headerTrack.visible||headerTrack.worldAudio!=='playing')throw new Error('Live header metadata did not follow the track: '+JSON.stringify(headerTrack));
             if(await metadata.locator('#player-mount iframe').count()!==1)throw new Error('Header transport duplicated its SoundCloud iframe');
             await metadata.locator('#dock-open').click();
-            if(!await metadata.locator('#sound-dialog').isVisible())throw new Error('Header player did not open');
-            await metadata.getByRole('button',{name:'Chiudi il player',exact:true}).click();
+            if(!await metadata.locator('#track-dialog').isVisible())throw new Error('Header track details did not open');
+            if(await metadata.locator('#track-detail-title').innerText()!=='KIST / Metadati dal player'||!await metadata.locator('#track-detail-cover').getAttribute('src').then(src=>src==='/media/bipolar-cover.webp'))throw new Error('Track details lost live SoundCloud metadata');
+            await metadata.getByRole('button',{name:'Chiudi i dettagli del set',exact:true}).click();
             if(!await metadata.evaluate(()=>document.body.classList.contains('sound-active')&&window.metadataPlayCalls===1&&window.metadataPauseCalls===0))throw new Error('Opening the header player altered playback');
             await metadata.screenshot({animations:'disabled',path:'screenshots/'+name+'-header-track.png'});
             await navigate(metadata,'Social');
