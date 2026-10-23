@@ -28,16 +28,18 @@ async function traceScroll(page,delta=1,interval=55,count=12){
  lastTrace=await page.evaluate(({delta,interval,count})=>new Promise(resolve=>{
   const character=document.querySelector('.gate-character');
   const sprite=character.querySelector('[data-gate-pose="run"] [data-kist-sprite]');
-  const start=performance.now(),startY=scrollY,route=Number(character.dataset.routeProgress),samples=[],poseChanges=[];
+  const start=performance.now(),startY=scrollY,route=Number(character.dataset.routeProgress),samples=[],poseChanges=[],frameChanges=[];
   const observer=new MutationObserver(()=>poseChanges.push({time:performance.now()-start,pose:character.dataset.pose}));
   observer.observe(character,{attributes:true,attributeFilter:['data-pose']});
+  const frames=new MutationObserver(()=>frameChanges.push({time:performance.now()-start,pose:character.dataset.pose,frame:sprite.dataset.frame}));
+  frames.observe(sprite,{attributes:true,attributeFilter:['data-frame']});
   let step=0,endedAt=Infinity;
   const timer=setInterval(()=>{scrollBy({top:delta,behavior:'instant'});if(++step===count){clearInterval(timer);endedAt=performance.now()-start;}},interval);
   function sample(){
    const time=performance.now()-start;
    samples.push({time,pose:character.dataset.pose,frame:sprite.dataset.frame,y:scrollY});
    if(time<endedAt+250)requestAnimationFrame(sample);
-   else{observer.disconnect();resolve({samples,poseChanges,endedAt,startY,endY:scrollY,route,endRoute:Number(character.dataset.routeProgress),facing:character.dataset.facing});}
+   else{observer.disconnect();frames.disconnect();resolve({samples,poseChanges,frameChanges,endedAt,startY,endY:scrollY,route,endRoute:Number(character.dataset.routeProgress),facing:character.dataset.facing});}
   }
   requestAnimationFrame(sample);
  }),{delta,interval,count});
@@ -50,7 +52,8 @@ function verifyTrace(trace,label,direction=1){
  const active=trace.samples.filter(s=>s.time>140&&s.time<trace.endedAt);
  const runs=active.filter(s=>s.pose==='run');
  assert(runs.length/active.length>.85,`${label}: running flickered or stayed idle (${runs.length}/${active.length})`);
- assert(new Set(runs.map(s=>s.frame)).size>=3,`${label}: run sprite froze despite page movement`);
+ const runFrames=trace.frameChanges.filter(s=>s.pose==='run'&&s.time<trace.endedAt);
+ assert(new Set(runFrames.map(s=>s.frame)).size>=3,`${label}: run sprite froze despite page movement`);
  // Measure the DOM transition, not the next sampled frame: Safari/Firefox may
  // composite less often on a busy device even while the stop timer fires on time.
  const stopped=trace.poseChanges.find(s=>s.time>trace.endedAt&&s.pose==='groove');

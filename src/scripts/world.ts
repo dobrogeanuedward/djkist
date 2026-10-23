@@ -81,7 +81,7 @@ if(gate&&root&&canvas&&context){
  function syncMotionState(){
   root!.dataset.worldPaused=String(staticWorld());root!.dataset.worldAudio=playing?'playing':'quiet';syncCharacter(performance.now());
  }
- window.addEventListener('scroll',()=>{
+ function onScroll(){
   const nextY=scrollPosition(),delta=nextY-lastScrollY,now=performance.now();lastScrollY=nextY;track();
   if(!staticWorld()&&!blocked()){
    if(now-lastScrollSampleAt>runHold||delta*scrollDistance<0)scrollDistance=0;
@@ -91,11 +91,17 @@ if(gate&&root&&canvas&&context){
    if(Math.abs(scrollDistance)>=.5){
     lastScrollAt=now;character.style.setProperty('--gate-facing',scrollDistance>0?'1':'-1');character.dataset.facing=scrollDistance>0?'right':'left';scrollDistance=0;syncCharacter(now);
     // Do not wait for the next canvas frame to stop on slower devices.
-    clearTimeout(idleTimer);idleTimer=setTimeout(()=>{idleTimer=undefined;syncCharacter(performance.now())},runHold+1);
+    clearTimeout(idleTimer);idleTimer=setTimeout(()=>{
+     idleTimer=undefined;
+     // Safari can coalesce scroll events while its compositor keeps moving.
+     // Consult the real page position before declaring the gesture finished.
+     if(scrollPosition()!==lastScrollY)onScroll();else syncCharacter(performance.now());
+    },runHold+1);
    }
   }
   resume();
- },{passive:true});
+ }
+ window.addEventListener('scroll',onScroll,{passive:true});
  window.addEventListener('resize',measure,{passive:true});
  gate.addEventListener('pointermove',event=>{if(event.pointerType!=='mouse'||staticWorld())return;const rect=gate.getBoundingClientRect();pointerX=(event.clientX-rect.left)/rect.width-.5;pointerY=(event.clientY-rect.top)/rect.height-.5},{passive:true});
  window.addEventListener('kist:audio',event=>{
